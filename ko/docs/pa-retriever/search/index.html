@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="ko" dir="ltr">
+<head>
+  <!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="검색 가이드# PA-Retriever의 고급 검색 문법을 설명합니다.
+검색 명령어# 1 2 3 4 5 6 pa search &lt;query&gt; [options] Options: --limit=N 결과 수 제한 (기본: 10) --json JSON 형식 출력 --content 본문 내용 포함 기본 검색# 키워드 검색# 1 2 3 4 5 # 단일 키워드 pa search &#34;login&#34; # 여러 키워드 (암묵적 AND) pa search &#34;login auth&#34; 결과 예시# 🔍 검색 결과: &#34;login&#34; (3건) 1. [l2] auth.L2-LoginPort 도메인: auth | 토큰: 1,234 &gt; 로그인 프로세스를 처리하는 L2 Port... 2. [api] auth.API-Login 도메인: auth | 토큰: 856 &gt; POST /api/auth/login... 3. [l1] auth.L1-SessionPort 도메인: auth | 토큰: 623 &gt; 세션 관리...필드 검색# 문법# 필드:값지원 필드# 필드 설명 예시 type 문서 타입 type:l2 domain 도메인 domain:auth status 상태 status:active priority 우선순위 priority:high author 작성자 author:홍길동 tag 태그 tag:jwt 예시# 1 2 3 4 5 6 7 8 9 10 11 # L2 타입만 pa search &#34;type:l2&#34; # auth 도메인만 pa search &#34;domain:auth&#34; # active 상태만 pa search &#34;status:active&#34; # 특정 태그 pa search &#34;tag:jwt&#34; 복합 쿼리# AND 연산# 1 2 3 4 5 # 명시적 AND pa search &#34;type:l2 AND domain:auth&#34; # 암묵적 AND (공백) pa search &#34;type:l2 domain:auth&#34; OR 연산# 1 2 3 4 5 # L1 또는 L2 타입 pa search &#34;type:l1 OR type:l2&#34; # auth 또는 users 도메인 pa search &#34;domain:auth OR domain:users&#34; NOT 연산# 1 2 3 4 5 # deprecated 제외 pa search &#34;type:l2 NOT status:deprecated&#34; # draft 제외 pa search &#34;domain:auth NOT status:draft&#34; 괄호 그룹# 1 2 3 4 5 # (auth OR users) 도메인의 L2 pa search &#34;type:l2 AND (domain:auth OR domain:users)&#34; # 복잡한 조합 pa search &#34;(type:l1 OR type:l2) AND domain:orders NOT status:draft&#34; 범위 검색# 토큰 수# 1 2 3 4 5 6 7 8 # 1000 토큰 이상 pa search &#34;tokens:&gt;1000&#34; # 500 토큰 이하 pa search &#34;tokens:&lt;500&#34; # 범위 pa search &#34;tokens:&gt;=500 AND tokens:&lt;=2000&#34; 전문 검색 (FTS)# 본문 내용 검색# 1 2 3 4 5 # 본문에 &#34;suspend fun&#34; 포함 pa search &#34;suspend fun&#34; # 본문에 &#34;interface&#34; 포함 pa search &#34;interface&#34; 와일드카드# 1 2 3 4 5 # Login으로 시작 pa search &#34;Login*&#34; # Port로 끝나는 단어 pa search &#34;*Port&#34; 실용적인 쿼리 예시# 도메인별 문서 확인# 1 2 3 4 5 # auth 도메인 전체 pa search &#34;domain:auth&#34; # auth 도메인의 Port들 pa search &#34;domain:auth AND (type:l1 OR type:l2)&#34; 상태별 필터링# 1 2 3 4 5 6 7 8 # 활성 문서만 pa search &#34;status:active&#34; # 검토 필요 (draft) pa search &#34;status:draft&#34; # deprecated 문서 (정리 대상) pa search &#34;status:deprecated&#34; API 명세 찾기# 1 2 3 4 5 # 모든 API 문서 pa search &#34;type:api&#34; # 특정 도메인 API pa search &#34;type:api AND domain:orders&#34; 의존성 추적# 1 2 3 4 5 # LoginPort에 의존하는 문서 (본문 검색) pa search &#34;LoginPort&#34; # L1-UserPort를 참조하는 문서 pa search &#34;L1-UserPort&#34; 최근 변경 문서# 1 2 3 4 5 # 우선순위 높은 문서 pa search &#34;priority:high&#34; # 특정 작성자의 문서 pa search &#34;author:홍길동&#34; JSON 출력# 1 2 3 4 5 6 7 8 # JSON 형식으로 출력 pa search &#34;type:l2&#34; --json # jq와 조합 pa search &#34;type:l2&#34; --json | jq &#39;.[] | .id&#39; # 파일로 저장 pa search &#34;domain:auth&#34; --json &gt; auth-docs.json JSON 구조# 1 2 3 4 5 6 7 8 9 10 11 12 13 [ { &#34;id&#34;: &#34;auth.L2-LoginPort&#34;, &#34;path&#34;: &#34;ports/auth/L2-LoginPort.md&#34;, &#34;type&#34;: &#34;l2&#34;, &#34;domain&#34;: &#34;auth&#34;, &#34;status&#34;: &#34;active&#34;, &#34;tokens&#34;: 1234, &#34;summary&#34;: &#34;로그인 프로세스 Port&#34;, &#34;tags&#34;: [&#34;auth&#34;, &#34;login&#34;], &#34;score&#34;: 0.95 } ] 검색 팁# 효율적인 검색# 타입 먼저: type:l2 login (타입으로 먼저 필터링) 도메인 추가: type:l2 domain:auth 키워드 추가: type:l2 domain:auth login 검색 결과가 없을 때# 1 2 3 4 5 6 7 8 # 인덱스 상태 확인 pa status # 문서 타입 확인 pa config types # 전체 재인덱싱 pa index --force 다음 단계# 코드 인덱싱 Claude와 함께 사용 ">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://pa-layer.github.io/ko/docs/pa-retriever/search/">
+  <meta property="og:site_name" content="PA-Layer">
+  <meta property="og:title" content="검색 가이드">
+  <meta property="og:description" content="검색 가이드# PA-Retriever의 고급 검색 문법을 설명합니다.
+검색 명령어# 1 2 3 4 5 6 pa search &lt;query&gt; [options] Options: --limit=N 결과 수 제한 (기본: 10) --json JSON 형식 출력 --content 본문 내용 포함 기본 검색# 키워드 검색# 1 2 3 4 5 # 단일 키워드 pa search &#34;login&#34; # 여러 키워드 (암묵적 AND) pa search &#34;login auth&#34; 결과 예시# 🔍 검색 결과: &#34;login&#34; (3건) 1. [l2] auth.L2-LoginPort 도메인: auth | 토큰: 1,234 &gt; 로그인 프로세스를 처리하는 L2 Port... 2. [api] auth.API-Login 도메인: auth | 토큰: 856 &gt; POST /api/auth/login... 3. [l1] auth.L1-SessionPort 도메인: auth | 토큰: 623 &gt; 세션 관리...필드 검색# 문법# 필드:값지원 필드# 필드 설명 예시 type 문서 타입 type:l2 domain 도메인 domain:auth status 상태 status:active priority 우선순위 priority:high author 작성자 author:홍길동 tag 태그 tag:jwt 예시# 1 2 3 4 5 6 7 8 9 10 11 # L2 타입만 pa search &#34;type:l2&#34; # auth 도메인만 pa search &#34;domain:auth&#34; # active 상태만 pa search &#34;status:active&#34; # 특정 태그 pa search &#34;tag:jwt&#34; 복합 쿼리# AND 연산# 1 2 3 4 5 # 명시적 AND pa search &#34;type:l2 AND domain:auth&#34; # 암묵적 AND (공백) pa search &#34;type:l2 domain:auth&#34; OR 연산# 1 2 3 4 5 # L1 또는 L2 타입 pa search &#34;type:l1 OR type:l2&#34; # auth 또는 users 도메인 pa search &#34;domain:auth OR domain:users&#34; NOT 연산# 1 2 3 4 5 # deprecated 제외 pa search &#34;type:l2 NOT status:deprecated&#34; # draft 제외 pa search &#34;domain:auth NOT status:draft&#34; 괄호 그룹# 1 2 3 4 5 # (auth OR users) 도메인의 L2 pa search &#34;type:l2 AND (domain:auth OR domain:users)&#34; # 복잡한 조합 pa search &#34;(type:l1 OR type:l2) AND domain:orders NOT status:draft&#34; 범위 검색# 토큰 수# 1 2 3 4 5 6 7 8 # 1000 토큰 이상 pa search &#34;tokens:&gt;1000&#34; # 500 토큰 이하 pa search &#34;tokens:&lt;500&#34; # 범위 pa search &#34;tokens:&gt;=500 AND tokens:&lt;=2000&#34; 전문 검색 (FTS)# 본문 내용 검색# 1 2 3 4 5 # 본문에 &#34;suspend fun&#34; 포함 pa search &#34;suspend fun&#34; # 본문에 &#34;interface&#34; 포함 pa search &#34;interface&#34; 와일드카드# 1 2 3 4 5 # Login으로 시작 pa search &#34;Login*&#34; # Port로 끝나는 단어 pa search &#34;*Port&#34; 실용적인 쿼리 예시# 도메인별 문서 확인# 1 2 3 4 5 # auth 도메인 전체 pa search &#34;domain:auth&#34; # auth 도메인의 Port들 pa search &#34;domain:auth AND (type:l1 OR type:l2)&#34; 상태별 필터링# 1 2 3 4 5 6 7 8 # 활성 문서만 pa search &#34;status:active&#34; # 검토 필요 (draft) pa search &#34;status:draft&#34; # deprecated 문서 (정리 대상) pa search &#34;status:deprecated&#34; API 명세 찾기# 1 2 3 4 5 # 모든 API 문서 pa search &#34;type:api&#34; # 특정 도메인 API pa search &#34;type:api AND domain:orders&#34; 의존성 추적# 1 2 3 4 5 # LoginPort에 의존하는 문서 (본문 검색) pa search &#34;LoginPort&#34; # L1-UserPort를 참조하는 문서 pa search &#34;L1-UserPort&#34; 최근 변경 문서# 1 2 3 4 5 # 우선순위 높은 문서 pa search &#34;priority:high&#34; # 특정 작성자의 문서 pa search &#34;author:홍길동&#34; JSON 출력# 1 2 3 4 5 6 7 8 # JSON 형식으로 출력 pa search &#34;type:l2&#34; --json # jq와 조합 pa search &#34;type:l2&#34; --json | jq &#39;.[] | .id&#39; # 파일로 저장 pa search &#34;domain:auth&#34; --json &gt; auth-docs.json JSON 구조# 1 2 3 4 5 6 7 8 9 10 11 12 13 [ { &#34;id&#34;: &#34;auth.L2-LoginPort&#34;, &#34;path&#34;: &#34;ports/auth/L2-LoginPort.md&#34;, &#34;type&#34;: &#34;l2&#34;, &#34;domain&#34;: &#34;auth&#34;, &#34;status&#34;: &#34;active&#34;, &#34;tokens&#34;: 1234, &#34;summary&#34;: &#34;로그인 프로세스 Port&#34;, &#34;tags&#34;: [&#34;auth&#34;, &#34;login&#34;], &#34;score&#34;: 0.95 } ] 검색 팁# 효율적인 검색# 타입 먼저: type:l2 login (타입으로 먼저 필터링) 도메인 추가: type:l2 domain:auth 키워드 추가: type:l2 domain:auth login 검색 결과가 없을 때# 1 2 3 4 5 6 7 8 # 인덱스 상태 확인 pa status # 문서 타입 확인 pa config types # 전체 재인덱싱 pa index --force 다음 단계# 코드 인덱싱 Claude와 함께 사용">
+  <meta property="og:locale" content="ko">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+
+
+  <meta itemprop="name" content="검색 가이드">
+  <meta itemprop="description" content="검색 가이드# PA-Retriever의 고급 검색 문법을 설명합니다.
+검색 명령어# 1 2 3 4 5 6 pa search &lt;query&gt; [options] Options: --limit=N 결과 수 제한 (기본: 10) --json JSON 형식 출력 --content 본문 내용 포함 기본 검색# 키워드 검색# 1 2 3 4 5 # 단일 키워드 pa search &#34;login&#34; # 여러 키워드 (암묵적 AND) pa search &#34;login auth&#34; 결과 예시# 🔍 검색 결과: &#34;login&#34; (3건) 1. [l2] auth.L2-LoginPort 도메인: auth | 토큰: 1,234 &gt; 로그인 프로세스를 처리하는 L2 Port... 2. [api] auth.API-Login 도메인: auth | 토큰: 856 &gt; POST /api/auth/login... 3. [l1] auth.L1-SessionPort 도메인: auth | 토큰: 623 &gt; 세션 관리...필드 검색# 문법# 필드:값지원 필드# 필드 설명 예시 type 문서 타입 type:l2 domain 도메인 domain:auth status 상태 status:active priority 우선순위 priority:high author 작성자 author:홍길동 tag 태그 tag:jwt 예시# 1 2 3 4 5 6 7 8 9 10 11 # L2 타입만 pa search &#34;type:l2&#34; # auth 도메인만 pa search &#34;domain:auth&#34; # active 상태만 pa search &#34;status:active&#34; # 특정 태그 pa search &#34;tag:jwt&#34; 복합 쿼리# AND 연산# 1 2 3 4 5 # 명시적 AND pa search &#34;type:l2 AND domain:auth&#34; # 암묵적 AND (공백) pa search &#34;type:l2 domain:auth&#34; OR 연산# 1 2 3 4 5 # L1 또는 L2 타입 pa search &#34;type:l1 OR type:l2&#34; # auth 또는 users 도메인 pa search &#34;domain:auth OR domain:users&#34; NOT 연산# 1 2 3 4 5 # deprecated 제외 pa search &#34;type:l2 NOT status:deprecated&#34; # draft 제외 pa search &#34;domain:auth NOT status:draft&#34; 괄호 그룹# 1 2 3 4 5 # (auth OR users) 도메인의 L2 pa search &#34;type:l2 AND (domain:auth OR domain:users)&#34; # 복잡한 조합 pa search &#34;(type:l1 OR type:l2) AND domain:orders NOT status:draft&#34; 범위 검색# 토큰 수# 1 2 3 4 5 6 7 8 # 1000 토큰 이상 pa search &#34;tokens:&gt;1000&#34; # 500 토큰 이하 pa search &#34;tokens:&lt;500&#34; # 범위 pa search &#34;tokens:&gt;=500 AND tokens:&lt;=2000&#34; 전문 검색 (FTS)# 본문 내용 검색# 1 2 3 4 5 # 본문에 &#34;suspend fun&#34; 포함 pa search &#34;suspend fun&#34; # 본문에 &#34;interface&#34; 포함 pa search &#34;interface&#34; 와일드카드# 1 2 3 4 5 # Login으로 시작 pa search &#34;Login*&#34; # Port로 끝나는 단어 pa search &#34;*Port&#34; 실용적인 쿼리 예시# 도메인별 문서 확인# 1 2 3 4 5 # auth 도메인 전체 pa search &#34;domain:auth&#34; # auth 도메인의 Port들 pa search &#34;domain:auth AND (type:l1 OR type:l2)&#34; 상태별 필터링# 1 2 3 4 5 6 7 8 # 활성 문서만 pa search &#34;status:active&#34; # 검토 필요 (draft) pa search &#34;status:draft&#34; # deprecated 문서 (정리 대상) pa search &#34;status:deprecated&#34; API 명세 찾기# 1 2 3 4 5 # 모든 API 문서 pa search &#34;type:api&#34; # 특정 도메인 API pa search &#34;type:api AND domain:orders&#34; 의존성 추적# 1 2 3 4 5 # LoginPort에 의존하는 문서 (본문 검색) pa search &#34;LoginPort&#34; # L1-UserPort를 참조하는 문서 pa search &#34;L1-UserPort&#34; 최근 변경 문서# 1 2 3 4 5 # 우선순위 높은 문서 pa search &#34;priority:high&#34; # 특정 작성자의 문서 pa search &#34;author:홍길동&#34; JSON 출력# 1 2 3 4 5 6 7 8 # JSON 형식으로 출력 pa search &#34;type:l2&#34; --json # jq와 조합 pa search &#34;type:l2&#34; --json | jq &#39;.[] | .id&#39; # 파일로 저장 pa search &#34;domain:auth&#34; --json &gt; auth-docs.json JSON 구조# 1 2 3 4 5 6 7 8 9 10 11 12 13 [ { &#34;id&#34;: &#34;auth.L2-LoginPort&#34;, &#34;path&#34;: &#34;ports/auth/L2-LoginPort.md&#34;, &#34;type&#34;: &#34;l2&#34;, &#34;domain&#34;: &#34;auth&#34;, &#34;status&#34;: &#34;active&#34;, &#34;tokens&#34;: 1234, &#34;summary&#34;: &#34;로그인 프로세스 Port&#34;, &#34;tags&#34;: [&#34;auth&#34;, &#34;login&#34;], &#34;score&#34;: 0.95 } ] 검색 팁# 효율적인 검색# 타입 먼저: type:l2 login (타입으로 먼저 필터링) 도메인 추가: type:l2 domain:auth 키워드 추가: type:l2 domain:auth login 검색 결과가 없을 때# 1 2 3 4 5 6 7 8 # 인덱스 상태 확인 pa status # 문서 타입 확인 pa config types # 전체 재인덱싱 pa index --force 다음 단계# 코드 인덱싱 Claude와 함께 사용">
+  <meta itemprop="wordCount" content="615">
+
+<title>검색 가이드 | PA-Layer</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="https://pa-layer.github.io/ko/docs/pa-retriever/search/">
+  <link rel="alternate" hreflang="en" href="https://pa-layer.github.io/en/docs/pa-retriever/search/" title="Search Guide">
+<link rel="stylesheet" href="/book.min.6970156cec683193d93c9c4edaf0d56574e4361df2e0c1be4f697ae81c3ba55f.css" integrity="sha256-aXAVbOxoMZPZPJxO2vDVZXTkNh3y4MG&#43;T2l66Bw7pV8=" crossorigin="anonymous">
+
+
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/ko.search.min.e9756793949413dae8c85e803ce1e02b13ffa1c302aec58e19bfbadb693819d3.js" integrity="sha256-6XVnk5SUE9royF6APOHgKxP/ocMCrsWOGb&#43;622k4GdM=" crossorigin="anonymous"></script>
+
+
+
+  
+</head>
+<body dir="ltr" class="book-kind-page book-type-docs">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    
+<aside class="book-menu">
+  <div class="book-menu-content">
+    
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/ko/"><img src="/images/pa-layer-logo.svg" alt="Logo" /><span>PA-Layer</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input id="book-search-input" type="text" 
+    placeholder="Search"
+    aria-label="Search"
+    maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+  
+
+
+  
+    
+  
+
+
+  
+
+
+<ul class="book-languages">
+  <li>
+    <input type="checkbox" id="languages" class="toggle" />
+    <label for="languages" class="flex">
+      <a role="button">
+        <img src="/icons/translate.svg" class="book-icon" alt="Languages" />
+        한국어
+      </a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+
+    <ul>
+      
+      <li>
+        <a href="/en/docs/pa-retriever/search/" class="flex flex-auto">
+          English
+        </a>
+      </li>
+      
+    </ul>
+  </li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-b056803e087b3464503e98766cccad1a" class="toggle"  />
+    <label for="section-b056803e087b3464503e98766cccad1a" class="flex">
+      <a href="/ko/docs/installation/" class="">
+        설치하기</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/macos/" class="">
+      macOS 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/windows/" class="">
+      Windows 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/linux/" class="">
+      Linux 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/workspace/" class="">
+      워크스페이스 구성</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-187b3aa4e29a5d5ef2738d28ac16df69" class="toggle"  />
+    <label for="section-187b3aa4e29a5d5ef2738d28ac16df69" class="flex">
+      <a href="/ko/docs/configuration/" class="">
+        설정하기</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/claude/" class="">
+      Claude 연동</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/obsidian/" class="">
+      Obsidian 설정</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/pa-config/" class="">
+      PA-Retriever 설정</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99ad2865f9541edb014cad9a350d886e" class="toggle"  />
+    <label for="section-99ad2865f9541edb014cad9a350d886e" class="flex">
+      <a href="/ko/docs/pa-layer/" class="">
+        PA-Layer</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/overview/" class="">
+      아키텍처 개요</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/backend/" class="">
+      Backend 컨벤션</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/frontend/" class="">
+      Frontend 컨벤션</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99cc806f10f29d7b76e63ff1539abbc7" class="toggle" checked />
+    <label for="section-99cc806f10f29d7b76e63ff1539abbc7" class="flex">
+      <a href="/ko/docs/pa-retriever/" class="">
+        PA-Retriever</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/basic/" class="">
+      기본 사용법</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/search/" class="active">
+      검색 가이드</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/code/" class="">
+      코드 인덱싱</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/with-claude/" class="">
+      Claude와 함께 사용</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/advanced/" class="">
+      고급 기능</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+<ul><li><a href="https://github.com/pa-layer/pa-retriever" target="_blank" rel="noopener">GitHub</a></li></ul>
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+
+  </div>
+</aside>
+ 
+
+    <div class="book-page">
+      <header class="book-header hidden">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/icons/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>검색 가이드</h3>
+
+  <label for="toc-control">
+    
+    <img src="/icons/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#검색-명령어">검색 명령어</a></li>
+    <li><a href="#기본-검색">기본 검색</a>
+      <ul>
+        <li><a href="#키워드-검색">키워드 검색</a></li>
+        <li><a href="#결과-예시">결과 예시</a></li>
+      </ul>
+    </li>
+    <li><a href="#필드-검색">필드 검색</a>
+      <ul>
+        <li><a href="#문법">문법</a></li>
+        <li><a href="#지원-필드">지원 필드</a></li>
+        <li><a href="#예시">예시</a></li>
+      </ul>
+    </li>
+    <li><a href="#복합-쿼리">복합 쿼리</a>
+      <ul>
+        <li><a href="#and-연산">AND 연산</a></li>
+        <li><a href="#or-연산">OR 연산</a></li>
+        <li><a href="#not-연산">NOT 연산</a></li>
+        <li><a href="#괄호-그룹">괄호 그룹</a></li>
+      </ul>
+    </li>
+    <li><a href="#범위-검색">범위 검색</a>
+      <ul>
+        <li><a href="#토큰-수">토큰 수</a></li>
+      </ul>
+    </li>
+    <li><a href="#전문-검색-fts">전문 검색 (FTS)</a>
+      <ul>
+        <li><a href="#본문-내용-검색">본문 내용 검색</a></li>
+        <li><a href="#와일드카드">와일드카드</a></li>
+      </ul>
+    </li>
+    <li><a href="#실용적인-쿼리-예시">실용적인 쿼리 예시</a>
+      <ul>
+        <li><a href="#도메인별-문서-확인">도메인별 문서 확인</a></li>
+        <li><a href="#상태별-필터링">상태별 필터링</a></li>
+        <li><a href="#api-명세-찾기">API 명세 찾기</a></li>
+        <li><a href="#의존성-추적">의존성 추적</a></li>
+        <li><a href="#최근-변경-문서">최근 변경 문서</a></li>
+      </ul>
+    </li>
+    <li><a href="#json-출력">JSON 출력</a>
+      <ul>
+        <li><a href="#json-구조">JSON 구조</a></li>
+      </ul>
+    </li>
+    <li><a href="#검색-팁">검색 팁</a>
+      <ul>
+        <li><a href="#효율적인-검색">효율적인 검색</a></li>
+        <li><a href="#검색-결과가-없을-때">검색 결과가 없을 때</a></li>
+      </ul>
+    </li>
+    <li><a href="#다음-단계">다음 단계</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="검색-가이드">검색 가이드<a class="anchor" href="#%ea%b2%80%ec%83%89-%ea%b0%80%ec%9d%b4%eb%93%9c">#</a></h1>
+<p>PA-Retriever의 고급 검색 문법을 설명합니다.</p>
+<h2 id="검색-명령어">검색 명령어<a class="anchor" href="#%ea%b2%80%ec%83%89-%eb%aa%85%eb%a0%b9%ec%96%b4">#</a></h2>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>pa search &lt;query&gt; <span style="color:#f92672">[</span>options<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Options:
+</span></span><span style="display:flex;"><span>  --limit<span style="color:#f92672">=</span>N     결과 수 제한 <span style="color:#f92672">(</span>기본: 10<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>  --json        JSON 형식 출력
+</span></span><span style="display:flex;"><span>  --content     본문 내용 포함</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="기본-검색">기본 검색<a class="anchor" href="#%ea%b8%b0%eb%b3%b8-%ea%b2%80%ec%83%89">#</a></h2>
+<h3 id="키워드-검색">키워드 검색<a class="anchor" href="#%ed%82%a4%ec%9b%8c%eb%93%9c-%ea%b2%80%ec%83%89">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 단일 키워드</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;login&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 여러 키워드 (암묵적 AND)</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;login auth&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="결과-예시">결과 예시<a class="anchor" href="#%ea%b2%b0%ea%b3%bc-%ec%98%88%ec%8b%9c">#</a></h3>
+<pre tabindex="0"><code>🔍 검색 결과: &#34;login&#34; (3건)
+
+1. [l2] auth.L2-LoginPort
+   도메인: auth | 토큰: 1,234
+   &gt; 로그인 프로세스를 처리하는 L2 Port...
+
+2. [api] auth.API-Login
+   도메인: auth | 토큰: 856
+   &gt; POST /api/auth/login...
+
+3. [l1] auth.L1-SessionPort
+   도메인: auth | 토큰: 623
+   &gt; 세션 관리...</code></pre><h2 id="필드-검색">필드 검색<a class="anchor" href="#%ed%95%84%eb%93%9c-%ea%b2%80%ec%83%89">#</a></h2>
+<h3 id="문법">문법<a class="anchor" href="#%eb%ac%b8%eb%b2%95">#</a></h3>
+<pre tabindex="0"><code>필드:값</code></pre><h3 id="지원-필드">지원 필드<a class="anchor" href="#%ec%a7%80%ec%9b%90-%ed%95%84%eb%93%9c">#</a></h3>
+<table>
+  <thead>
+      <tr>
+          <th>필드</th>
+          <th>설명</th>
+          <th>예시</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>type</code></td>
+          <td>문서 타입</td>
+          <td><code>type:l2</code></td>
+      </tr>
+      <tr>
+          <td><code>domain</code></td>
+          <td>도메인</td>
+          <td><code>domain:auth</code></td>
+      </tr>
+      <tr>
+          <td><code>status</code></td>
+          <td>상태</td>
+          <td><code>status:active</code></td>
+      </tr>
+      <tr>
+          <td><code>priority</code></td>
+          <td>우선순위</td>
+          <td><code>priority:high</code></td>
+      </tr>
+      <tr>
+          <td><code>author</code></td>
+          <td>작성자</td>
+          <td><code>author:홍길동</code></td>
+      </tr>
+      <tr>
+          <td><code>tag</code></td>
+          <td>태그</td>
+          <td><code>tag:jwt</code></td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="예시">예시<a class="anchor" href="#%ec%98%88%ec%8b%9c">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># L2 타입만</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;type:l2&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># auth 도메인만</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;domain:auth&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># active 상태만</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;status:active&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 특정 태그</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;tag:jwt&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="복합-쿼리">복합 쿼리<a class="anchor" href="#%eb%b3%b5%ed%95%a9-%ec%bf%bc%eb%a6%ac">#</a></h2>
+<h3 id="and-연산">AND 연산<a class="anchor" href="#and-%ec%97%b0%ec%82%b0">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 명시적 AND</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;type:l2 AND domain:auth&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 암묵적 AND (공백)</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;type:l2 domain:auth&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="or-연산">OR 연산<a class="anchor" href="#or-%ec%97%b0%ec%82%b0">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># L1 또는 L2 타입</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;type:l1 OR type:l2&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># auth 또는 users 도메인</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;domain:auth OR domain:users&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="not-연산">NOT 연산<a class="anchor" href="#not-%ec%97%b0%ec%82%b0">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># deprecated 제외</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;type:l2 NOT status:deprecated&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># draft 제외</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;domain:auth NOT status:draft&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="괄호-그룹">괄호 그룹<a class="anchor" href="#%ea%b4%84%ed%98%b8-%ea%b7%b8%eb%a3%b9">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># (auth OR users) 도메인의 L2</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;type:l2 AND (domain:auth OR domain:users)&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 복잡한 조합</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;(type:l1 OR type:l2) AND domain:orders NOT status:draft&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="범위-검색">범위 검색<a class="anchor" href="#%eb%b2%94%ec%9c%84-%ea%b2%80%ec%83%89">#</a></h2>
+<h3 id="토큰-수">토큰 수<a class="anchor" href="#%ed%86%a0%ed%81%b0-%ec%88%98">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 1000 토큰 이상</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;tokens:&gt;1000&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 500 토큰 이하</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;tokens:&lt;500&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 범위</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;tokens:&gt;=500 AND tokens:&lt;=2000&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="전문-검색-fts">전문 검색 (FTS)<a class="anchor" href="#%ec%a0%84%eb%ac%b8-%ea%b2%80%ec%83%89-fts">#</a></h2>
+<h3 id="본문-내용-검색">본문 내용 검색<a class="anchor" href="#%eb%b3%b8%eb%ac%b8-%eb%82%b4%ec%9a%a9-%ea%b2%80%ec%83%89">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 본문에 &#34;suspend fun&#34; 포함</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;suspend fun&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 본문에 &#34;interface&#34; 포함</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;interface&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="와일드카드">와일드카드<a class="anchor" href="#%ec%99%80%ec%9d%bc%eb%93%9c%ec%b9%b4%eb%93%9c">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Login으로 시작</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;Login*&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Port로 끝나는 단어</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;*Port&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="실용적인-쿼리-예시">실용적인 쿼리 예시<a class="anchor" href="#%ec%8b%a4%ec%9a%a9%ec%a0%81%ec%9d%b8-%ec%bf%bc%eb%a6%ac-%ec%98%88%ec%8b%9c">#</a></h2>
+<h3 id="도메인별-문서-확인">도메인별 문서 확인<a class="anchor" href="#%eb%8f%84%eb%a9%94%ec%9d%b8%eb%b3%84-%eb%ac%b8%ec%84%9c-%ed%99%95%ec%9d%b8">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># auth 도메인 전체</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;domain:auth&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># auth 도메인의 Port들</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;domain:auth AND (type:l1 OR type:l2)&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="상태별-필터링">상태별 필터링<a class="anchor" href="#%ec%83%81%ed%83%9c%eb%b3%84-%ed%95%84%ed%84%b0%eb%a7%81">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 활성 문서만</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;status:active&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 검토 필요 (draft)</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;status:draft&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># deprecated 문서 (정리 대상)</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;status:deprecated&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="api-명세-찾기">API 명세 찾기<a class="anchor" href="#api-%eb%aa%85%ec%84%b8-%ec%b0%be%ea%b8%b0">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 모든 API 문서</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;type:api&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 특정 도메인 API</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;type:api AND domain:orders&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="의존성-추적">의존성 추적<a class="anchor" href="#%ec%9d%98%ec%a1%b4%ec%84%b1-%ec%b6%94%ec%a0%81">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># LoginPort에 의존하는 문서 (본문 검색)</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;LoginPort&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># L1-UserPort를 참조하는 문서</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;L1-UserPort&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="최근-변경-문서">최근 변경 문서<a class="anchor" href="#%ec%b5%9c%ea%b7%bc-%eb%b3%80%ea%b2%bd-%eb%ac%b8%ec%84%9c">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 우선순위 높은 문서</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;priority:high&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 특정 작성자의 문서</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;author:홍길동&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="json-출력">JSON 출력<a class="anchor" href="#json-%ec%b6%9c%eb%a0%a5">#</a></h2>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># JSON 형식으로 출력</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;type:l2&#34;</span> --json
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># jq와 조합</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;type:l2&#34;</span> --json | jq <span style="color:#e6db74">&#39;.[] | .id&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 파일로 저장</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;domain:auth&#34;</span> --json &gt; auth-docs.json</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="json-구조">JSON 구조<a class="anchor" href="#json-%ea%b5%ac%ec%a1%b0">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>[
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;auth.L2-LoginPort&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;path&#34;</span>: <span style="color:#e6db74">&#34;ports/auth/L2-LoginPort.md&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;l2&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;domain&#34;</span>: <span style="color:#e6db74">&#34;auth&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;status&#34;</span>: <span style="color:#e6db74">&#34;active&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;tokens&#34;</span>: <span style="color:#ae81ff">1234</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;summary&#34;</span>: <span style="color:#e6db74">&#34;로그인 프로세스 Port&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;tags&#34;</span>: [<span style="color:#e6db74">&#34;auth&#34;</span>, <span style="color:#e6db74">&#34;login&#34;</span>],
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;score&#34;</span>: <span style="color:#ae81ff">0.95</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>]</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="검색-팁">검색 팁<a class="anchor" href="#%ea%b2%80%ec%83%89-%ed%8c%81">#</a></h2>
+<h3 id="효율적인-검색">효율적인 검색<a class="anchor" href="#%ed%9a%a8%ec%9c%a8%ec%a0%81%ec%9d%b8-%ea%b2%80%ec%83%89">#</a></h3>
+<ol>
+<li><strong>타입 먼저</strong>: <code>type:l2 login</code> (타입으로 먼저 필터링)</li>
+<li><strong>도메인 추가</strong>: <code>type:l2 domain:auth</code></li>
+<li><strong>키워드 추가</strong>: <code>type:l2 domain:auth login</code></li>
+</ol>
+<h3 id="검색-결과가-없을-때">검색 결과가 없을 때<a class="anchor" href="#%ea%b2%80%ec%83%89-%ea%b2%b0%ea%b3%bc%ea%b0%80-%ec%97%86%ec%9d%84-%eb%95%8c">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 인덱스 상태 확인</span>
+</span></span><span style="display:flex;"><span>pa status
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 문서 타입 확인</span>
+</span></span><span style="display:flex;"><span>pa config types
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 전체 재인덱싱</span>
+</span></span><span style="display:flex;"><span>pa index --force</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="다음-단계">다음 단계<a class="anchor" href="#%eb%8b%a4%ec%9d%8c-%eb%8b%a8%ea%b3%84">#</a></h2>
+<ul>
+<li><a href="/ko/docs/pa-retriever/code/">코드 인덱싱</a></li>
+<li><a href="/ko/docs/pa-retriever/with-claude/">Claude와 함께 사용</a></li>
+</ul>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+<div>
+
+</div>
+
+<div>
+
+</div>
+
+</div>
+
+
+
+
+
+  
+  
+  
+  <div class="flex flex-wrap justify-between">
+    <span>
+    
+      <a href="/ko/docs/pa-retriever/basic/" class="flex align-center">
+        <img src="/icons/backward.svg" class="book-icon" alt="Backward" />
+        <span>기본 사용법</span>
+      </a>
+    
+    </span>
+    <span>
+    
+      <a href="/ko/docs/pa-retriever/code/" class="flex align-center">
+        <span>코드 인덱싱</span>
+        <img src="/icons/forward.svg" class="book-icon" alt="Forward" />
+      </a>
+    
+    </span>
+  </div>
+  
+
+
+ 
+        
+  
+ 
+        
+        
+  
+ 
+        
+  
+  
+    <script>(function(){document.querySelectorAll("pre:has(code)").forEach(e=>{e.addEventListener("click",e.focus),e.addEventListener("copy",function(t){if(t.preventDefault(),navigator.clipboard){const t=window.getSelection().toString()||e.textContent;navigator.clipboard.writeText(t)}})})})()</script>
+  
+
+      </footer>
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+  
+  <aside class="book-toc">
+    <div class="book-toc-content">
+      
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#검색-명령어">검색 명령어</a></li>
+    <li><a href="#기본-검색">기본 검색</a>
+      <ul>
+        <li><a href="#키워드-검색">키워드 검색</a></li>
+        <li><a href="#결과-예시">결과 예시</a></li>
+      </ul>
+    </li>
+    <li><a href="#필드-검색">필드 검색</a>
+      <ul>
+        <li><a href="#문법">문법</a></li>
+        <li><a href="#지원-필드">지원 필드</a></li>
+        <li><a href="#예시">예시</a></li>
+      </ul>
+    </li>
+    <li><a href="#복합-쿼리">복합 쿼리</a>
+      <ul>
+        <li><a href="#and-연산">AND 연산</a></li>
+        <li><a href="#or-연산">OR 연산</a></li>
+        <li><a href="#not-연산">NOT 연산</a></li>
+        <li><a href="#괄호-그룹">괄호 그룹</a></li>
+      </ul>
+    </li>
+    <li><a href="#범위-검색">범위 검색</a>
+      <ul>
+        <li><a href="#토큰-수">토큰 수</a></li>
+      </ul>
+    </li>
+    <li><a href="#전문-검색-fts">전문 검색 (FTS)</a>
+      <ul>
+        <li><a href="#본문-내용-검색">본문 내용 검색</a></li>
+        <li><a href="#와일드카드">와일드카드</a></li>
+      </ul>
+    </li>
+    <li><a href="#실용적인-쿼리-예시">실용적인 쿼리 예시</a>
+      <ul>
+        <li><a href="#도메인별-문서-확인">도메인별 문서 확인</a></li>
+        <li><a href="#상태별-필터링">상태별 필터링</a></li>
+        <li><a href="#api-명세-찾기">API 명세 찾기</a></li>
+        <li><a href="#의존성-추적">의존성 추적</a></li>
+        <li><a href="#최근-변경-문서">최근 변경 문서</a></li>
+      </ul>
+    </li>
+    <li><a href="#json-출력">JSON 출력</a>
+      <ul>
+        <li><a href="#json-구조">JSON 구조</a></li>
+      </ul>
+    </li>
+    <li><a href="#검색-팁">검색 팁</a>
+      <ul>
+        <li><a href="#효율적인-검색">효율적인 검색</a></li>
+        <li><a href="#검색-결과가-없을-때">검색 결과가 없을 때</a></li>
+      </ul>
+    </li>
+    <li><a href="#다음-단계">다음 단계</a></li>
+  </ul>
+</nav>
+
+
+
+    </div>
+  </aside>
+  
+ 
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="ko" dir="ltr">
+<head>
+	<meta name="generator" content="Hugo 0.154.2">
+  <!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="PA-Layer# AI 에이전트와 함께 일하기 위한 아키텍처 컨벤션
+🎯 토큰 효율적# 컨텍스트 윈도우를 효율적으로 활용합니다. 필요한 문서만 선택적으로 로드하여 AI 에이전트가 정확한 컨텍스트에서 작업할 수 있습니다.
+🔌 에이전트 친화적# Claude, GPT 등 AI 에이전트가 이해하기 쉬운 구조화된 문서 형식을 제공합니다. MCP 프로토콜로 실시간 연동됩니다.
+🏗️ 검증된 아키텍처# Hexagonal Architecture와 CQS 패턴을 기반으로 한 실용적인 소프트웨어 아키텍처 컨벤션입니다.
+빠른 시작# macOS (Apple Silicon / Intel)# 1 2 3 4 5 6 7 8 9 10 11 # Homebrew로 설치 brew install pa-layer/tap/pa-retriever # 초기화 pa init # 인덱싱 pa index # Claude와 연동 pa mcp install Windows# 1 2 3 4 5 6 7 8 9 10 11 12 # Scoop으로 설치 scoop bucket add pa-layer https://github.com/pa-layer/scoop-bucket scoop install pa-retriever # 초기화 pa init # 인덱싱 pa index # Claude와 연동 pa mcp install Linux# 1 2 3 4 5 6 7 8 9 10 11 # 바이너리 다운로드 curl -sSL https://pa-layer.github.io/install.sh | bash # 초기화 pa init # 인덱싱 pa index # Claude와 연동 pa mcp install 문서 구성# 섹션 설명 설치하기 플랫폼별 설치 가이드, 워크스페이스 구성 설정하기 Claude, Obsidian, PA-Retriever 연동 PA-Layer 아키텍처 컨벤션, Backend/Frontend 가이드 PA-Retriever CLI 사용법, 기본부터 고급까지 다운로드# 플랫폼 아키텍처 다운로드 macOS Apple Silicon (arm64) pa-retriever-darwin-arm64.tar.gz macOS Intel (amd64) pa-retriever-darwin-amd64.tar.gz Windows x64 pa-retriever-windows-amd64.zip Linux x64 pa-retriever-linux-amd64.tar.gz Linux arm64 pa-retriever-linux-arm64.tar.gz ">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://pa-layer.github.io/ko/">
+  <meta property="og:site_name" content="PA-Layer">
+  <meta property="og:title" content="PA-Layer">
+  <meta property="og:description" content="PA-Layer# AI 에이전트와 함께 일하기 위한 아키텍처 컨벤션
+🎯 토큰 효율적# 컨텍스트 윈도우를 효율적으로 활용합니다. 필요한 문서만 선택적으로 로드하여 AI 에이전트가 정확한 컨텍스트에서 작업할 수 있습니다.
+🔌 에이전트 친화적# Claude, GPT 등 AI 에이전트가 이해하기 쉬운 구조화된 문서 형식을 제공합니다. MCP 프로토콜로 실시간 연동됩니다.
+🏗️ 검증된 아키텍처# Hexagonal Architecture와 CQS 패턴을 기반으로 한 실용적인 소프트웨어 아키텍처 컨벤션입니다.
+빠른 시작# macOS (Apple Silicon / Intel)# 1 2 3 4 5 6 7 8 9 10 11 # Homebrew로 설치 brew install pa-layer/tap/pa-retriever # 초기화 pa init # 인덱싱 pa index # Claude와 연동 pa mcp install Windows# 1 2 3 4 5 6 7 8 9 10 11 12 # Scoop으로 설치 scoop bucket add pa-layer https://github.com/pa-layer/scoop-bucket scoop install pa-retriever # 초기화 pa init # 인덱싱 pa index # Claude와 연동 pa mcp install Linux# 1 2 3 4 5 6 7 8 9 10 11 # 바이너리 다운로드 curl -sSL https://pa-layer.github.io/install.sh | bash # 초기화 pa init # 인덱싱 pa index # Claude와 연동 pa mcp install 문서 구성# 섹션 설명 설치하기 플랫폼별 설치 가이드, 워크스페이스 구성 설정하기 Claude, Obsidian, PA-Retriever 연동 PA-Layer 아키텍처 컨벤션, Backend/Frontend 가이드 PA-Retriever CLI 사용법, 기본부터 고급까지 다운로드# 플랫폼 아키텍처 다운로드 macOS Apple Silicon (arm64) pa-retriever-darwin-arm64.tar.gz macOS Intel (amd64) pa-retriever-darwin-amd64.tar.gz Windows x64 pa-retriever-windows-amd64.zip Linux x64 pa-retriever-linux-amd64.tar.gz Linux arm64 pa-retriever-linux-arm64.tar.gz">
+  <meta property="og:locale" content="ko">
+  <meta property="og:type" content="website">
+
+
+  <meta itemprop="name" content="PA-Layer">
+  <meta itemprop="description" content="PA-Layer# AI 에이전트와 함께 일하기 위한 아키텍처 컨벤션
+🎯 토큰 효율적# 컨텍스트 윈도우를 효율적으로 활용합니다. 필요한 문서만 선택적으로 로드하여 AI 에이전트가 정확한 컨텍스트에서 작업할 수 있습니다.
+🔌 에이전트 친화적# Claude, GPT 등 AI 에이전트가 이해하기 쉬운 구조화된 문서 형식을 제공합니다. MCP 프로토콜로 실시간 연동됩니다.
+🏗️ 검증된 아키텍처# Hexagonal Architecture와 CQS 패턴을 기반으로 한 실용적인 소프트웨어 아키텍처 컨벤션입니다.
+빠른 시작# macOS (Apple Silicon / Intel)# 1 2 3 4 5 6 7 8 9 10 11 # Homebrew로 설치 brew install pa-layer/tap/pa-retriever # 초기화 pa init # 인덱싱 pa index # Claude와 연동 pa mcp install Windows# 1 2 3 4 5 6 7 8 9 10 11 12 # Scoop으로 설치 scoop bucket add pa-layer https://github.com/pa-layer/scoop-bucket scoop install pa-retriever # 초기화 pa init # 인덱싱 pa index # Claude와 연동 pa mcp install Linux# 1 2 3 4 5 6 7 8 9 10 11 # 바이너리 다운로드 curl -sSL https://pa-layer.github.io/install.sh | bash # 초기화 pa init # 인덱싱 pa index # Claude와 연동 pa mcp install 문서 구성# 섹션 설명 설치하기 플랫폼별 설치 가이드, 워크스페이스 구성 설정하기 Claude, Obsidian, PA-Retriever 연동 PA-Layer 아키텍처 컨벤션, Backend/Frontend 가이드 PA-Retriever CLI 사용법, 기본부터 고급까지 다운로드# 플랫폼 아키텍처 다운로드 macOS Apple Silicon (arm64) pa-retriever-darwin-arm64.tar.gz macOS Intel (amd64) pa-retriever-darwin-amd64.tar.gz Windows x64 pa-retriever-windows-amd64.zip Linux x64 pa-retriever-linux-amd64.tar.gz Linux arm64 pa-retriever-linux-arm64.tar.gz">
+  <meta itemprop="wordCount" content="214">
+
+<title>PA-Layer | PA-Layer</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="https://pa-layer.github.io/ko/">
+  <link rel="alternate" hreflang="en" href="https://pa-layer.github.io/en/" title="PA-Layer">
+<link rel="stylesheet" href="/book.min.6970156cec683193d93c9c4edaf0d56574e4361df2e0c1be4f697ae81c3ba55f.css" integrity="sha256-aXAVbOxoMZPZPJxO2vDVZXTkNh3y4MG&#43;T2l66Bw7pV8=" crossorigin="anonymous">
+
+
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/ko.search.min.e9756793949413dae8c85e803ce1e02b13ffa1c302aec58e19bfbadb693819d3.js" integrity="sha256-6XVnk5SUE9royF6APOHgKxP/ocMCrsWOGb&#43;622k4GdM=" crossorigin="anonymous"></script>
+
+
+<link rel="alternate" type="application/rss+xml" href="https://pa-layer.github.io/ko/index.xml" title="PA-Layer" />
+
+  
+</head>
+<body dir="ltr" class="book-kind-home book-type-docs">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    
+<aside class="book-menu">
+  <div class="book-menu-content">
+    
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/ko/"><img src="/images/pa-layer-logo.svg" alt="Logo" /><span>PA-Layer</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input id="book-search-input" type="text" 
+    placeholder="Search"
+    aria-label="Search"
+    maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+  
+
+
+  
+    
+  
+
+
+  
+
+
+<ul class="book-languages">
+  <li>
+    <input type="checkbox" id="languages" class="toggle" />
+    <label for="languages" class="flex">
+      <a role="button">
+        <img src="/icons/translate.svg" class="book-icon" alt="Languages" />
+        한국어
+      </a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+
+    <ul>
+      
+      <li>
+        <a href="/en/" class="flex flex-auto">
+          English
+        </a>
+      </li>
+      
+    </ul>
+  </li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-b056803e087b3464503e98766cccad1a" class="toggle"  />
+    <label for="section-b056803e087b3464503e98766cccad1a" class="flex">
+      <a href="/ko/docs/installation/" class="">
+        설치하기</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/macos/" class="">
+      macOS 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/windows/" class="">
+      Windows 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/linux/" class="">
+      Linux 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/workspace/" class="">
+      워크스페이스 구성</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-187b3aa4e29a5d5ef2738d28ac16df69" class="toggle"  />
+    <label for="section-187b3aa4e29a5d5ef2738d28ac16df69" class="flex">
+      <a href="/ko/docs/configuration/" class="">
+        설정하기</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/claude/" class="">
+      Claude 연동</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/obsidian/" class="">
+      Obsidian 설정</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/pa-config/" class="">
+      PA-Retriever 설정</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99ad2865f9541edb014cad9a350d886e" class="toggle"  />
+    <label for="section-99ad2865f9541edb014cad9a350d886e" class="flex">
+      <a href="/ko/docs/pa-layer/" class="">
+        PA-Layer</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/overview/" class="">
+      아키텍처 개요</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/backend/" class="">
+      Backend 컨벤션</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/frontend/" class="">
+      Frontend 컨벤션</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99cc806f10f29d7b76e63ff1539abbc7" class="toggle"  />
+    <label for="section-99cc806f10f29d7b76e63ff1539abbc7" class="flex">
+      <a href="/ko/docs/pa-retriever/" class="">
+        PA-Retriever</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/basic/" class="">
+      기본 사용법</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/search/" class="">
+      검색 가이드</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/code/" class="">
+      코드 인덱싱</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/with-claude/" class="">
+      Claude와 함께 사용</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/advanced/" class="">
+      고급 기능</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+<ul><li><a href="https://github.com/pa-layer/pa-retriever" target="_blank" rel="noopener">GitHub</a></li></ul>
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+
+  </div>
+</aside>
+ 
+
+    <div class="book-page">
+      <header class="book-header hidden">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/icons/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>PA-Layer</h3>
+
+  <label for="toc-control">
+    
+    <img src="/icons/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#-토큰-효율적">🎯 토큰 효율적</a></li>
+    <li><a href="#-에이전트-친화적">🔌 에이전트 친화적</a></li>
+    <li><a href="#-검증된-아키텍처">🏗️ 검증된 아키텍처</a></li>
+    <li><a href="#빠른-시작">빠른 시작</a>
+      <ul>
+        <li><a href="#macos-apple-silicon--intel">macOS (Apple Silicon / Intel)</a></li>
+        <li><a href="#windows">Windows</a></li>
+        <li><a href="#linux">Linux</a></li>
+      </ul>
+    </li>
+    <li><a href="#문서-구성">문서 구성</a></li>
+    <li><a href="#다운로드">다운로드</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="pa-layer">PA-Layer<a class="anchor" href="#pa-layer">#</a></h1>
+<p><strong>AI 에이전트와 함께 일하기 위한 아키텍처 컨벤션</strong></p>
+<hr>
+<h2 id="-토큰-효율적">🎯 토큰 효율적<a class="anchor" href="#-%ed%86%a0%ed%81%b0-%ed%9a%a8%ec%9c%a8%ec%a0%81">#</a></h2>
+<p>컨텍스트 윈도우를 효율적으로 활용합니다. 필요한 문서만 선택적으로 로드하여 AI 에이전트가 정확한 컨텍스트에서 작업할 수 있습니다.</p>
+<h2 id="-에이전트-친화적">🔌 에이전트 친화적<a class="anchor" href="#-%ec%97%90%ec%9d%b4%ec%a0%84%ed%8a%b8-%ec%b9%9c%ed%99%94%ec%a0%81">#</a></h2>
+<p>Claude, GPT 등 AI 에이전트가 이해하기 쉬운 구조화된 문서 형식을 제공합니다. MCP 프로토콜로 실시간 연동됩니다.</p>
+<h2 id="-검증된-아키텍처">🏗️ 검증된 아키텍처<a class="anchor" href="#-%ea%b2%80%ec%a6%9d%eb%90%9c-%ec%95%84%ed%82%a4%ed%85%8d%ec%b2%98">#</a></h2>
+<p>Hexagonal Architecture와 CQS 패턴을 기반으로 한 실용적인 소프트웨어 아키텍처 컨벤션입니다.</p>
+<hr>
+<h2 id="빠른-시작">빠른 시작<a class="anchor" href="#%eb%b9%a0%eb%a5%b8-%ec%8b%9c%ec%9e%91">#</a></h2>
+<h3 id="macos-apple-silicon--intel">macOS (Apple Silicon / Intel)<a class="anchor" href="#macos-apple-silicon--intel">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Homebrew로 설치</span>
+</span></span><span style="display:flex;"><span>brew install pa-layer/tap/pa-retriever
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 초기화</span>
+</span></span><span style="display:flex;"><span>pa init
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 인덱싱</span>
+</span></span><span style="display:flex;"><span>pa index
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Claude와 연동</span>
+</span></span><span style="display:flex;"><span>pa mcp install</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="windows">Windows<a class="anchor" href="#windows">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span><span style="color:#75715e"># Scoop으로 설치</span>
+</span></span><span style="display:flex;"><span>scoop bucket add pa-layer https<span style="color:#960050;background-color:#1e0010">:</span>//github.com/pa-layer/scoop-bucket
+</span></span><span style="display:flex;"><span>scoop install pa-retriever
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 초기화</span>
+</span></span><span style="display:flex;"><span>pa init
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 인덱싱  </span>
+</span></span><span style="display:flex;"><span>pa index
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Claude와 연동</span>
+</span></span><span style="display:flex;"><span>pa mcp install</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="linux">Linux<a class="anchor" href="#linux">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 바이너리 다운로드</span>
+</span></span><span style="display:flex;"><span>curl -sSL https://pa-layer.github.io/install.sh | bash
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 초기화</span>
+</span></span><span style="display:flex;"><span>pa init
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 인덱싱</span>
+</span></span><span style="display:flex;"><span>pa index
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Claude와 연동</span>
+</span></span><span style="display:flex;"><span>pa mcp install</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="문서-구성">문서 구성<a class="anchor" href="#%eb%ac%b8%ec%84%9c-%ea%b5%ac%ec%84%b1">#</a></h2>
+<table>
+  <thead>
+      <tr>
+          <th>섹션</th>
+          <th>설명</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><a href="/ko/docs/installation/">설치하기</a></td>
+          <td>플랫폼별 설치 가이드, 워크스페이스 구성</td>
+      </tr>
+      <tr>
+          <td><a href="/ko/docs/configuration/">설정하기</a></td>
+          <td>Claude, Obsidian, PA-Retriever 연동</td>
+      </tr>
+      <tr>
+          <td><a href="/ko/docs/pa-layer/">PA-Layer</a></td>
+          <td>아키텍처 컨벤션, Backend/Frontend 가이드</td>
+      </tr>
+      <tr>
+          <td><a href="/ko/docs/pa-retriever/">PA-Retriever</a></td>
+          <td>CLI 사용법, 기본부터 고급까지</td>
+      </tr>
+  </tbody>
+</table>
+<hr>
+<h2 id="다운로드">다운로드<a class="anchor" href="#%eb%8b%a4%ec%9a%b4%eb%a1%9c%eb%93%9c">#</a></h2>
+<table>
+  <thead>
+      <tr>
+          <th>플랫폼</th>
+          <th>아키텍처</th>
+          <th>다운로드</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>macOS</td>
+          <td>Apple Silicon (arm64)</td>
+          <td><a href="https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-darwin-arm64.tar.gz">pa-retriever-darwin-arm64.tar.gz</a></td>
+      </tr>
+      <tr>
+          <td>macOS</td>
+          <td>Intel (amd64)</td>
+          <td><a href="https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-darwin-amd64.tar.gz">pa-retriever-darwin-amd64.tar.gz</a></td>
+      </tr>
+      <tr>
+          <td>Windows</td>
+          <td>x64</td>
+          <td><a href="https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-windows-amd64.zip">pa-retriever-windows-amd64.zip</a></td>
+      </tr>
+      <tr>
+          <td>Linux</td>
+          <td>x64</td>
+          <td><a href="https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-linux-amd64.tar.gz">pa-retriever-linux-amd64.tar.gz</a></td>
+      </tr>
+      <tr>
+          <td>Linux</td>
+          <td>arm64</td>
+          <td><a href="https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-linux-arm64.tar.gz">pa-retriever-linux-arm64.tar.gz</a></td>
+      </tr>
+  </tbody>
+</table>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+<div>
+
+</div>
+
+<div>
+
+</div>
+
+</div>
+
+
+
+
+
+  
+  
+  
+
+
+ 
+        
+  
+ 
+        
+        
+  
+ 
+        
+  
+  
+    <script>(function(){document.querySelectorAll("pre:has(code)").forEach(e=>{e.addEventListener("click",e.focus),e.addEventListener("copy",function(t){if(t.preventDefault(),navigator.clipboard){const t=window.getSelection().toString()||e.textContent;navigator.clipboard.writeText(t)}})})})()</script>
+  
+
+      </footer>
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+  
+  <aside class="book-toc">
+    <div class="book-toc-content">
+      
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#-토큰-효율적">🎯 토큰 효율적</a></li>
+    <li><a href="#-에이전트-친화적">🔌 에이전트 친화적</a></li>
+    <li><a href="#-검증된-아키텍처">🏗️ 검증된 아키텍처</a></li>
+    <li><a href="#빠른-시작">빠른 시작</a>
+      <ul>
+        <li><a href="#macos-apple-silicon--intel">macOS (Apple Silicon / Intel)</a></li>
+        <li><a href="#windows">Windows</a></li>
+        <li><a href="#linux">Linux</a></li>
+      </ul>
+    </li>
+    <li><a href="#문서-구성">문서 구성</a></li>
+    <li><a href="#다운로드">다운로드</a></li>
+  </ul>
+</nav>
+
+
+
+    </div>
+  </aside>
+  
+ 
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

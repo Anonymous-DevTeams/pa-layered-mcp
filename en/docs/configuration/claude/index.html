@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Claude Integration# Connect PA-Retriever with Claude Desktop and Claude Code.
+MCP (Model Context Protocol)# MCP is the protocol that Claude uses to communicate with external tools. PA-Retriever operates as an MCP server to provide document search/retrieval capabilities to Claude.
+Auto Setup# 1 2 3 4 5 6 7 8 9 10 11 # Auto-configure all clients pa mcp install # Claude Desktop only pa mcp install --desktop # Claude Code only pa mcp install --code # Check status pa mcp status Manual Setup# Claude Desktop (macOS)# Config file location:
+">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://pa-layer.github.io/en/docs/configuration/claude/">
+  <meta property="og:site_name" content="PA-Layer">
+  <meta property="og:title" content="Claude Integration">
+  <meta property="og:description" content="Claude Integration# Connect PA-Retriever with Claude Desktop and Claude Code.
+MCP (Model Context Protocol)# MCP is the protocol that Claude uses to communicate with external tools. PA-Retriever operates as an MCP server to provide document search/retrieval capabilities to Claude.
+Auto Setup# 1 2 3 4 5 6 7 8 9 10 11 # Auto-configure all clients pa mcp install # Claude Desktop only pa mcp install --desktop # Claude Code only pa mcp install --code # Check status pa mcp status Manual Setup# Claude Desktop (macOS)# Config file location:">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+
+
+  <meta itemprop="name" content="Claude Integration">
+  <meta itemprop="description" content="Claude Integration# Connect PA-Retriever with Claude Desktop and Claude Code.
+MCP (Model Context Protocol)# MCP is the protocol that Claude uses to communicate with external tools. PA-Retriever operates as an MCP server to provide document search/retrieval capabilities to Claude.
+Auto Setup# 1 2 3 4 5 6 7 8 9 10 11 # Auto-configure all clients pa mcp install # Claude Desktop only pa mcp install --desktop # Claude Code only pa mcp install --code # Check status pa mcp status Manual Setup# Claude Desktop (macOS)# Config file location:">
+  <meta itemprop="wordCount" content="233">
+
+<title>Claude Integration | PA-Layer</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="https://pa-layer.github.io/en/docs/configuration/claude/">
+  <link rel="alternate" hreflang="ko" href="https://pa-layer.github.io/ko/docs/configuration/claude/" title="Claude 연동">
+<link rel="stylesheet" href="/book.min.6970156cec683193d93c9c4edaf0d56574e4361df2e0c1be4f697ae81c3ba55f.css" integrity="sha256-aXAVbOxoMZPZPJxO2vDVZXTkNh3y4MG&#43;T2l66Bw7pV8=" crossorigin="anonymous">
+
+
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.b5456745024e721c0ed5066be46dd05983568404556d91df1ba7a31dc5a41591.js" integrity="sha256-tUVnRQJOchwO1QZr5G3QWYNWhARVbZHfG6ejHcWkFZE=" crossorigin="anonymous"></script>
+
+
+
+  
+</head>
+<body dir="ltr" class="book-kind-page book-type-docs">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    
+<aside class="book-menu">
+  <div class="book-menu-content">
+    
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/en/"><img src="/images/pa-layer-logo.svg" alt="Logo" /><span>PA-Layer</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input id="book-search-input" type="text" 
+    placeholder="Search"
+    aria-label="Search"
+    maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+  
+
+
+  
+    
+  
+
+
+  
+
+
+<ul class="book-languages">
+  <li>
+    <input type="checkbox" id="languages" class="toggle" />
+    <label for="languages" class="flex">
+      <a role="button">
+        <img src="/icons/translate.svg" class="book-icon" alt="Languages" />
+        English
+      </a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+
+    <ul>
+      
+      <li>
+        <a href="/ko/docs/configuration/claude/" class="flex flex-auto">
+          한국어
+        </a>
+      </li>
+      
+    </ul>
+  </li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-6236be1b89680b92e3aefa016e21a142" class="toggle"  />
+    <label for="section-6236be1b89680b92e3aefa016e21a142" class="flex">
+      <a href="/en/docs/installation/" class="">
+        Installation</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/macos/" class="">
+      macOS Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/windows/" class="">
+      Windows Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/linux/" class="">
+      Linux Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/workspace/" class="">
+      Workspace Setup</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c57e8d2542437d90ac12ebccc18f7bd6" class="toggle" checked />
+    <label for="section-c57e8d2542437d90ac12ebccc18f7bd6" class="flex">
+      <a href="/en/docs/configuration/" class="">
+        Configuration</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/claude/" class="active">
+      Claude Integration</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/obsidian/" class="">
+      Obsidian Settings</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/pa-config/" class="">
+      PA-Retriever Config</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e28c43a16f6ea811813d9b83e9c091a1" class="toggle"  />
+    <label for="section-e28c43a16f6ea811813d9b83e9c091a1" class="flex">
+      <a href="/en/docs/pa-layer/" class="">
+        PA-Layer</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/overview/" class="">
+      Architecture Overview</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/backend/" class="">
+      Backend Conventions</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/frontend/" class="">
+      Frontend Conventions</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-2e7de72bf7fb1d60035ad67e5a7421f2" class="toggle"  />
+    <label for="section-2e7de72bf7fb1d60035ad67e5a7421f2" class="flex">
+      <a href="/en/docs/pa-retriever/" class="">
+        PA-Retriever</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/basic/" class="">
+      Basic Usage</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/search/" class="">
+      Search Guide</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/code/" class="">
+      Code Indexing</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/with-claude/" class="">
+      Using with Claude</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/advanced/" class="">
+      Advanced Features</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+<ul><li><a href="https://github.com/pa-layer/pa-retriever" target="_blank" rel="noopener">GitHub</a></li></ul>
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+
+  </div>
+</aside>
+ 
+
+    <div class="book-page">
+      <header class="book-header hidden">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/icons/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>Claude Integration</h3>
+
+  <label for="toc-control">
+    
+    <img src="/icons/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#mcp-model-context-protocol">MCP (Model Context Protocol)</a></li>
+    <li><a href="#auto-setup">Auto Setup</a></li>
+    <li><a href="#manual-setup">Manual Setup</a>
+      <ul>
+        <li><a href="#claude-desktop-macos">Claude Desktop (macOS)</a></li>
+        <li><a href="#claude-desktop-windows">Claude Desktop (Windows)</a></li>
+      </ul>
+    </li>
+    <li><a href="#verify-connection">Verify Connection</a>
+      <ul>
+        <li><a href="#1-restart-claude-desktop">1. Restart Claude Desktop</a></li>
+        <li><a href="#2-check-mcp-tools">2. Check MCP Tools</a></li>
+        <li><a href="#3-test-search">3. Test Search</a></li>
+      </ul>
+    </li>
+    <li><a href="#next-steps">Next Steps</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="claude-integration">Claude Integration<a class="anchor" href="#claude-integration">#</a></h1>
+<p>Connect PA-Retriever with Claude Desktop and Claude Code.</p>
+<h2 id="mcp-model-context-protocol">MCP (Model Context Protocol)<a class="anchor" href="#mcp-model-context-protocol">#</a></h2>
+<p>MCP is the protocol that Claude uses to communicate with external tools. PA-Retriever operates as an MCP server to provide document search/retrieval capabilities to Claude.</p>
+<h2 id="auto-setup">Auto Setup<a class="anchor" href="#auto-setup">#</a></h2>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Auto-configure all clients</span>
+</span></span><span style="display:flex;"><span>pa mcp install
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Claude Desktop only</span>
+</span></span><span style="display:flex;"><span>pa mcp install --desktop
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Claude Code only</span>
+</span></span><span style="display:flex;"><span>pa mcp install --code
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Check status</span>
+</span></span><span style="display:flex;"><span>pa mcp status</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="manual-setup">Manual Setup<a class="anchor" href="#manual-setup">#</a></h2>
+<h3 id="claude-desktop-macos">Claude Desktop (macOS)<a class="anchor" href="#claude-desktop-macos">#</a></h3>
+<p>Config file location:</p>
+<pre tabindex="0"><code>~/Library/Application Support/Claude/claude_desktop_config.json</code></pre><p>Content:</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;mcpServers&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;pa-retriever&#34;</span>: {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;command&#34;</span>: <span style="color:#e6db74">&#34;/usr/local/bin/pa&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;args&#34;</span>: [<span style="color:#e6db74">&#34;serve&#34;</span>, <span style="color:#e6db74">&#34;--mcp&#34;</span>]
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="claude-desktop-windows">Claude Desktop (Windows)<a class="anchor" href="#claude-desktop-windows">#</a></h3>
+<p>Config file location:</p>
+<pre tabindex="0"><code>%APPDATA%\Claude\claude_desktop_config.json</code></pre><p>Content:</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;mcpServers&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;pa-retriever&#34;</span>: {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;command&#34;</span>: <span style="color:#e6db74">&#34;C:\\Users\\&lt;username&gt;\\.local\\bin\\pa.exe&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;args&#34;</span>: [<span style="color:#e6db74">&#34;serve&#34;</span>, <span style="color:#e6db74">&#34;--mcp&#34;</span>]
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="verify-connection">Verify Connection<a class="anchor" href="#verify-connection">#</a></h2>
+<h3 id="1-restart-claude-desktop">1. Restart Claude Desktop<a class="anchor" href="#1-restart-claude-desktop">#</a></h3>
+<p>After configuration, completely quit and restart Claude Desktop.</p>
+<h3 id="2-check-mcp-tools">2. Check MCP Tools<a class="anchor" href="#2-check-mcp-tools">#</a></h3>
+<p>In a conversation with Claude:</p>
+<pre tabindex="0"><code>&#34;Tell me the available tools from PA-Retriever&#34;</code></pre><p><strong>Expected response</strong>:</p>
+<pre tabindex="0"><code>The following tools are available from PA-Retriever MCP server:
+
+1. search_docs - Search documents
+2. get_doc - Get document
+3. find_port - Find Port
+4. get_architecture - Architecture rules
+5. list_by_type - List by type
+6. get_stats - Statistics</code></pre><h3 id="3-test-search">3. Test Search<a class="anchor" href="#3-test-search">#</a></h3>
+<pre tabindex="0"><code>&#34;Search for all L2 Ports in the auth domain&#34;</code></pre><p>Claude will call PA-Retriever and return results.</p>
+<hr>
+<h2 id="next-steps">Next Steps<a class="anchor" href="#next-steps">#</a></h2>
+<ul>
+<li><a href="/en/docs/configuration/obsidian/">Obsidian Settings</a></li>
+<li><a href="/en/docs/configuration/pa-config/">PA-Retriever Config</a></li>
+</ul>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+<div>
+
+</div>
+
+<div>
+
+</div>
+
+</div>
+
+
+
+
+
+  
+  
+  
+  <div class="flex flex-wrap justify-between">
+    <span>
+    
+      <a href="/en/docs/configuration/" class="flex align-center">
+        <img src="/icons/backward.svg" class="book-icon" alt="Backward" />
+        <span>Configuration</span>
+      </a>
+    
+    </span>
+    <span>
+    
+      <a href="/en/docs/configuration/obsidian/" class="flex align-center">
+        <span>Obsidian Settings</span>
+        <img src="/icons/forward.svg" class="book-icon" alt="Forward" />
+      </a>
+    
+    </span>
+  </div>
+  
+
+
+ 
+        
+  
+ 
+        
+        
+  
+ 
+        
+  
+  
+    <script>(function(){document.querySelectorAll("pre:has(code)").forEach(e=>{e.addEventListener("click",e.focus),e.addEventListener("copy",function(t){if(t.preventDefault(),navigator.clipboard){const t=window.getSelection().toString()||e.textContent;navigator.clipboard.writeText(t)}})})})()</script>
+  
+
+      </footer>
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+  
+  <aside class="book-toc">
+    <div class="book-toc-content">
+      
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#mcp-model-context-protocol">MCP (Model Context Protocol)</a></li>
+    <li><a href="#auto-setup">Auto Setup</a></li>
+    <li><a href="#manual-setup">Manual Setup</a>
+      <ul>
+        <li><a href="#claude-desktop-macos">Claude Desktop (macOS)</a></li>
+        <li><a href="#claude-desktop-windows">Claude Desktop (Windows)</a></li>
+      </ul>
+    </li>
+    <li><a href="#verify-connection">Verify Connection</a>
+      <ul>
+        <li><a href="#1-restart-claude-desktop">1. Restart Claude Desktop</a></li>
+        <li><a href="#2-check-mcp-tools">2. Check MCP Tools</a></li>
+        <li><a href="#3-test-search">3. Test Search</a></li>
+      </ul>
+    </li>
+    <li><a href="#next-steps">Next Steps</a></li>
+  </ul>
+</nav>
+
+
+
+    </div>
+  </aside>
+  
+ 
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

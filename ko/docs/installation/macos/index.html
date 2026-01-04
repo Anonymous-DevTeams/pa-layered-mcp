@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="ko" dir="ltr">
+<head>
+  <!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="macOS 설치 가이드# Apple Silicon (M1/M2/M3) 및 Intel Mac에서 PA-Layer 환경을 구성합니다.
+1. Homebrew로 설치 (권장)# 1 2 3 4 5 6 7 8 9 # Homebrew 설치 (없는 경우) /bin/bash -c &#34;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)&#34; # PA-Retriever 설치 brew tap pa-layer/tap brew install pa-retriever # 설치 확인 pa version 2. 수동 설치# Apple Silicon (M1/M2/M3)# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 # 다운로드 curl -LO https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-darwin-arm64.tar.gz # 압축 해제 tar xzf pa-retriever-darwin-arm64.tar.gz # 실행 권한 부여 chmod &#43;x pa # PATH에 추가 (zsh 기준) sudo mv pa /usr/local/bin/ # 또는 사용자 디렉토리에 설치 mkdir -p ~/.local/bin mv pa ~/.local/bin/ echo &#39;export PATH=&#34;$HOME/.local/bin:$PATH&#34;&#39; &gt;&gt; ~/.zshrc source ~/.zshrc Intel Mac# 1 2 3 4 5 6 7 # 다운로드 curl -LO https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-darwin-amd64.tar.gz # 압축 해제 및 설치 tar xzf pa-retriever-darwin-amd64.tar.gz chmod &#43;x pa sudo mv pa /usr/local/bin/ 3. 필수 도구 설치# Claude Desktop# claude.ai/download에서 다운로드 Applications 폴더로 이동 실행 후 로그인 Obsidian# 1 2 3 4 5 # Homebrew로 설치 brew install --cask obsidian # 또는 공식 사이트에서 다운로드 # https://obsidian.md 4. Shell 설정# Zsh (~/.zshrc)# 1 2 3 4 5 6 7 8 9 10 11 12 13 # PA-Layer 환경 변수 export PA_HOME=&#34;$HOME/.pa&#34; export PA_WORKSPACE=&#34;$HOME/playground&#34; # 단축 명령어 (선택) alias pas=&#34;pa search&#34; alias pai=&#34;pa index&#34; alias pac=&#34;pa code&#34; # 자동완성 (선택) if command -v pa &amp;&gt; /dev/null; then eval &#34;$(pa completion zsh)&#34; fi Bash (~/.bashrc)# 1 2 3 4 5 6 7 8 # PA-Layer 환경 변수 export PA_HOME=&#34;$HOME/.pa&#34; export PA_WORKSPACE=&#34;$HOME/playground&#34; # 단축 명령어 (선택) alias pas=&#34;pa search&#34; alias pai=&#34;pa index&#34; alias pac=&#34;pa code&#34; 5. 설치 확인# 1 2 3 4 5 6 7 8 9 10 11 # 버전 확인 pa version # 출력 예시: # pa-retriever v0.8.0 # # Features: # ✅ Phase 1: Search (Tier 1 &#43; 2) # ✅ Phase 2: MCP Server # ✅ Phase 3: Bundle &#43; Signing # ... 6. 초기화# 1 2 3 4 5 # 대화형 초기화 (권장) pa init # 또는 기본값으로 빠른 초기화 pa init --yes 다음 단계# 워크스페이스 구성 - 디렉토리 구조 설정 설정하기 - Claude 연동 문제 해결# “pa: command not found”# 1 2 3 4 5 6 7 8 9 # PATH 확인 echo $PATH # 바이너리 위치 확인 which pa # PATH에 추가 echo &#39;export PATH=&#34;/usr/local/bin:$PATH&#34;&#39; &gt;&gt; ~/.zshrc source ~/.zshrc Apple Silicon에서 실행 오류# 1 2 3 4 # Rosetta 2 설치 (Intel 바이너리 호환) softwareupdate --install-rosetta # 또는 arm64 버전 재다운로드 보안 경고 (확인되지 않은 개발자)# 1 2 3 4 # 실행 허용 xattr -d com.apple.quarantine /usr/local/bin/pa # 또는 시스템 환경설정 &gt; 보안 및 개인정보 보호에서 허용 ">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://pa-layer.github.io/ko/docs/installation/macos/">
+  <meta property="og:site_name" content="PA-Layer">
+  <meta property="og:title" content="macOS 설치">
+  <meta property="og:description" content="macOS 설치 가이드# Apple Silicon (M1/M2/M3) 및 Intel Mac에서 PA-Layer 환경을 구성합니다.
+1. Homebrew로 설치 (권장)# 1 2 3 4 5 6 7 8 9 # Homebrew 설치 (없는 경우) /bin/bash -c &#34;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)&#34; # PA-Retriever 설치 brew tap pa-layer/tap brew install pa-retriever # 설치 확인 pa version 2. 수동 설치# Apple Silicon (M1/M2/M3)# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 # 다운로드 curl -LO https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-darwin-arm64.tar.gz # 압축 해제 tar xzf pa-retriever-darwin-arm64.tar.gz # 실행 권한 부여 chmod &#43;x pa # PATH에 추가 (zsh 기준) sudo mv pa /usr/local/bin/ # 또는 사용자 디렉토리에 설치 mkdir -p ~/.local/bin mv pa ~/.local/bin/ echo &#39;export PATH=&#34;$HOME/.local/bin:$PATH&#34;&#39; &gt;&gt; ~/.zshrc source ~/.zshrc Intel Mac# 1 2 3 4 5 6 7 # 다운로드 curl -LO https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-darwin-amd64.tar.gz # 압축 해제 및 설치 tar xzf pa-retriever-darwin-amd64.tar.gz chmod &#43;x pa sudo mv pa /usr/local/bin/ 3. 필수 도구 설치# Claude Desktop# claude.ai/download에서 다운로드 Applications 폴더로 이동 실행 후 로그인 Obsidian# 1 2 3 4 5 # Homebrew로 설치 brew install --cask obsidian # 또는 공식 사이트에서 다운로드 # https://obsidian.md 4. Shell 설정# Zsh (~/.zshrc)# 1 2 3 4 5 6 7 8 9 10 11 12 13 # PA-Layer 환경 변수 export PA_HOME=&#34;$HOME/.pa&#34; export PA_WORKSPACE=&#34;$HOME/playground&#34; # 단축 명령어 (선택) alias pas=&#34;pa search&#34; alias pai=&#34;pa index&#34; alias pac=&#34;pa code&#34; # 자동완성 (선택) if command -v pa &amp;&gt; /dev/null; then eval &#34;$(pa completion zsh)&#34; fi Bash (~/.bashrc)# 1 2 3 4 5 6 7 8 # PA-Layer 환경 변수 export PA_HOME=&#34;$HOME/.pa&#34; export PA_WORKSPACE=&#34;$HOME/playground&#34; # 단축 명령어 (선택) alias pas=&#34;pa search&#34; alias pai=&#34;pa index&#34; alias pac=&#34;pa code&#34; 5. 설치 확인# 1 2 3 4 5 6 7 8 9 10 11 # 버전 확인 pa version # 출력 예시: # pa-retriever v0.8.0 # # Features: # ✅ Phase 1: Search (Tier 1 &#43; 2) # ✅ Phase 2: MCP Server # ✅ Phase 3: Bundle &#43; Signing # ... 6. 초기화# 1 2 3 4 5 # 대화형 초기화 (권장) pa init # 또는 기본값으로 빠른 초기화 pa init --yes 다음 단계# 워크스페이스 구성 - 디렉토리 구조 설정 설정하기 - Claude 연동 문제 해결# “pa: command not found”# 1 2 3 4 5 6 7 8 9 # PATH 확인 echo $PATH # 바이너리 위치 확인 which pa # PATH에 추가 echo &#39;export PATH=&#34;/usr/local/bin:$PATH&#34;&#39; &gt;&gt; ~/.zshrc source ~/.zshrc Apple Silicon에서 실행 오류# 1 2 3 4 # Rosetta 2 설치 (Intel 바이너리 호환) softwareupdate --install-rosetta # 또는 arm64 버전 재다운로드 보안 경고 (확인되지 않은 개발자)# 1 2 3 4 # 실행 허용 xattr -d com.apple.quarantine /usr/local/bin/pa # 또는 시스템 환경설정 &gt; 보안 및 개인정보 보호에서 허용">
+  <meta property="og:locale" content="ko">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+
+
+  <meta itemprop="name" content="macOS 설치">
+  <meta itemprop="description" content="macOS 설치 가이드# Apple Silicon (M1/M2/M3) 및 Intel Mac에서 PA-Layer 환경을 구성합니다.
+1. Homebrew로 설치 (권장)# 1 2 3 4 5 6 7 8 9 # Homebrew 설치 (없는 경우) /bin/bash -c &#34;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)&#34; # PA-Retriever 설치 brew tap pa-layer/tap brew install pa-retriever # 설치 확인 pa version 2. 수동 설치# Apple Silicon (M1/M2/M3)# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 # 다운로드 curl -LO https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-darwin-arm64.tar.gz # 압축 해제 tar xzf pa-retriever-darwin-arm64.tar.gz # 실행 권한 부여 chmod &#43;x pa # PATH에 추가 (zsh 기준) sudo mv pa /usr/local/bin/ # 또는 사용자 디렉토리에 설치 mkdir -p ~/.local/bin mv pa ~/.local/bin/ echo &#39;export PATH=&#34;$HOME/.local/bin:$PATH&#34;&#39; &gt;&gt; ~/.zshrc source ~/.zshrc Intel Mac# 1 2 3 4 5 6 7 # 다운로드 curl -LO https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-darwin-amd64.tar.gz # 압축 해제 및 설치 tar xzf pa-retriever-darwin-amd64.tar.gz chmod &#43;x pa sudo mv pa /usr/local/bin/ 3. 필수 도구 설치# Claude Desktop# claude.ai/download에서 다운로드 Applications 폴더로 이동 실행 후 로그인 Obsidian# 1 2 3 4 5 # Homebrew로 설치 brew install --cask obsidian # 또는 공식 사이트에서 다운로드 # https://obsidian.md 4. Shell 설정# Zsh (~/.zshrc)# 1 2 3 4 5 6 7 8 9 10 11 12 13 # PA-Layer 환경 변수 export PA_HOME=&#34;$HOME/.pa&#34; export PA_WORKSPACE=&#34;$HOME/playground&#34; # 단축 명령어 (선택) alias pas=&#34;pa search&#34; alias pai=&#34;pa index&#34; alias pac=&#34;pa code&#34; # 자동완성 (선택) if command -v pa &amp;&gt; /dev/null; then eval &#34;$(pa completion zsh)&#34; fi Bash (~/.bashrc)# 1 2 3 4 5 6 7 8 # PA-Layer 환경 변수 export PA_HOME=&#34;$HOME/.pa&#34; export PA_WORKSPACE=&#34;$HOME/playground&#34; # 단축 명령어 (선택) alias pas=&#34;pa search&#34; alias pai=&#34;pa index&#34; alias pac=&#34;pa code&#34; 5. 설치 확인# 1 2 3 4 5 6 7 8 9 10 11 # 버전 확인 pa version # 출력 예시: # pa-retriever v0.8.0 # # Features: # ✅ Phase 1: Search (Tier 1 &#43; 2) # ✅ Phase 2: MCP Server # ✅ Phase 3: Bundle &#43; Signing # ... 6. 초기화# 1 2 3 4 5 # 대화형 초기화 (권장) pa init # 또는 기본값으로 빠른 초기화 pa init --yes 다음 단계# 워크스페이스 구성 - 디렉토리 구조 설정 설정하기 - Claude 연동 문제 해결# “pa: command not found”# 1 2 3 4 5 6 7 8 9 # PATH 확인 echo $PATH # 바이너리 위치 확인 which pa # PATH에 추가 echo &#39;export PATH=&#34;/usr/local/bin:$PATH&#34;&#39; &gt;&gt; ~/.zshrc source ~/.zshrc Apple Silicon에서 실행 오류# 1 2 3 4 # Rosetta 2 설치 (Intel 바이너리 호환) softwareupdate --install-rosetta # 또는 arm64 버전 재다운로드 보안 경고 (확인되지 않은 개발자)# 1 2 3 4 # 실행 허용 xattr -d com.apple.quarantine /usr/local/bin/pa # 또는 시스템 환경설정 &gt; 보안 및 개인정보 보호에서 허용">
+  <meta itemprop="wordCount" content="433">
+
+<title>macOS 설치 | PA-Layer</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="https://pa-layer.github.io/ko/docs/installation/macos/">
+  <link rel="alternate" hreflang="en" href="https://pa-layer.github.io/en/docs/installation/macos/" title="macOS Installation">
+<link rel="stylesheet" href="/book.min.6970156cec683193d93c9c4edaf0d56574e4361df2e0c1be4f697ae81c3ba55f.css" integrity="sha256-aXAVbOxoMZPZPJxO2vDVZXTkNh3y4MG&#43;T2l66Bw7pV8=" crossorigin="anonymous">
+
+
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/ko.search.min.e9756793949413dae8c85e803ce1e02b13ffa1c302aec58e19bfbadb693819d3.js" integrity="sha256-6XVnk5SUE9royF6APOHgKxP/ocMCrsWOGb&#43;622k4GdM=" crossorigin="anonymous"></script>
+
+
+
+  
+</head>
+<body dir="ltr" class="book-kind-page book-type-docs">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    
+<aside class="book-menu">
+  <div class="book-menu-content">
+    
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/ko/"><img src="/images/pa-layer-logo.svg" alt="Logo" /><span>PA-Layer</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input id="book-search-input" type="text" 
+    placeholder="Search"
+    aria-label="Search"
+    maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+  
+
+
+  
+    
+  
+
+
+  
+
+
+<ul class="book-languages">
+  <li>
+    <input type="checkbox" id="languages" class="toggle" />
+    <label for="languages" class="flex">
+      <a role="button">
+        <img src="/icons/translate.svg" class="book-icon" alt="Languages" />
+        한국어
+      </a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+
+    <ul>
+      
+      <li>
+        <a href="/en/docs/installation/macos/" class="flex flex-auto">
+          English
+        </a>
+      </li>
+      
+    </ul>
+  </li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-b056803e087b3464503e98766cccad1a" class="toggle" checked />
+    <label for="section-b056803e087b3464503e98766cccad1a" class="flex">
+      <a href="/ko/docs/installation/" class="">
+        설치하기</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/macos/" class="active">
+      macOS 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/windows/" class="">
+      Windows 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/linux/" class="">
+      Linux 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/workspace/" class="">
+      워크스페이스 구성</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-187b3aa4e29a5d5ef2738d28ac16df69" class="toggle"  />
+    <label for="section-187b3aa4e29a5d5ef2738d28ac16df69" class="flex">
+      <a href="/ko/docs/configuration/" class="">
+        설정하기</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/claude/" class="">
+      Claude 연동</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/obsidian/" class="">
+      Obsidian 설정</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/pa-config/" class="">
+      PA-Retriever 설정</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99ad2865f9541edb014cad9a350d886e" class="toggle"  />
+    <label for="section-99ad2865f9541edb014cad9a350d886e" class="flex">
+      <a href="/ko/docs/pa-layer/" class="">
+        PA-Layer</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/overview/" class="">
+      아키텍처 개요</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/backend/" class="">
+      Backend 컨벤션</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/frontend/" class="">
+      Frontend 컨벤션</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99cc806f10f29d7b76e63ff1539abbc7" class="toggle"  />
+    <label for="section-99cc806f10f29d7b76e63ff1539abbc7" class="flex">
+      <a href="/ko/docs/pa-retriever/" class="">
+        PA-Retriever</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/basic/" class="">
+      기본 사용법</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/search/" class="">
+      검색 가이드</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/code/" class="">
+      코드 인덱싱</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/with-claude/" class="">
+      Claude와 함께 사용</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/advanced/" class="">
+      고급 기능</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+<ul><li><a href="https://github.com/pa-layer/pa-retriever" target="_blank" rel="noopener">GitHub</a></li></ul>
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+
+  </div>
+</aside>
+ 
+
+    <div class="book-page">
+      <header class="book-header hidden">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/icons/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>macOS 설치</h3>
+
+  <label for="toc-control">
+    
+    <img src="/icons/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#1-homebrew로-설치-권장">1. Homebrew로 설치 (권장)</a></li>
+    <li><a href="#2-수동-설치">2. 수동 설치</a>
+      <ul>
+        <li><a href="#apple-silicon-m1m2m3">Apple Silicon (M1/M2/M3)</a></li>
+        <li><a href="#intel-mac">Intel Mac</a></li>
+      </ul>
+    </li>
+    <li><a href="#3-필수-도구-설치">3. 필수 도구 설치</a>
+      <ul>
+        <li><a href="#claude-desktop">Claude Desktop</a></li>
+        <li><a href="#obsidian">Obsidian</a></li>
+      </ul>
+    </li>
+    <li><a href="#4-shell-설정">4. Shell 설정</a>
+      <ul>
+        <li><a href="#zsh-zshrc">Zsh (~/.zshrc)</a></li>
+        <li><a href="#bash-bashrc">Bash (~/.bashrc)</a></li>
+      </ul>
+    </li>
+    <li><a href="#5-설치-확인">5. 설치 확인</a></li>
+    <li><a href="#6-초기화">6. 초기화</a></li>
+    <li><a href="#다음-단계">다음 단계</a></li>
+    <li><a href="#문제-해결">문제 해결</a>
+      <ul>
+        <li><a href="#pa-command-not-found">&ldquo;pa: command not found&rdquo;</a></li>
+        <li><a href="#apple-silicon에서-실행-오류">Apple Silicon에서 실행 오류</a></li>
+        <li><a href="#보안-경고-확인되지-않은-개발자">보안 경고 (확인되지 않은 개발자)</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="macos-설치-가이드">macOS 설치 가이드<a class="anchor" href="#macos-%ec%84%a4%ec%b9%98-%ea%b0%80%ec%9d%b4%eb%93%9c">#</a></h1>
+<p>Apple Silicon (M1/M2/M3) 및 Intel Mac에서 PA-Layer 환경을 구성합니다.</p>
+<h2 id="1-homebrew로-설치-권장">1. Homebrew로 설치 (권장)<a class="anchor" href="#1-homebrew%eb%a1%9c-%ec%84%a4%ec%b9%98-%ea%b6%8c%ec%9e%a5">#</a></h2>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Homebrew 설치 (없는 경우)</span>
+</span></span><span style="display:flex;"><span>/bin/bash -c <span style="color:#e6db74">&#34;</span><span style="color:#66d9ef">$(</span>curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh<span style="color:#66d9ef">)</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># PA-Retriever 설치</span>
+</span></span><span style="display:flex;"><span>brew tap pa-layer/tap
+</span></span><span style="display:flex;"><span>brew install pa-retriever
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 설치 확인</span>
+</span></span><span style="display:flex;"><span>pa version</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="2-수동-설치">2. 수동 설치<a class="anchor" href="#2-%ec%88%98%eb%8f%99-%ec%84%a4%ec%b9%98">#</a></h2>
+<h3 id="apple-silicon-m1m2m3">Apple Silicon (M1/M2/M3)<a class="anchor" href="#apple-silicon-m1m2m3">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 다운로드</span>
+</span></span><span style="display:flex;"><span>curl -LO https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-darwin-arm64.tar.gz
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 압축 해제</span>
+</span></span><span style="display:flex;"><span>tar xzf pa-retriever-darwin-arm64.tar.gz
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 실행 권한 부여</span>
+</span></span><span style="display:flex;"><span>chmod +x pa
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># PATH에 추가 (zsh 기준)</span>
+</span></span><span style="display:flex;"><span>sudo mv pa /usr/local/bin/
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 또는 사용자 디렉토리에 설치</span>
+</span></span><span style="display:flex;"><span>mkdir -p ~/.local/bin
+</span></span><span style="display:flex;"><span>mv pa ~/.local/bin/
+</span></span><span style="display:flex;"><span>echo <span style="color:#e6db74">&#39;export PATH=&#34;$HOME/.local/bin:$PATH&#34;&#39;</span> &gt;&gt; ~/.zshrc
+</span></span><span style="display:flex;"><span>source ~/.zshrc</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="intel-mac">Intel Mac<a class="anchor" href="#intel-mac">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 다운로드</span>
+</span></span><span style="display:flex;"><span>curl -LO https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-darwin-amd64.tar.gz
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 압축 해제 및 설치</span>
+</span></span><span style="display:flex;"><span>tar xzf pa-retriever-darwin-amd64.tar.gz
+</span></span><span style="display:flex;"><span>chmod +x pa
+</span></span><span style="display:flex;"><span>sudo mv pa /usr/local/bin/</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="3-필수-도구-설치">3. 필수 도구 설치<a class="anchor" href="#3-%ed%95%84%ec%88%98-%eb%8f%84%ea%b5%ac-%ec%84%a4%ec%b9%98">#</a></h2>
+<h3 id="claude-desktop">Claude Desktop<a class="anchor" href="#claude-desktop">#</a></h3>
+<ol>
+<li><a href="https://claude.ai/download">claude.ai/download</a>에서 다운로드</li>
+<li>Applications 폴더로 이동</li>
+<li>실행 후 로그인</li>
+</ol>
+<h3 id="obsidian">Obsidian<a class="anchor" href="#obsidian">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Homebrew로 설치</span>
+</span></span><span style="display:flex;"><span>brew install --cask obsidian
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 또는 공식 사이트에서 다운로드</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># https://obsidian.md</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="4-shell-설정">4. Shell 설정<a class="anchor" href="#4-shell-%ec%84%a4%ec%a0%95">#</a></h2>
+<h3 id="zsh-zshrc">Zsh (~/.zshrc)<a class="anchor" href="#zsh-zshrc">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># PA-Layer 환경 변수</span>
+</span></span><span style="display:flex;"><span>export PA_HOME<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$HOME<span style="color:#e6db74">/.pa&#34;</span>
+</span></span><span style="display:flex;"><span>export PA_WORKSPACE<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$HOME<span style="color:#e6db74">/playground&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 단축 명령어 (선택)</span>
+</span></span><span style="display:flex;"><span>alias pas<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;pa search&#34;</span>
+</span></span><span style="display:flex;"><span>alias pai<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;pa index&#34;</span>
+</span></span><span style="display:flex;"><span>alias pac<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;pa code&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 자동완성 (선택)</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> command -v pa &amp;&gt; /dev/null; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>  eval <span style="color:#e6db74">&#34;</span><span style="color:#66d9ef">$(</span>pa completion zsh<span style="color:#66d9ef">)</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fi</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="bash-bashrc">Bash (~/.bashrc)<a class="anchor" href="#bash-bashrc">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># PA-Layer 환경 변수</span>
+</span></span><span style="display:flex;"><span>export PA_HOME<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$HOME<span style="color:#e6db74">/.pa&#34;</span>
+</span></span><span style="display:flex;"><span>export PA_WORKSPACE<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$HOME<span style="color:#e6db74">/playground&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 단축 명령어 (선택)</span>
+</span></span><span style="display:flex;"><span>alias pas<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;pa search&#34;</span>
+</span></span><span style="display:flex;"><span>alias pai<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;pa index&#34;</span>
+</span></span><span style="display:flex;"><span>alias pac<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;pa code&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="5-설치-확인">5. 설치 확인<a class="anchor" href="#5-%ec%84%a4%ec%b9%98-%ed%99%95%ec%9d%b8">#</a></h2>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 버전 확인</span>
+</span></span><span style="display:flex;"><span>pa version
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 출력 예시:</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># pa-retriever v0.8.0</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Features:</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#   ✅ Phase 1: Search (Tier 1 + 2)</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#   ✅ Phase 2: MCP Server</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#   ✅ Phase 3: Bundle + Signing</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#   ...</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="6-초기화">6. 초기화<a class="anchor" href="#6-%ec%b4%88%ea%b8%b0%ed%99%94">#</a></h2>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 대화형 초기화 (권장)</span>
+</span></span><span style="display:flex;"><span>pa init
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 또는 기본값으로 빠른 초기화</span>
+</span></span><span style="display:flex;"><span>pa init --yes</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="다음-단계">다음 단계<a class="anchor" href="#%eb%8b%a4%ec%9d%8c-%eb%8b%a8%ea%b3%84">#</a></h2>
+<ul>
+<li><a href="/ko/docs/installation/workspace/">워크스페이스 구성</a> - 디렉토리 구조 설정</li>
+<li><a href="/ko/docs/configuration/">설정하기</a> - Claude 연동</li>
+</ul>
+<hr>
+<h2 id="문제-해결">문제 해결<a class="anchor" href="#%eb%ac%b8%ec%a0%9c-%ed%95%b4%ea%b2%b0">#</a></h2>
+<h3 id="pa-command-not-found">&ldquo;pa: command not found&rdquo;<a class="anchor" href="#pa-command-not-found">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># PATH 확인</span>
+</span></span><span style="display:flex;"><span>echo $PATH
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 바이너리 위치 확인</span>
+</span></span><span style="display:flex;"><span>which pa
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># PATH에 추가</span>
+</span></span><span style="display:flex;"><span>echo <span style="color:#e6db74">&#39;export PATH=&#34;/usr/local/bin:$PATH&#34;&#39;</span> &gt;&gt; ~/.zshrc
+</span></span><span style="display:flex;"><span>source ~/.zshrc</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="apple-silicon에서-실행-오류">Apple Silicon에서 실행 오류<a class="anchor" href="#apple-silicon%ec%97%90%ec%84%9c-%ec%8b%a4%ed%96%89-%ec%98%a4%eb%a5%98">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Rosetta 2 설치 (Intel 바이너리 호환)</span>
+</span></span><span style="display:flex;"><span>softwareupdate --install-rosetta
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 또는 arm64 버전 재다운로드</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="보안-경고-확인되지-않은-개발자">보안 경고 (확인되지 않은 개발자)<a class="anchor" href="#%eb%b3%b4%ec%95%88-%ea%b2%bd%ea%b3%a0-%ed%99%95%ec%9d%b8%eb%90%98%ec%a7%80-%ec%95%8a%ec%9d%80-%ea%b0%9c%eb%b0%9c%ec%9e%90">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 실행 허용</span>
+</span></span><span style="display:flex;"><span>xattr -d com.apple.quarantine /usr/local/bin/pa
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 또는 시스템 환경설정 &gt; 보안 및 개인정보 보호에서 허용</span></span></span></code></pre></td></tr></table>
+</div>
+</div></article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+<div>
+
+</div>
+
+<div>
+
+</div>
+
+</div>
+
+
+
+
+
+  
+  
+  
+  <div class="flex flex-wrap justify-between">
+    <span>
+    
+      <a href="/ko/docs/installation/" class="flex align-center">
+        <img src="/icons/backward.svg" class="book-icon" alt="Backward" />
+        <span>설치하기</span>
+      </a>
+    
+    </span>
+    <span>
+    
+      <a href="/ko/docs/installation/windows/" class="flex align-center">
+        <span>Windows 설치</span>
+        <img src="/icons/forward.svg" class="book-icon" alt="Forward" />
+      </a>
+    
+    </span>
+  </div>
+  
+
+
+ 
+        
+  
+ 
+        
+        
+  
+ 
+        
+  
+  
+    <script>(function(){document.querySelectorAll("pre:has(code)").forEach(e=>{e.addEventListener("click",e.focus),e.addEventListener("copy",function(t){if(t.preventDefault(),navigator.clipboard){const t=window.getSelection().toString()||e.textContent;navigator.clipboard.writeText(t)}})})})()</script>
+  
+
+      </footer>
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+  
+  <aside class="book-toc">
+    <div class="book-toc-content">
+      
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#1-homebrew로-설치-권장">1. Homebrew로 설치 (권장)</a></li>
+    <li><a href="#2-수동-설치">2. 수동 설치</a>
+      <ul>
+        <li><a href="#apple-silicon-m1m2m3">Apple Silicon (M1/M2/M3)</a></li>
+        <li><a href="#intel-mac">Intel Mac</a></li>
+      </ul>
+    </li>
+    <li><a href="#3-필수-도구-설치">3. 필수 도구 설치</a>
+      <ul>
+        <li><a href="#claude-desktop">Claude Desktop</a></li>
+        <li><a href="#obsidian">Obsidian</a></li>
+      </ul>
+    </li>
+    <li><a href="#4-shell-설정">4. Shell 설정</a>
+      <ul>
+        <li><a href="#zsh-zshrc">Zsh (~/.zshrc)</a></li>
+        <li><a href="#bash-bashrc">Bash (~/.bashrc)</a></li>
+      </ul>
+    </li>
+    <li><a href="#5-설치-확인">5. 설치 확인</a></li>
+    <li><a href="#6-초기화">6. 초기화</a></li>
+    <li><a href="#다음-단계">다음 단계</a></li>
+    <li><a href="#문제-해결">문제 해결</a>
+      <ul>
+        <li><a href="#pa-command-not-found">&ldquo;pa: command not found&rdquo;</a></li>
+        <li><a href="#apple-silicon에서-실행-오류">Apple Silicon에서 실행 오류</a></li>
+        <li><a href="#보안-경고-확인되지-않은-개발자">보안 경고 (확인되지 않은 개발자)</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+    </div>
+  </aside>
+  
+ 
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

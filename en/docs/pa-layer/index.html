@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="PA-Layer# A software architecture convention for working with AI agents.
+What is PA-Layer?# PA-Layer is a practical architecture convention combining Port/Adapter (Hexagonal) architecture with CQS (Command-Query Separation) patterns.
+PA-Layer = Port/Adapter &#43; CQS &#43; AI-Friendly ConventionWhy PA-Layer?# 1. AI Agent Friendly# Feature Description Clear boundaries Responsibilities separated by Port units for easy context understanding Standardized documents Consistent format for AI pattern learning and prediction Selective loading Load only needed documents to maximize token efficiency 2. Token Efficient# Aspect Traditional RAG PA-Layer Search method Vector similarity Structured query Result format Document chunks Complete documents Context Partial Fully preserved Dependency tracking Not possible Tracked via Wiki links 3. Proven Architecture# Hexagonal Architecture: Separation of business logic and infrastructure CQS Pattern: Clear separation of commands and queries Layer Structure: Enforced dependency direction L1 → LM → L2 Sections# Architecture Overview Backend Conventions Frontend Conventions ">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://pa-layer.github.io/en/docs/pa-layer/">
+  <meta property="og:site_name" content="PA-Layer">
+  <meta property="og:title" content="PA-Layer">
+  <meta property="og:description" content="PA-Layer# A software architecture convention for working with AI agents.
+What is PA-Layer?# PA-Layer is a practical architecture convention combining Port/Adapter (Hexagonal) architecture with CQS (Command-Query Separation) patterns.
+PA-Layer = Port/Adapter &#43; CQS &#43; AI-Friendly ConventionWhy PA-Layer?# 1. AI Agent Friendly# Feature Description Clear boundaries Responsibilities separated by Port units for easy context understanding Standardized documents Consistent format for AI pattern learning and prediction Selective loading Load only needed documents to maximize token efficiency 2. Token Efficient# Aspect Traditional RAG PA-Layer Search method Vector similarity Structured query Result format Document chunks Complete documents Context Partial Fully preserved Dependency tracking Not possible Tracked via Wiki links 3. Proven Architecture# Hexagonal Architecture: Separation of business logic and infrastructure CQS Pattern: Clear separation of commands and queries Layer Structure: Enforced dependency direction L1 → LM → L2 Sections# Architecture Overview Backend Conventions Frontend Conventions">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="website">
+
+
+  <meta itemprop="name" content="PA-Layer">
+  <meta itemprop="description" content="PA-Layer# A software architecture convention for working with AI agents.
+What is PA-Layer?# PA-Layer is a practical architecture convention combining Port/Adapter (Hexagonal) architecture with CQS (Command-Query Separation) patterns.
+PA-Layer = Port/Adapter &#43; CQS &#43; AI-Friendly ConventionWhy PA-Layer?# 1. AI Agent Friendly# Feature Description Clear boundaries Responsibilities separated by Port units for easy context understanding Standardized documents Consistent format for AI pattern learning and prediction Selective loading Load only needed documents to maximize token efficiency 2. Token Efficient# Aspect Traditional RAG PA-Layer Search method Vector similarity Structured query Result format Document chunks Complete documents Context Partial Fully preserved Dependency tracking Not possible Tracked via Wiki links 3. Proven Architecture# Hexagonal Architecture: Separation of business logic and infrastructure CQS Pattern: Clear separation of commands and queries Layer Structure: Enforced dependency direction L1 → LM → L2 Sections# Architecture Overview Backend Conventions Frontend Conventions">
+  <meta itemprop="wordCount" content="141">
+
+<title>PA-Layer | PA-Layer</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="https://pa-layer.github.io/en/docs/pa-layer/">
+  <link rel="alternate" hreflang="ko" href="https://pa-layer.github.io/ko/docs/pa-layer/" title="PA-Layer">
+<link rel="stylesheet" href="/book.min.6970156cec683193d93c9c4edaf0d56574e4361df2e0c1be4f697ae81c3ba55f.css" integrity="sha256-aXAVbOxoMZPZPJxO2vDVZXTkNh3y4MG&#43;T2l66Bw7pV8=" crossorigin="anonymous">
+
+
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.b5456745024e721c0ed5066be46dd05983568404556d91df1ba7a31dc5a41591.js" integrity="sha256-tUVnRQJOchwO1QZr5G3QWYNWhARVbZHfG6ejHcWkFZE=" crossorigin="anonymous"></script>
+
+
+<link rel="alternate" type="application/rss+xml" href="https://pa-layer.github.io/en/docs/pa-layer/index.xml" title="PA-Layer" />
+
+  
+</head>
+<body dir="ltr" class="book-kind-section book-type-docs">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    
+<aside class="book-menu">
+  <div class="book-menu-content">
+    
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/en/"><img src="/images/pa-layer-logo.svg" alt="Logo" /><span>PA-Layer</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input id="book-search-input" type="text" 
+    placeholder="Search"
+    aria-label="Search"
+    maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+  
+
+
+  
+    
+  
+
+
+  
+
+
+<ul class="book-languages">
+  <li>
+    <input type="checkbox" id="languages" class="toggle" />
+    <label for="languages" class="flex">
+      <a role="button">
+        <img src="/icons/translate.svg" class="book-icon" alt="Languages" />
+        English
+      </a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+
+    <ul>
+      
+      <li>
+        <a href="/ko/docs/pa-layer/" class="flex flex-auto">
+          한국어
+        </a>
+      </li>
+      
+    </ul>
+  </li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-6236be1b89680b92e3aefa016e21a142" class="toggle"  />
+    <label for="section-6236be1b89680b92e3aefa016e21a142" class="flex">
+      <a href="/en/docs/installation/" class="">
+        Installation</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/macos/" class="">
+      macOS Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/windows/" class="">
+      Windows Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/linux/" class="">
+      Linux Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/workspace/" class="">
+      Workspace Setup</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c57e8d2542437d90ac12ebccc18f7bd6" class="toggle"  />
+    <label for="section-c57e8d2542437d90ac12ebccc18f7bd6" class="flex">
+      <a href="/en/docs/configuration/" class="">
+        Configuration</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/claude/" class="">
+      Claude Integration</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/obsidian/" class="">
+      Obsidian Settings</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/pa-config/" class="">
+      PA-Retriever Config</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e28c43a16f6ea811813d9b83e9c091a1" class="toggle" checked />
+    <label for="section-e28c43a16f6ea811813d9b83e9c091a1" class="flex">
+      <a href="/en/docs/pa-layer/" class="active">
+        PA-Layer</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/overview/" class="">
+      Architecture Overview</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/backend/" class="">
+      Backend Conventions</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/frontend/" class="">
+      Frontend Conventions</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-2e7de72bf7fb1d60035ad67e5a7421f2" class="toggle"  />
+    <label for="section-2e7de72bf7fb1d60035ad67e5a7421f2" class="flex">
+      <a href="/en/docs/pa-retriever/" class="">
+        PA-Retriever</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/basic/" class="">
+      Basic Usage</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/search/" class="">
+      Search Guide</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/code/" class="">
+      Code Indexing</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/with-claude/" class="">
+      Using with Claude</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/advanced/" class="">
+      Advanced Features</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+<ul><li><a href="https://github.com/pa-layer/pa-retriever" target="_blank" rel="noopener">GitHub</a></li></ul>
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+
+  </div>
+</aside>
+ 
+
+    <div class="book-page">
+      <header class="book-header hidden">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/icons/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>PA-Layer</h3>
+
+  <label for="toc-control">
+    
+    <img src="/icons/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#what-is-pa-layer">What is PA-Layer?</a></li>
+    <li><a href="#why-pa-layer">Why PA-Layer?</a>
+      <ul>
+        <li><a href="#1-ai-agent-friendly">1. AI Agent Friendly</a></li>
+        <li><a href="#2-token-efficient">2. Token Efficient</a></li>
+        <li><a href="#3-proven-architecture">3. Proven Architecture</a></li>
+      </ul>
+    </li>
+    <li><a href="#sections">Sections</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="pa-layer">PA-Layer<a class="anchor" href="#pa-layer">#</a></h1>
+<p>A software architecture convention for working with AI agents.</p>
+<h2 id="what-is-pa-layer">What is PA-Layer?<a class="anchor" href="#what-is-pa-layer">#</a></h2>
+<p><strong>PA-Layer</strong> is a practical architecture convention combining Port/Adapter (Hexagonal) architecture with CQS (Command-Query Separation) patterns.</p>
+<pre tabindex="0"><code>PA-Layer = Port/Adapter + CQS + AI-Friendly Convention</code></pre><h2 id="why-pa-layer">Why PA-Layer?<a class="anchor" href="#why-pa-layer">#</a></h2>
+<h3 id="1-ai-agent-friendly">1. AI Agent Friendly<a class="anchor" href="#1-ai-agent-friendly">#</a></h3>
+<table>
+  <thead>
+      <tr>
+          <th>Feature</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><strong>Clear boundaries</strong></td>
+          <td>Responsibilities separated by Port units for easy context understanding</td>
+      </tr>
+      <tr>
+          <td><strong>Standardized documents</strong></td>
+          <td>Consistent format for AI pattern learning and prediction</td>
+      </tr>
+      <tr>
+          <td><strong>Selective loading</strong></td>
+          <td>Load only needed documents to maximize token efficiency</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="2-token-efficient">2. Token Efficient<a class="anchor" href="#2-token-efficient">#</a></h3>
+<table>
+  <thead>
+      <tr>
+          <th>Aspect</th>
+          <th>Traditional RAG</th>
+          <th>PA-Layer</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Search method</td>
+          <td>Vector similarity</td>
+          <td>Structured query</td>
+      </tr>
+      <tr>
+          <td>Result format</td>
+          <td>Document chunks</td>
+          <td>Complete documents</td>
+      </tr>
+      <tr>
+          <td>Context</td>
+          <td>Partial</td>
+          <td>Fully preserved</td>
+      </tr>
+      <tr>
+          <td>Dependency tracking</td>
+          <td>Not possible</td>
+          <td>Tracked via Wiki links</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="3-proven-architecture">3. Proven Architecture<a class="anchor" href="#3-proven-architecture">#</a></h3>
+<ul>
+<li><strong>Hexagonal Architecture</strong>: Separation of business logic and infrastructure</li>
+<li><strong>CQS Pattern</strong>: Clear separation of commands and queries</li>
+<li><strong>Layer Structure</strong>: Enforced dependency direction L1 → LM → L2</li>
+</ul>
+<hr>
+<h2 id="sections">Sections<a class="anchor" href="#sections">#</a></h2>
+<ul>
+<li><a href="/en/docs/pa-layer/overview/">Architecture Overview</a></li>
+<li><a href="/en/docs/pa-layer/backend/">Backend Conventions</a></li>
+<li><a href="/en/docs/pa-layer/frontend/">Frontend Conventions</a></li>
+</ul>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+<div>
+
+</div>
+
+<div>
+
+</div>
+
+</div>
+
+
+
+
+
+  
+  
+  
+  <div class="flex flex-wrap justify-between">
+    <span>
+    
+      <a href="/en/docs/configuration/pa-config/" class="flex align-center">
+        <img src="/icons/backward.svg" class="book-icon" alt="Backward" />
+        <span>PA-Retriever Config</span>
+      </a>
+    
+    </span>
+    <span>
+    
+      <a href="/en/docs/pa-layer/overview/" class="flex align-center">
+        <span>Architecture Overview</span>
+        <img src="/icons/forward.svg" class="book-icon" alt="Forward" />
+      </a>
+    
+    </span>
+  </div>
+  
+
+
+ 
+        
+  
+ 
+        
+        
+  
+ 
+        
+  
+  
+    <script>(function(){document.querySelectorAll("pre:has(code)").forEach(e=>{e.addEventListener("click",e.focus),e.addEventListener("copy",function(t){if(t.preventDefault(),navigator.clipboard){const t=window.getSelection().toString()||e.textContent;navigator.clipboard.writeText(t)}})})})()</script>
+  
+
+      </footer>
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+  
+  <aside class="book-toc">
+    <div class="book-toc-content">
+      
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#what-is-pa-layer">What is PA-Layer?</a></li>
+    <li><a href="#why-pa-layer">Why PA-Layer?</a>
+      <ul>
+        <li><a href="#1-ai-agent-friendly">1. AI Agent Friendly</a></li>
+        <li><a href="#2-token-efficient">2. Token Efficient</a></li>
+        <li><a href="#3-proven-architecture">3. Proven Architecture</a></li>
+      </ul>
+    </li>
+    <li><a href="#sections">Sections</a></li>
+  </ul>
+</nav>
+
+
+
+    </div>
+  </aside>
+  
+ 
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

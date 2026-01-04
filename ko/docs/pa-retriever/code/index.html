@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="ko" dir="ltr">
+<head>
+  <!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="코드 인덱싱# PA-Retriever의 코드 시그니처 인덱싱 기능을 설명합니다.
+개요# 코드 인덱싱은 실제 코드에서 Port 시그니처를 추출하여 문서와 연결합니다.
+문서 (Port 명세) 코드 (구현체) ┌───────────────┐ ┌───────────────┐ │ L2-LoginPort │◄────►│ LoginPort.kt │ │ (마크다운) │ 연결 │ (Kotlin) │ └───────────────┘ └───────────────┘지원 언어# 언어 확장자 추출 대상 Kotlin .kt interface, class, fun, suspend fun TypeScript .ts, .tsx interface, class, function, type Go .go type, func, interface 명령어# 프로젝트 등록# 1 2 3 4 5 6 7 # 프로젝트 추가 pa code add &lt;이름&gt; &lt;경로&gt; [옵션] # 예시 pa code add my-backend ~/playground/CodeSpace/my-backend --lang=kotlin pa code add my-frontend ~/playground/CodeSpace/my-frontend --lang=typescript pa code add my-api ~/playground/CodeSpace/my-api --lang=go 옵션:
+">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://pa-layer.github.io/ko/docs/pa-retriever/code/">
+  <meta property="og:site_name" content="PA-Layer">
+  <meta property="og:title" content="코드 인덱싱">
+  <meta property="og:description" content="코드 인덱싱# PA-Retriever의 코드 시그니처 인덱싱 기능을 설명합니다.
+개요# 코드 인덱싱은 실제 코드에서 Port 시그니처를 추출하여 문서와 연결합니다.
+문서 (Port 명세) 코드 (구현체) ┌───────────────┐ ┌───────────────┐ │ L2-LoginPort │◄────►│ LoginPort.kt │ │ (마크다운) │ 연결 │ (Kotlin) │ └───────────────┘ └───────────────┘지원 언어# 언어 확장자 추출 대상 Kotlin .kt interface, class, fun, suspend fun TypeScript .ts, .tsx interface, class, function, type Go .go type, func, interface 명령어# 프로젝트 등록# 1 2 3 4 5 6 7 # 프로젝트 추가 pa code add &lt;이름&gt; &lt;경로&gt; [옵션] # 예시 pa code add my-backend ~/playground/CodeSpace/my-backend --lang=kotlin pa code add my-frontend ~/playground/CodeSpace/my-frontend --lang=typescript pa code add my-api ~/playground/CodeSpace/my-api --lang=go 옵션:">
+  <meta property="og:locale" content="ko">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+
+
+  <meta itemprop="name" content="코드 인덱싱">
+  <meta itemprop="description" content="코드 인덱싱# PA-Retriever의 코드 시그니처 인덱싱 기능을 설명합니다.
+개요# 코드 인덱싱은 실제 코드에서 Port 시그니처를 추출하여 문서와 연결합니다.
+문서 (Port 명세) 코드 (구현체) ┌───────────────┐ ┌───────────────┐ │ L2-LoginPort │◄────►│ LoginPort.kt │ │ (마크다운) │ 연결 │ (Kotlin) │ └───────────────┘ └───────────────┘지원 언어# 언어 확장자 추출 대상 Kotlin .kt interface, class, fun, suspend fun TypeScript .ts, .tsx interface, class, function, type Go .go type, func, interface 명령어# 프로젝트 등록# 1 2 3 4 5 6 7 # 프로젝트 추가 pa code add &lt;이름&gt; &lt;경로&gt; [옵션] # 예시 pa code add my-backend ~/playground/CodeSpace/my-backend --lang=kotlin pa code add my-frontend ~/playground/CodeSpace/my-frontend --lang=typescript pa code add my-api ~/playground/CodeSpace/my-api --lang=go 옵션:">
+  <meta itemprop="wordCount" content="449">
+
+<title>코드 인덱싱 | PA-Layer</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="https://pa-layer.github.io/ko/docs/pa-retriever/code/">
+  <link rel="alternate" hreflang="en" href="https://pa-layer.github.io/en/docs/pa-retriever/code/" title="Code Indexing">
+<link rel="stylesheet" href="/book.min.6970156cec683193d93c9c4edaf0d56574e4361df2e0c1be4f697ae81c3ba55f.css" integrity="sha256-aXAVbOxoMZPZPJxO2vDVZXTkNh3y4MG&#43;T2l66Bw7pV8=" crossorigin="anonymous">
+
+
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/ko.search.min.e9756793949413dae8c85e803ce1e02b13ffa1c302aec58e19bfbadb693819d3.js" integrity="sha256-6XVnk5SUE9royF6APOHgKxP/ocMCrsWOGb&#43;622k4GdM=" crossorigin="anonymous"></script>
+
+
+
+  
+</head>
+<body dir="ltr" class="book-kind-page book-type-docs">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    
+<aside class="book-menu">
+  <div class="book-menu-content">
+    
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/ko/"><img src="/images/pa-layer-logo.svg" alt="Logo" /><span>PA-Layer</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input id="book-search-input" type="text" 
+    placeholder="Search"
+    aria-label="Search"
+    maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+  
+
+
+  
+    
+  
+
+
+  
+
+
+<ul class="book-languages">
+  <li>
+    <input type="checkbox" id="languages" class="toggle" />
+    <label for="languages" class="flex">
+      <a role="button">
+        <img src="/icons/translate.svg" class="book-icon" alt="Languages" />
+        한국어
+      </a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+
+    <ul>
+      
+      <li>
+        <a href="/en/docs/pa-retriever/code/" class="flex flex-auto">
+          English
+        </a>
+      </li>
+      
+    </ul>
+  </li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-b056803e087b3464503e98766cccad1a" class="toggle"  />
+    <label for="section-b056803e087b3464503e98766cccad1a" class="flex">
+      <a href="/ko/docs/installation/" class="">
+        설치하기</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/macos/" class="">
+      macOS 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/windows/" class="">
+      Windows 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/linux/" class="">
+      Linux 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/workspace/" class="">
+      워크스페이스 구성</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-187b3aa4e29a5d5ef2738d28ac16df69" class="toggle"  />
+    <label for="section-187b3aa4e29a5d5ef2738d28ac16df69" class="flex">
+      <a href="/ko/docs/configuration/" class="">
+        설정하기</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/claude/" class="">
+      Claude 연동</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/obsidian/" class="">
+      Obsidian 설정</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/pa-config/" class="">
+      PA-Retriever 설정</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99ad2865f9541edb014cad9a350d886e" class="toggle"  />
+    <label for="section-99ad2865f9541edb014cad9a350d886e" class="flex">
+      <a href="/ko/docs/pa-layer/" class="">
+        PA-Layer</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/overview/" class="">
+      아키텍처 개요</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/backend/" class="">
+      Backend 컨벤션</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/frontend/" class="">
+      Frontend 컨벤션</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99cc806f10f29d7b76e63ff1539abbc7" class="toggle" checked />
+    <label for="section-99cc806f10f29d7b76e63ff1539abbc7" class="flex">
+      <a href="/ko/docs/pa-retriever/" class="">
+        PA-Retriever</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/basic/" class="">
+      기본 사용법</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/search/" class="">
+      검색 가이드</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/code/" class="active">
+      코드 인덱싱</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/with-claude/" class="">
+      Claude와 함께 사용</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/advanced/" class="">
+      고급 기능</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+<ul><li><a href="https://github.com/pa-layer/pa-retriever" target="_blank" rel="noopener">GitHub</a></li></ul>
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+
+  </div>
+</aside>
+ 
+
+    <div class="book-page">
+      <header class="book-header hidden">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/icons/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>코드 인덱싱</h3>
+
+  <label for="toc-control">
+    
+    <img src="/icons/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#개요">개요</a></li>
+    <li><a href="#지원-언어">지원 언어</a></li>
+    <li><a href="#명령어">명령어</a>
+      <ul>
+        <li><a href="#프로젝트-등록">프로젝트 등록</a></li>
+        <li><a href="#프로젝트-목록">프로젝트 목록</a></li>
+        <li><a href="#코드-인덱싱-1">코드 인덱싱</a></li>
+        <li><a href="#코드-검색">코드 검색</a></li>
+      </ul>
+    </li>
+    <li><a href="#문서-코드-연결">문서-코드 연결</a>
+      <ul>
+        <li><a href="#자동-연결">자동 연결</a></li>
+        <li><a href="#마커-사용">마커 사용</a></li>
+        <li><a href="#연결-상태-확인">연결 상태 확인</a></li>
+      </ul>
+    </li>
+    <li><a href="#실용-예시">실용 예시</a>
+      <ul>
+        <li><a href="#문서와-코드-동시-검색">문서와 코드 동시 검색</a></li>
+        <li><a href="#구현-누락-확인">구현 누락 확인</a></li>
+        <li><a href="#문서-누락-확인">문서 누락 확인</a></li>
+      </ul>
+    </li>
+    <li><a href="#다음-단계">다음 단계</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="코드-인덱싱">코드 인덱싱<a class="anchor" href="#%ec%bd%94%eb%93%9c-%ec%9d%b8%eb%8d%b1%ec%8b%b1">#</a></h1>
+<p>PA-Retriever의 코드 시그니처 인덱싱 기능을 설명합니다.</p>
+<h2 id="개요">개요<a class="anchor" href="#%ea%b0%9c%ec%9a%94">#</a></h2>
+<p>코드 인덱싱은 실제 코드에서 Port 시그니처를 추출하여 문서와 연결합니다.</p>
+<pre tabindex="0"><code>문서 (Port 명세)        코드 (구현체)
+┌───────────────┐      ┌───────────────┐
+│ L2-LoginPort  │◄────►│ LoginPort.kt  │
+│ (마크다운)    │ 연결 │ (Kotlin)      │
+└───────────────┘      └───────────────┘</code></pre><h2 id="지원-언어">지원 언어<a class="anchor" href="#%ec%a7%80%ec%9b%90-%ec%96%b8%ec%96%b4">#</a></h2>
+<table>
+  <thead>
+      <tr>
+          <th>언어</th>
+          <th>확장자</th>
+          <th>추출 대상</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Kotlin</td>
+          <td><code>.kt</code></td>
+          <td>interface, class, fun, suspend fun</td>
+      </tr>
+      <tr>
+          <td>TypeScript</td>
+          <td><code>.ts</code>, <code>.tsx</code></td>
+          <td>interface, class, function, type</td>
+      </tr>
+      <tr>
+          <td>Go</td>
+          <td><code>.go</code></td>
+          <td>type, func, interface</td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="명령어">명령어<a class="anchor" href="#%eb%aa%85%eb%a0%b9%ec%96%b4">#</a></h2>
+<h3 id="프로젝트-등록">프로젝트 등록<a class="anchor" href="#%ed%94%84%eb%a1%9c%ec%a0%9d%ed%8a%b8-%eb%93%b1%eb%a1%9d">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 프로젝트 추가</span>
+</span></span><span style="display:flex;"><span>pa code add &lt;이름&gt; &lt;경로&gt; <span style="color:#f92672">[</span>옵션<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 예시</span>
+</span></span><span style="display:flex;"><span>pa code add my-backend ~/playground/CodeSpace/my-backend --lang<span style="color:#f92672">=</span>kotlin
+</span></span><span style="display:flex;"><span>pa code add my-frontend ~/playground/CodeSpace/my-frontend --lang<span style="color:#f92672">=</span>typescript
+</span></span><span style="display:flex;"><span>pa code add my-api ~/playground/CodeSpace/my-api --lang<span style="color:#f92672">=</span>go</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>옵션</strong>:</p>
+<ul>
+<li><code>--lang=&lt;언어&gt;</code>: kotlin, typescript, go (자동 감지)</li>
+<li><code>--exclude=&lt;패턴&gt;</code>: 제외할 경로 패턴</li>
+</ul>
+<h3 id="프로젝트-목록">프로젝트 목록<a class="anchor" href="#%ed%94%84%eb%a1%9c%ec%a0%9d%ed%8a%b8-%eb%aa%a9%eb%a1%9d">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>pa code list</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>출력</strong>:</p>
+<pre tabindex="0"><code>📦 등록된 코드 프로젝트
+
+  my-backend (kotlin)
+    경로: ~/playground/CodeSpace/my-backend
+    시그니처: 234개
+
+  my-frontend (typescript)
+    경로: ~/playground/CodeSpace/my-frontend
+    시그니처: 156개</code></pre><h3 id="코드-인덱싱-1">코드 인덱싱<a class="anchor" href="#%ec%bd%94%eb%93%9c-%ec%9d%b8%eb%8d%b1%ec%8b%b1-1">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 모든 프로젝트 인덱싱</span>
+</span></span><span style="display:flex;"><span>pa code index
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 특정 프로젝트만</span>
+</span></span><span style="display:flex;"><span>pa code index --project<span style="color:#f92672">=</span>my-backend
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 강제 재인덱싱</span>
+</span></span><span style="display:flex;"><span>pa code index --force</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>출력</strong>:</p>
+<pre tabindex="0"><code>🔍 코드 인덱싱: my-backend
+
+처리 중:
+  ✓ src/domain/auth/port/LoginPort.kt
+  ✓ src/domain/auth/port/TokenPort.kt
+  ✓ src/domain/users/port/UserPort.kt
+  ...
+
+📊 완료:
+  파일: 45
+  시그니처: 234
+    - interface: 23
+    - class: 45
+    - function: 166</code></pre><h3 id="코드-검색">코드 검색<a class="anchor" href="#%ec%bd%94%eb%93%9c-%ea%b2%80%ec%83%89">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 시그니처 검색</span>
+</span></span><span style="display:flex;"><span>pa code search &lt;쿼리&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 예시</span>
+</span></span><span style="display:flex;"><span>pa code search <span style="color:#e6db74">&#34;LoginPort&#34;</span>
+</span></span><span style="display:flex;"><span>pa code search <span style="color:#e6db74">&#34;fun login&#34;</span>
+</span></span><span style="display:flex;"><span>pa code search <span style="color:#e6db74">&#34;interface User&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>출력</strong>:</p>
+<pre tabindex="0"><code>🔍 코드 검색: &#34;LoginPort&#34; (3건)
+
+1. [interface] LoginPort
+   파일: src/domain/auth/port/LoginPort.kt
+   프로젝트: my-backend
+   연결된 문서: auth.L2-LoginPort ✓
+
+2. [class] LoginAdapter
+   파일: src/application/adapter/LoginAdapter.kt
+   프로젝트: my-backend
+   구현: LoginPort
+
+3. [interface] LoginPort
+   파일: src/ports/auth/LoginPort.ts
+   프로젝트: my-frontend</code></pre><h2 id="문서-코드-연결">문서-코드 연결<a class="anchor" href="#%eb%ac%b8%ec%84%9c-%ec%bd%94%eb%93%9c-%ec%97%b0%ea%b2%b0">#</a></h2>
+<h3 id="자동-연결">자동 연결<a class="anchor" href="#%ec%9e%90%eb%8f%99-%ec%97%b0%ea%b2%b0">#</a></h3>
+<p>PA-Retriever는 다음 규칙으로 자동 연결을 시도합니다:</p>
+<ol>
+<li><strong>이름 매칭</strong>: 문서 ID와 시그니처 이름</li>
+<li><strong>마커 매칭</strong>: <code>@pa-port</code> 마커</li>
+</ol>
+<h3 id="마커-사용">마커 사용<a class="anchor" href="#%eb%a7%88%ec%bb%a4-%ec%82%ac%ec%9a%a9">#</a></h3>
+<p>문서에 마커를 추가하여 명시적으로 연결:</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-markdown" data-lang="markdown"><span style="display:flex;"><span>&lt;!-- L2-LoginPort.md --&gt;
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span>type: l2
+</span></span><span style="display:flex;"><span>domain: auth
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span># L2-LoginPort
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>&lt;!-- @pa-port: LoginPort --&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">## 인터페이스
+</span></span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>...</span></span></code></pre></td></tr></table>
+</div>
+</div><p>코드에도 주석 마커 추가 가능:</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// LoginPort.kt
+</span></span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// @pa-doc: auth.L2-LoginPort
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">LoginPort</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">login</span>(request: LoginRequest): LoginResult
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="연결-상태-확인">연결 상태 확인<a class="anchor" href="#%ec%97%b0%ea%b2%b0-%ec%83%81%ed%83%9c-%ed%99%95%ec%9d%b8">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 상태 대시보드에서 확인</span>
+</span></span><span style="display:flex;"><span>pa status
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Port 검색 시 연결 정보 표시</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;find_port:LoginPort&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="실용-예시">실용 예시<a class="anchor" href="#%ec%8b%a4%ec%9a%a9-%ec%98%88%ec%8b%9c">#</a></h2>
+<h3 id="문서와-코드-동시-검색">문서와 코드 동시 검색<a class="anchor" href="#%eb%ac%b8%ec%84%9c%ec%99%80-%ec%bd%94%eb%93%9c-%eb%8f%99%ec%8b%9c-%ea%b2%80%ec%83%89">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 1. 문서에서 Port 명세 확인</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;L2-LoginPort&#34;</span> --content
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 2. 해당 코드 구현체 찾기</span>
+</span></span><span style="display:flex;"><span>pa code search <span style="color:#e6db74">&#34;LoginPort&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="구현-누락-확인">구현 누락 확인<a class="anchor" href="#%ea%b5%ac%ed%98%84-%eb%88%84%eb%9d%bd-%ed%99%95%ec%9d%b8">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 문서는 있지만 코드가 없는 Port</span>
+</span></span><span style="display:flex;"><span>pa code search <span style="color:#e6db74">&#34;L2-PaymentPort&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 결과 없음 → 구현 필요</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="문서-누락-확인">문서 누락 확인<a class="anchor" href="#%eb%ac%b8%ec%84%9c-%eb%88%84%eb%9d%bd-%ed%99%95%ec%9d%b8">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 코드는 있지만 문서가 없는 Port</span>
+</span></span><span style="display:flex;"><span>pa code search <span style="color:#e6db74">&#34;OrderPort&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 연결된 문서: (없음) → 문서 작성 필요</span></span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="다음-단계">다음 단계<a class="anchor" href="#%eb%8b%a4%ec%9d%8c-%eb%8b%a8%ea%b3%84">#</a></h2>
+<ul>
+<li><a href="/ko/docs/pa-retriever/with-claude/">Claude와 함께 사용</a></li>
+<li><a href="/ko/docs/pa-retriever/advanced/">고급 기능</a></li>
+</ul>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+<div>
+
+</div>
+
+<div>
+
+</div>
+
+</div>
+
+
+
+
+
+  
+  
+  
+  <div class="flex flex-wrap justify-between">
+    <span>
+    
+      <a href="/ko/docs/pa-retriever/search/" class="flex align-center">
+        <img src="/icons/backward.svg" class="book-icon" alt="Backward" />
+        <span>검색 가이드</span>
+      </a>
+    
+    </span>
+    <span>
+    
+      <a href="/ko/docs/pa-retriever/with-claude/" class="flex align-center">
+        <span>Claude와 함께 사용</span>
+        <img src="/icons/forward.svg" class="book-icon" alt="Forward" />
+      </a>
+    
+    </span>
+  </div>
+  
+
+
+ 
+        
+  
+ 
+        
+        
+  
+ 
+        
+  
+  
+    <script>(function(){document.querySelectorAll("pre:has(code)").forEach(e=>{e.addEventListener("click",e.focus),e.addEventListener("copy",function(t){if(t.preventDefault(),navigator.clipboard){const t=window.getSelection().toString()||e.textContent;navigator.clipboard.writeText(t)}})})})()</script>
+  
+
+      </footer>
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+  
+  <aside class="book-toc">
+    <div class="book-toc-content">
+      
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#개요">개요</a></li>
+    <li><a href="#지원-언어">지원 언어</a></li>
+    <li><a href="#명령어">명령어</a>
+      <ul>
+        <li><a href="#프로젝트-등록">프로젝트 등록</a></li>
+        <li><a href="#프로젝트-목록">프로젝트 목록</a></li>
+        <li><a href="#코드-인덱싱-1">코드 인덱싱</a></li>
+        <li><a href="#코드-검색">코드 검색</a></li>
+      </ul>
+    </li>
+    <li><a href="#문서-코드-연결">문서-코드 연결</a>
+      <ul>
+        <li><a href="#자동-연결">자동 연결</a></li>
+        <li><a href="#마커-사용">마커 사용</a></li>
+        <li><a href="#연결-상태-확인">연결 상태 확인</a></li>
+      </ul>
+    </li>
+    <li><a href="#실용-예시">실용 예시</a>
+      <ul>
+        <li><a href="#문서와-코드-동시-검색">문서와 코드 동시 검색</a></li>
+        <li><a href="#구현-누락-확인">구현 누락 확인</a></li>
+        <li><a href="#문서-누락-확인">문서 누락 확인</a></li>
+      </ul>
+    </li>
+    <li><a href="#다음-단계">다음 단계</a></li>
+  </ul>
+</nav>
+
+
+
+    </div>
+  </aside>
+  
+ 
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

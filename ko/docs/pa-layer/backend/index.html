@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="ko" dir="ltr">
+<head>
+  <!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Backend 컨벤션# PA-Layer의 Backend 구현 가이드입니다.
+공통 원칙# 디렉토리 구조# src/ ├── domain/ # 도메인별 분류 │ ├── auth/ │ │ ├── port/ # Port 인터페이스 │ │ │ ├── AuthPort.kt │ │ │ └── TokenPort.kt │ │ ├── adapter/ # Adapter 구현체 │ │ │ ├── AuthAdapter.kt │ │ │ └── TokenAdapter.kt │ │ └── model/ # 도메인 모델 │ │ ├── User.kt │ │ └── Token.kt │ └── orders/ │ ├── port/ │ ├── adapter/ │ └── model/ ├── api/ # API 레이어 │ └── controller/ └── infrastructure/ # 인프라 ├── persistence/ └── external/네이밍 규칙# 구분 규칙 예시 L1 Port {Domain}Port UserPort, TokenPort L2 Port {Feature}Port LoginPort, CheckoutPort Adapter {Port}Adapter LoginAdapter Query {Domain}Query UserQuery Kotlin / Spring Framework# Gradle 멀티모듈 구조# my-backend/ ├── build.gradle.kts ├── settings.gradle.kts ├── domain/ # 도메인 모듈 │ ├── domain-auth/ │ │ └── build.gradle.kts │ ├── domain-users/ │ │ └── build.gradle.kts │ └── domain-orders/ │ └── build.gradle.kts ├── application/ # 애플리케이션 모듈 │ ├── app-api/ │ │ └── build.gradle.kts │ └── app-admin/ │ └── build.gradle.kts └── infrastructure/ # 인프라 모듈 ├── infra-persistence/ │ └── build.gradle.kts └── infra-external/ └── build.gradle.ktssettings.gradle.kts# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 rootProject.name = &#34;my-backend&#34; include( // Domain &#34;domain:domain-auth&#34;, &#34;domain:domain-users&#34;, &#34;domain:domain-orders&#34;, // Application &#34;application:app-api&#34;, // Infrastructure &#34;infrastructure:infra-persistence&#34;, &#34;infrastructure:infra-external&#34; ) L1 Port 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 // domain/domain-users/src/.../port/UserPort.kt package com.example.domain.users.port interface UserPort { suspend fun create(command: CreateUserCommand): CreateUserResult suspend fun update(command: UpdateUserCommand): UpdateUserResult suspend fun delete(command: DeleteUserCommand): DeleteUserResult } // Command 정의 data class CreateUserCommand( val email: String, val name: String, val password: String ) // Result 정의 (sealed class 권장) sealed class CreateUserResult { data class Success(val userId: UserId) : CreateUserResult() data class EmailAlreadyExists(val email: String) : CreateUserResult() data class ValidationFailed(val errors: List&lt;String&gt;) : CreateUserResult() } L2 Port 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 // domain/domain-auth/src/.../port/LoginPort.kt package com.example.domain.auth.port interface LoginPort { suspend fun login(request: LoginRequest): LoginResult suspend fun logout(request: LogoutRequest): LogoutResult suspend fun refresh(request: RefreshRequest): RefreshResult } data class LoginRequest( val email: String, val password: String, val deviceInfo: DeviceInfo? = null ) sealed class LoginResult { data class Success( val accessToken: String, val refreshToken: String, val expiresIn: Long ) : LoginResult() object InvalidCredentials : LoginResult() object AccountLocked : LoginResult() data class TwoFactorRequired(val challengeId: String) : LoginResult() } Adapter 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 // application/app-api/src/.../adapter/LoginAdapter.kt package com.example.application.adapter.auth @Component class LoginAdapter( private val userPort: UserPort, private val tokenPort: TokenPort, private val sessionPort: SessionPort, private val eventPublisher: EventPublisher ) : LoginPort { @Transactional override suspend fun login(request: LoginRequest): LoginResult { // 1. 사용자 조회 및 검증 val user = userPort.findByEmail(request.email) ?: return LoginResult.InvalidCredentials // 2. 비밀번호 검증 if (!user.verifyPassword(request.password)) { eventPublisher.publish(LoginFailedEvent(user.id)) return LoginResult.InvalidCredentials } // 3. 계정 상태 확인 if (user.isLocked) { return LoginResult.AccountLocked } // 4. 토큰 생성 val tokens = tokenPort.generate(user.id, request.deviceInfo) // 5. 세션 생성 sessionPort.create(user.id, tokens.sessionId) // 6. 이벤트 발행 eventPublisher.publish(LoginSuccessEvent(user.id)) return LoginResult.Success( accessToken = tokens.accessToken, refreshToken = tokens.refreshToken, expiresIn = tokens.expiresIn ) } } Query 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 // domain/domain-users/src/.../query/UserQuery.kt package com.example.domain.users.query interface UserQuery { suspend fun findById(id: UserId): UserView? suspend fun findByEmail(email: String): UserView? suspend fun search(criteria: UserSearchCriteria): Page&lt;UserView&gt; } // View 모델 (Read-only) data class UserView( val id: String, val email: String, val name: String, val status: String, val createdAt: Instant ) data class UserSearchCriteria( val keyword: String? = null, val status: String? = null, val page: Int = 0, val size: Int = 20 ) TypeScript / NestJS# 디렉토리 구조# src/ ├── domain/ │ ├── auth/ │ │ ├── port/ │ │ │ ├── login.port.ts │ │ │ └── token.port.ts │ │ ├── adapter/ │ │ │ └── login.adapter.ts │ │ └── model/ │ │ └── auth.types.ts │ └── users/ │ ├── port/ │ ├── adapter/ │ └── model/ ├── api/ │ └── controller/ └── infrastructure/ └── persistence/L1 Port 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 // src/domain/users/port/user.port.ts export const USER_PORT = Symbol(&#39;USER_PORT&#39;); export interface UserPort { create(command: CreateUserCommand): Promise&lt;CreateUserResult&gt;; update(command: UpdateUserCommand): Promise&lt;UpdateUserResult&gt;; delete(command: DeleteUserCommand): Promise&lt;DeleteUserResult&gt;; } // Command export interface CreateUserCommand { email: string; name: string; password: string; } // Result (Discriminated Union) export type CreateUserResult = | { type: &#39;success&#39;; userId: string } | { type: &#39;emailExists&#39;; email: string } | { type: &#39;validationFailed&#39;; errors: string[] }; L2 Port 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 // src/domain/auth/port/login.port.ts export const LOGIN_PORT = Symbol(&#39;LOGIN_PORT&#39;); export interface LoginPort { login(request: LoginRequest): Promise&lt;LoginResult&gt;; logout(request: LogoutRequest): Promise&lt;void&gt;; refresh(request: RefreshRequest): Promise&lt;RefreshResult&gt;; } export interface LoginRequest { email: string; password: string; deviceInfo?: DeviceInfo; } export type LoginResult = | { type: &#39;success&#39;; accessToken: string; refreshToken: string; expiresIn: number } | { type: &#39;invalidCredentials&#39; } | { type: &#39;accountLocked&#39; } | { type: &#39;twoFactorRequired&#39;; challengeId: string }; Adapter 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 // src/domain/auth/adapter/login.adapter.ts import { Injectable, Inject } from &#39;@nestjs/common&#39;; import { LoginPort, LoginRequest, LoginResult } from &#39;../port/login.port&#39;; import { USER_PORT, UserPort } from &#39;../../users/port/user.port&#39;; import { TOKEN_PORT, TokenPort } from &#39;../port/token.port&#39;; @Injectable() export class LoginAdapter implements LoginPort { constructor( @Inject(USER_PORT) private readonly userPort: UserPort, @Inject(TOKEN_PORT) private readonly tokenPort: TokenPort, ) {} async login(request: LoginRequest): Promise&lt;LoginResult&gt; { // 1. 사용자 조회 const user = await this.userPort.findByEmail(request.email); if (!user) { return { type: &#39;invalidCredentials&#39; }; } // 2. 비밀번호 검증 const isValid = await this.userPort.verifyPassword( user.id, request.password ); if (!isValid) { return { type: &#39;invalidCredentials&#39; }; } // 3. 토큰 생성 const tokens = await this.tokenPort.generate(user.id); return { type: &#39;success&#39;, accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, expiresIn: tokens.expiresIn, }; } } Module 설정# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 // src/domain/auth/auth.module.ts import { Module } from &#39;@nestjs/common&#39;; import { LOGIN_PORT } from &#39;./port/login.port&#39;; import { LoginAdapter } from &#39;./adapter/login.adapter&#39;; import { UsersModule } from &#39;../users/users.module&#39;; @Module({ imports: [UsersModule], providers: [ { provide: LOGIN_PORT, useClass: LoginAdapter, }, ], exports: [LOGIN_PORT], }) export class AuthModule {} Go# 디렉토리 구조# my-api/ ├── go.mod ├── cmd/ │ └── api/ │ └── main.go ├── internal/ │ ├── domain/ │ │ ├── auth/ │ │ │ ├── port.go │ │ │ ├── adapter.go │ │ │ └── types.go │ │ └── users/ │ │ ├── port.go │ │ └── types.go │ ├── api/ │ │ └── handler/ │ └── infrastructure/ │ └── persistence/ └── pkg/ └── result/Port 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 // internal/domain/auth/port.go package auth import &#34;context&#34; // LoginPort defines the login interface type LoginPort interface { Login(ctx context.Context, req LoginRequest) (LoginResult, error) Logout(ctx context.Context, req LogoutRequest) error } // LoginRequest represents login input type LoginRequest struct { Email string Password string } // LoginResult represents login output type LoginResult struct { Type string AccessToken string RefreshToken string ExpiresIn int64 Error string } // Result types const ( LoginSuccess = &#34;success&#34; LoginInvalidCredentials = &#34;invalid_credentials&#34; LoginAccountLocked = &#34;account_locked&#34; ) Adapter 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 // internal/domain/auth/adapter.go package auth import ( &#34;context&#34; &#34;my-api/internal/domain/users&#34; ) type LoginAdapter struct { userPort users.UserPort tokenPort TokenPort } func NewLoginAdapter(userPort users.UserPort, tokenPort TokenPort) *LoginAdapter { return &amp;LoginAdapter{ userPort: userPort, tokenPort: tokenPort, } } func (a *LoginAdapter) Login(ctx context.Context, req LoginRequest) (LoginResult, error) { // 1. Find user user, err := a.userPort.FindByEmail(ctx, req.Email) if err != nil { return LoginResult{Type: LoginInvalidCredentials}, nil } // 2. Verify password if !user.VerifyPassword(req.Password) { return LoginResult{Type: LoginInvalidCredentials}, nil } // 3. Generate tokens tokens, err := a.tokenPort.Generate(ctx, user.ID) if err != nil { return LoginResult{}, err } return LoginResult{ Type: LoginSuccess, AccessToken: tokens.AccessToken, RefreshToken: tokens.RefreshToken, ExpiresIn: tokens.ExpiresIn, }, nil } Rust# 디렉토리 구조# my-service/ ├── Cargo.toml ├── src/ │ ├── main.rs │ ├── domain/ │ │ ├── mod.rs │ │ ├── auth/ │ │ │ ├── mod.rs │ │ │ ├── port.rs │ │ │ ├── adapter.rs │ │ │ └── types.rs │ │ └── users/ │ │ ├── mod.rs │ │ └── port.rs │ ├── api/ │ │ └── handler.rs │ └── infrastructure/ │ └── persistence.rsPort 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 // src/domain/auth/port.rs use async_trait::async_trait; use crate::domain::auth::types::*; #[async_trait] pub trait LoginPort: Send &#43; Sync { async fn login(&amp;self, request: LoginRequest) -&gt; Result&lt;LoginResult, AuthError&gt;; async fn logout(&amp;self, request: LogoutRequest) -&gt; Result&lt;(), AuthError&gt;; } // src/domain/auth/types.rs #[derive(Debug, Clone)] pub struct LoginRequest { pub email: String, pub password: String, } #[derive(Debug, Clone)] pub enum LoginResult { Success { access_token: String, refresh_token: String, expires_in: i64, }, InvalidCredentials, AccountLocked, } #[derive(Debug, thiserror::Error)] pub enum AuthError { #[error(&#34;Internal error: {0}&#34;)] Internal(String), } Adapter 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 // src/domain/auth/adapter.rs use async_trait::async_trait; use std::sync::Arc; use super::port::LoginPort; use super::types::*; use crate::domain::users::port::UserPort; pub struct LoginAdapter { user_port: Arc&lt;dyn UserPort&gt;, token_port: Arc&lt;dyn TokenPort&gt;, } impl LoginAdapter { pub fn new( user_port: Arc&lt;dyn UserPort&gt;, token_port: Arc&lt;dyn TokenPort&gt;, ) -&gt; Self { Self { user_port, token_port } } } #[async_trait] impl LoginPort for LoginAdapter { async fn login(&amp;self, request: LoginRequest) -&gt; Result&lt;LoginResult, AuthError&gt; { // 1. Find user let user = self.user_port .find_by_email(&amp;request.email) .await .map_err(|e| AuthError::Internal(e.to_string()))?; let user = match user { Some(u) =&gt; u, None =&gt; return Ok(LoginResult::InvalidCredentials), }; // 2. Verify password if !user.verify_password(&amp;request.password) { return Ok(LoginResult::InvalidCredentials); } // 3. Generate tokens let tokens = self.token_port .generate(&amp;user.id) .await .map_err(|e| AuthError::Internal(e.to_string()))?; Ok(LoginResult::Success { access_token: tokens.access_token, refresh_token: tokens.refresh_token, expires_in: tokens.expires_in, }) } } 다음 단계# Frontend 컨벤션 ">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://pa-layer.github.io/ko/docs/pa-layer/backend/">
+  <meta property="og:site_name" content="PA-Layer">
+  <meta property="og:title" content="Backend 컨벤션">
+  <meta property="og:description" content="Backend 컨벤션# PA-Layer의 Backend 구현 가이드입니다.
+공통 원칙# 디렉토리 구조# src/ ├── domain/ # 도메인별 분류 │ ├── auth/ │ │ ├── port/ # Port 인터페이스 │ │ │ ├── AuthPort.kt │ │ │ └── TokenPort.kt │ │ ├── adapter/ # Adapter 구현체 │ │ │ ├── AuthAdapter.kt │ │ │ └── TokenAdapter.kt │ │ └── model/ # 도메인 모델 │ │ ├── User.kt │ │ └── Token.kt │ └── orders/ │ ├── port/ │ ├── adapter/ │ └── model/ ├── api/ # API 레이어 │ └── controller/ └── infrastructure/ # 인프라 ├── persistence/ └── external/네이밍 규칙# 구분 규칙 예시 L1 Port {Domain}Port UserPort, TokenPort L2 Port {Feature}Port LoginPort, CheckoutPort Adapter {Port}Adapter LoginAdapter Query {Domain}Query UserQuery Kotlin / Spring Framework# Gradle 멀티모듈 구조# my-backend/ ├── build.gradle.kts ├── settings.gradle.kts ├── domain/ # 도메인 모듈 │ ├── domain-auth/ │ │ └── build.gradle.kts │ ├── domain-users/ │ │ └── build.gradle.kts │ └── domain-orders/ │ └── build.gradle.kts ├── application/ # 애플리케이션 모듈 │ ├── app-api/ │ │ └── build.gradle.kts │ └── app-admin/ │ └── build.gradle.kts └── infrastructure/ # 인프라 모듈 ├── infra-persistence/ │ └── build.gradle.kts └── infra-external/ └── build.gradle.ktssettings.gradle.kts# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 rootProject.name = &#34;my-backend&#34; include( // Domain &#34;domain:domain-auth&#34;, &#34;domain:domain-users&#34;, &#34;domain:domain-orders&#34;, // Application &#34;application:app-api&#34;, // Infrastructure &#34;infrastructure:infra-persistence&#34;, &#34;infrastructure:infra-external&#34; ) L1 Port 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 // domain/domain-users/src/.../port/UserPort.kt package com.example.domain.users.port interface UserPort { suspend fun create(command: CreateUserCommand): CreateUserResult suspend fun update(command: UpdateUserCommand): UpdateUserResult suspend fun delete(command: DeleteUserCommand): DeleteUserResult } // Command 정의 data class CreateUserCommand( val email: String, val name: String, val password: String ) // Result 정의 (sealed class 권장) sealed class CreateUserResult { data class Success(val userId: UserId) : CreateUserResult() data class EmailAlreadyExists(val email: String) : CreateUserResult() data class ValidationFailed(val errors: List&lt;String&gt;) : CreateUserResult() } L2 Port 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 // domain/domain-auth/src/.../port/LoginPort.kt package com.example.domain.auth.port interface LoginPort { suspend fun login(request: LoginRequest): LoginResult suspend fun logout(request: LogoutRequest): LogoutResult suspend fun refresh(request: RefreshRequest): RefreshResult } data class LoginRequest( val email: String, val password: String, val deviceInfo: DeviceInfo? = null ) sealed class LoginResult { data class Success( val accessToken: String, val refreshToken: String, val expiresIn: Long ) : LoginResult() object InvalidCredentials : LoginResult() object AccountLocked : LoginResult() data class TwoFactorRequired(val challengeId: String) : LoginResult() } Adapter 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 // application/app-api/src/.../adapter/LoginAdapter.kt package com.example.application.adapter.auth @Component class LoginAdapter( private val userPort: UserPort, private val tokenPort: TokenPort, private val sessionPort: SessionPort, private val eventPublisher: EventPublisher ) : LoginPort { @Transactional override suspend fun login(request: LoginRequest): LoginResult { // 1. 사용자 조회 및 검증 val user = userPort.findByEmail(request.email) ?: return LoginResult.InvalidCredentials // 2. 비밀번호 검증 if (!user.verifyPassword(request.password)) { eventPublisher.publish(LoginFailedEvent(user.id)) return LoginResult.InvalidCredentials } // 3. 계정 상태 확인 if (user.isLocked) { return LoginResult.AccountLocked } // 4. 토큰 생성 val tokens = tokenPort.generate(user.id, request.deviceInfo) // 5. 세션 생성 sessionPort.create(user.id, tokens.sessionId) // 6. 이벤트 발행 eventPublisher.publish(LoginSuccessEvent(user.id)) return LoginResult.Success( accessToken = tokens.accessToken, refreshToken = tokens.refreshToken, expiresIn = tokens.expiresIn ) } } Query 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 // domain/domain-users/src/.../query/UserQuery.kt package com.example.domain.users.query interface UserQuery { suspend fun findById(id: UserId): UserView? suspend fun findByEmail(email: String): UserView? suspend fun search(criteria: UserSearchCriteria): Page&lt;UserView&gt; } // View 모델 (Read-only) data class UserView( val id: String, val email: String, val name: String, val status: String, val createdAt: Instant ) data class UserSearchCriteria( val keyword: String? = null, val status: String? = null, val page: Int = 0, val size: Int = 20 ) TypeScript / NestJS# 디렉토리 구조# src/ ├── domain/ │ ├── auth/ │ │ ├── port/ │ │ │ ├── login.port.ts │ │ │ └── token.port.ts │ │ ├── adapter/ │ │ │ └── login.adapter.ts │ │ └── model/ │ │ └── auth.types.ts │ └── users/ │ ├── port/ │ ├── adapter/ │ └── model/ ├── api/ │ └── controller/ └── infrastructure/ └── persistence/L1 Port 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 // src/domain/users/port/user.port.ts export const USER_PORT = Symbol(&#39;USER_PORT&#39;); export interface UserPort { create(command: CreateUserCommand): Promise&lt;CreateUserResult&gt;; update(command: UpdateUserCommand): Promise&lt;UpdateUserResult&gt;; delete(command: DeleteUserCommand): Promise&lt;DeleteUserResult&gt;; } // Command export interface CreateUserCommand { email: string; name: string; password: string; } // Result (Discriminated Union) export type CreateUserResult = | { type: &#39;success&#39;; userId: string } | { type: &#39;emailExists&#39;; email: string } | { type: &#39;validationFailed&#39;; errors: string[] }; L2 Port 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 // src/domain/auth/port/login.port.ts export const LOGIN_PORT = Symbol(&#39;LOGIN_PORT&#39;); export interface LoginPort { login(request: LoginRequest): Promise&lt;LoginResult&gt;; logout(request: LogoutRequest): Promise&lt;void&gt;; refresh(request: RefreshRequest): Promise&lt;RefreshResult&gt;; } export interface LoginRequest { email: string; password: string; deviceInfo?: DeviceInfo; } export type LoginResult = | { type: &#39;success&#39;; accessToken: string; refreshToken: string; expiresIn: number } | { type: &#39;invalidCredentials&#39; } | { type: &#39;accountLocked&#39; } | { type: &#39;twoFactorRequired&#39;; challengeId: string }; Adapter 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 // src/domain/auth/adapter/login.adapter.ts import { Injectable, Inject } from &#39;@nestjs/common&#39;; import { LoginPort, LoginRequest, LoginResult } from &#39;../port/login.port&#39;; import { USER_PORT, UserPort } from &#39;../../users/port/user.port&#39;; import { TOKEN_PORT, TokenPort } from &#39;../port/token.port&#39;; @Injectable() export class LoginAdapter implements LoginPort { constructor( @Inject(USER_PORT) private readonly userPort: UserPort, @Inject(TOKEN_PORT) private readonly tokenPort: TokenPort, ) {} async login(request: LoginRequest): Promise&lt;LoginResult&gt; { // 1. 사용자 조회 const user = await this.userPort.findByEmail(request.email); if (!user) { return { type: &#39;invalidCredentials&#39; }; } // 2. 비밀번호 검증 const isValid = await this.userPort.verifyPassword( user.id, request.password ); if (!isValid) { return { type: &#39;invalidCredentials&#39; }; } // 3. 토큰 생성 const tokens = await this.tokenPort.generate(user.id); return { type: &#39;success&#39;, accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, expiresIn: tokens.expiresIn, }; } } Module 설정# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 // src/domain/auth/auth.module.ts import { Module } from &#39;@nestjs/common&#39;; import { LOGIN_PORT } from &#39;./port/login.port&#39;; import { LoginAdapter } from &#39;./adapter/login.adapter&#39;; import { UsersModule } from &#39;../users/users.module&#39;; @Module({ imports: [UsersModule], providers: [ { provide: LOGIN_PORT, useClass: LoginAdapter, }, ], exports: [LOGIN_PORT], }) export class AuthModule {} Go# 디렉토리 구조# my-api/ ├── go.mod ├── cmd/ │ └── api/ │ └── main.go ├── internal/ │ ├── domain/ │ │ ├── auth/ │ │ │ ├── port.go │ │ │ ├── adapter.go │ │ │ └── types.go │ │ └── users/ │ │ ├── port.go │ │ └── types.go │ ├── api/ │ │ └── handler/ │ └── infrastructure/ │ └── persistence/ └── pkg/ └── result/Port 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 // internal/domain/auth/port.go package auth import &#34;context&#34; // LoginPort defines the login interface type LoginPort interface { Login(ctx context.Context, req LoginRequest) (LoginResult, error) Logout(ctx context.Context, req LogoutRequest) error } // LoginRequest represents login input type LoginRequest struct { Email string Password string } // LoginResult represents login output type LoginResult struct { Type string AccessToken string RefreshToken string ExpiresIn int64 Error string } // Result types const ( LoginSuccess = &#34;success&#34; LoginInvalidCredentials = &#34;invalid_credentials&#34; LoginAccountLocked = &#34;account_locked&#34; ) Adapter 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 // internal/domain/auth/adapter.go package auth import ( &#34;context&#34; &#34;my-api/internal/domain/users&#34; ) type LoginAdapter struct { userPort users.UserPort tokenPort TokenPort } func NewLoginAdapter(userPort users.UserPort, tokenPort TokenPort) *LoginAdapter { return &amp;LoginAdapter{ userPort: userPort, tokenPort: tokenPort, } } func (a *LoginAdapter) Login(ctx context.Context, req LoginRequest) (LoginResult, error) { // 1. Find user user, err := a.userPort.FindByEmail(ctx, req.Email) if err != nil { return LoginResult{Type: LoginInvalidCredentials}, nil } // 2. Verify password if !user.VerifyPassword(req.Password) { return LoginResult{Type: LoginInvalidCredentials}, nil } // 3. Generate tokens tokens, err := a.tokenPort.Generate(ctx, user.ID) if err != nil { return LoginResult{}, err } return LoginResult{ Type: LoginSuccess, AccessToken: tokens.AccessToken, RefreshToken: tokens.RefreshToken, ExpiresIn: tokens.ExpiresIn, }, nil } Rust# 디렉토리 구조# my-service/ ├── Cargo.toml ├── src/ │ ├── main.rs │ ├── domain/ │ │ ├── mod.rs │ │ ├── auth/ │ │ │ ├── mod.rs │ │ │ ├── port.rs │ │ │ ├── adapter.rs │ │ │ └── types.rs │ │ └── users/ │ │ ├── mod.rs │ │ └── port.rs │ ├── api/ │ │ └── handler.rs │ └── infrastructure/ │ └── persistence.rsPort 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 // src/domain/auth/port.rs use async_trait::async_trait; use crate::domain::auth::types::*; #[async_trait] pub trait LoginPort: Send &#43; Sync { async fn login(&amp;self, request: LoginRequest) -&gt; Result&lt;LoginResult, AuthError&gt;; async fn logout(&amp;self, request: LogoutRequest) -&gt; Result&lt;(), AuthError&gt;; } // src/domain/auth/types.rs #[derive(Debug, Clone)] pub struct LoginRequest { pub email: String, pub password: String, } #[derive(Debug, Clone)] pub enum LoginResult { Success { access_token: String, refresh_token: String, expires_in: i64, }, InvalidCredentials, AccountLocked, } #[derive(Debug, thiserror::Error)] pub enum AuthError { #[error(&#34;Internal error: {0}&#34;)] Internal(String), } Adapter 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 // src/domain/auth/adapter.rs use async_trait::async_trait; use std::sync::Arc; use super::port::LoginPort; use super::types::*; use crate::domain::users::port::UserPort; pub struct LoginAdapter { user_port: Arc&lt;dyn UserPort&gt;, token_port: Arc&lt;dyn TokenPort&gt;, } impl LoginAdapter { pub fn new( user_port: Arc&lt;dyn UserPort&gt;, token_port: Arc&lt;dyn TokenPort&gt;, ) -&gt; Self { Self { user_port, token_port } } } #[async_trait] impl LoginPort for LoginAdapter { async fn login(&amp;self, request: LoginRequest) -&gt; Result&lt;LoginResult, AuthError&gt; { // 1. Find user let user = self.user_port .find_by_email(&amp;request.email) .await .map_err(|e| AuthError::Internal(e.to_string()))?; let user = match user { Some(u) =&gt; u, None =&gt; return Ok(LoginResult::InvalidCredentials), }; // 2. Verify password if !user.verify_password(&amp;request.password) { return Ok(LoginResult::InvalidCredentials); } // 3. Generate tokens let tokens = self.token_port .generate(&amp;user.id) .await .map_err(|e| AuthError::Internal(e.to_string()))?; Ok(LoginResult::Success { access_token: tokens.access_token, refresh_token: tokens.refresh_token, expires_in: tokens.expires_in, }) } } 다음 단계# Frontend 컨벤션">
+  <meta property="og:locale" content="ko">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+
+
+  <meta itemprop="name" content="Backend 컨벤션">
+  <meta itemprop="description" content="Backend 컨벤션# PA-Layer의 Backend 구현 가이드입니다.
+공통 원칙# 디렉토리 구조# src/ ├── domain/ # 도메인별 분류 │ ├── auth/ │ │ ├── port/ # Port 인터페이스 │ │ │ ├── AuthPort.kt │ │ │ └── TokenPort.kt │ │ ├── adapter/ # Adapter 구현체 │ │ │ ├── AuthAdapter.kt │ │ │ └── TokenAdapter.kt │ │ └── model/ # 도메인 모델 │ │ ├── User.kt │ │ └── Token.kt │ └── orders/ │ ├── port/ │ ├── adapter/ │ └── model/ ├── api/ # API 레이어 │ └── controller/ └── infrastructure/ # 인프라 ├── persistence/ └── external/네이밍 규칙# 구분 규칙 예시 L1 Port {Domain}Port UserPort, TokenPort L2 Port {Feature}Port LoginPort, CheckoutPort Adapter {Port}Adapter LoginAdapter Query {Domain}Query UserQuery Kotlin / Spring Framework# Gradle 멀티모듈 구조# my-backend/ ├── build.gradle.kts ├── settings.gradle.kts ├── domain/ # 도메인 모듈 │ ├── domain-auth/ │ │ └── build.gradle.kts │ ├── domain-users/ │ │ └── build.gradle.kts │ └── domain-orders/ │ └── build.gradle.kts ├── application/ # 애플리케이션 모듈 │ ├── app-api/ │ │ └── build.gradle.kts │ └── app-admin/ │ └── build.gradle.kts └── infrastructure/ # 인프라 모듈 ├── infra-persistence/ │ └── build.gradle.kts └── infra-external/ └── build.gradle.ktssettings.gradle.kts# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 rootProject.name = &#34;my-backend&#34; include( // Domain &#34;domain:domain-auth&#34;, &#34;domain:domain-users&#34;, &#34;domain:domain-orders&#34;, // Application &#34;application:app-api&#34;, // Infrastructure &#34;infrastructure:infra-persistence&#34;, &#34;infrastructure:infra-external&#34; ) L1 Port 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 // domain/domain-users/src/.../port/UserPort.kt package com.example.domain.users.port interface UserPort { suspend fun create(command: CreateUserCommand): CreateUserResult suspend fun update(command: UpdateUserCommand): UpdateUserResult suspend fun delete(command: DeleteUserCommand): DeleteUserResult } // Command 정의 data class CreateUserCommand( val email: String, val name: String, val password: String ) // Result 정의 (sealed class 권장) sealed class CreateUserResult { data class Success(val userId: UserId) : CreateUserResult() data class EmailAlreadyExists(val email: String) : CreateUserResult() data class ValidationFailed(val errors: List&lt;String&gt;) : CreateUserResult() } L2 Port 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 // domain/domain-auth/src/.../port/LoginPort.kt package com.example.domain.auth.port interface LoginPort { suspend fun login(request: LoginRequest): LoginResult suspend fun logout(request: LogoutRequest): LogoutResult suspend fun refresh(request: RefreshRequest): RefreshResult } data class LoginRequest( val email: String, val password: String, val deviceInfo: DeviceInfo? = null ) sealed class LoginResult { data class Success( val accessToken: String, val refreshToken: String, val expiresIn: Long ) : LoginResult() object InvalidCredentials : LoginResult() object AccountLocked : LoginResult() data class TwoFactorRequired(val challengeId: String) : LoginResult() } Adapter 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 // application/app-api/src/.../adapter/LoginAdapter.kt package com.example.application.adapter.auth @Component class LoginAdapter( private val userPort: UserPort, private val tokenPort: TokenPort, private val sessionPort: SessionPort, private val eventPublisher: EventPublisher ) : LoginPort { @Transactional override suspend fun login(request: LoginRequest): LoginResult { // 1. 사용자 조회 및 검증 val user = userPort.findByEmail(request.email) ?: return LoginResult.InvalidCredentials // 2. 비밀번호 검증 if (!user.verifyPassword(request.password)) { eventPublisher.publish(LoginFailedEvent(user.id)) return LoginResult.InvalidCredentials } // 3. 계정 상태 확인 if (user.isLocked) { return LoginResult.AccountLocked } // 4. 토큰 생성 val tokens = tokenPort.generate(user.id, request.deviceInfo) // 5. 세션 생성 sessionPort.create(user.id, tokens.sessionId) // 6. 이벤트 발행 eventPublisher.publish(LoginSuccessEvent(user.id)) return LoginResult.Success( accessToken = tokens.accessToken, refreshToken = tokens.refreshToken, expiresIn = tokens.expiresIn ) } } Query 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 // domain/domain-users/src/.../query/UserQuery.kt package com.example.domain.users.query interface UserQuery { suspend fun findById(id: UserId): UserView? suspend fun findByEmail(email: String): UserView? suspend fun search(criteria: UserSearchCriteria): Page&lt;UserView&gt; } // View 모델 (Read-only) data class UserView( val id: String, val email: String, val name: String, val status: String, val createdAt: Instant ) data class UserSearchCriteria( val keyword: String? = null, val status: String? = null, val page: Int = 0, val size: Int = 20 ) TypeScript / NestJS# 디렉토리 구조# src/ ├── domain/ │ ├── auth/ │ │ ├── port/ │ │ │ ├── login.port.ts │ │ │ └── token.port.ts │ │ ├── adapter/ │ │ │ └── login.adapter.ts │ │ └── model/ │ │ └── auth.types.ts │ └── users/ │ ├── port/ │ ├── adapter/ │ └── model/ ├── api/ │ └── controller/ └── infrastructure/ └── persistence/L1 Port 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 // src/domain/users/port/user.port.ts export const USER_PORT = Symbol(&#39;USER_PORT&#39;); export interface UserPort { create(command: CreateUserCommand): Promise&lt;CreateUserResult&gt;; update(command: UpdateUserCommand): Promise&lt;UpdateUserResult&gt;; delete(command: DeleteUserCommand): Promise&lt;DeleteUserResult&gt;; } // Command export interface CreateUserCommand { email: string; name: string; password: string; } // Result (Discriminated Union) export type CreateUserResult = | { type: &#39;success&#39;; userId: string } | { type: &#39;emailExists&#39;; email: string } | { type: &#39;validationFailed&#39;; errors: string[] }; L2 Port 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 // src/domain/auth/port/login.port.ts export const LOGIN_PORT = Symbol(&#39;LOGIN_PORT&#39;); export interface LoginPort { login(request: LoginRequest): Promise&lt;LoginResult&gt;; logout(request: LogoutRequest): Promise&lt;void&gt;; refresh(request: RefreshRequest): Promise&lt;RefreshResult&gt;; } export interface LoginRequest { email: string; password: string; deviceInfo?: DeviceInfo; } export type LoginResult = | { type: &#39;success&#39;; accessToken: string; refreshToken: string; expiresIn: number } | { type: &#39;invalidCredentials&#39; } | { type: &#39;accountLocked&#39; } | { type: &#39;twoFactorRequired&#39;; challengeId: string }; Adapter 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 // src/domain/auth/adapter/login.adapter.ts import { Injectable, Inject } from &#39;@nestjs/common&#39;; import { LoginPort, LoginRequest, LoginResult } from &#39;../port/login.port&#39;; import { USER_PORT, UserPort } from &#39;../../users/port/user.port&#39;; import { TOKEN_PORT, TokenPort } from &#39;../port/token.port&#39;; @Injectable() export class LoginAdapter implements LoginPort { constructor( @Inject(USER_PORT) private readonly userPort: UserPort, @Inject(TOKEN_PORT) private readonly tokenPort: TokenPort, ) {} async login(request: LoginRequest): Promise&lt;LoginResult&gt; { // 1. 사용자 조회 const user = await this.userPort.findByEmail(request.email); if (!user) { return { type: &#39;invalidCredentials&#39; }; } // 2. 비밀번호 검증 const isValid = await this.userPort.verifyPassword( user.id, request.password ); if (!isValid) { return { type: &#39;invalidCredentials&#39; }; } // 3. 토큰 생성 const tokens = await this.tokenPort.generate(user.id); return { type: &#39;success&#39;, accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, expiresIn: tokens.expiresIn, }; } } Module 설정# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 // src/domain/auth/auth.module.ts import { Module } from &#39;@nestjs/common&#39;; import { LOGIN_PORT } from &#39;./port/login.port&#39;; import { LoginAdapter } from &#39;./adapter/login.adapter&#39;; import { UsersModule } from &#39;../users/users.module&#39;; @Module({ imports: [UsersModule], providers: [ { provide: LOGIN_PORT, useClass: LoginAdapter, }, ], exports: [LOGIN_PORT], }) export class AuthModule {} Go# 디렉토리 구조# my-api/ ├── go.mod ├── cmd/ │ └── api/ │ └── main.go ├── internal/ │ ├── domain/ │ │ ├── auth/ │ │ │ ├── port.go │ │ │ ├── adapter.go │ │ │ └── types.go │ │ └── users/ │ │ ├── port.go │ │ └── types.go │ ├── api/ │ │ └── handler/ │ └── infrastructure/ │ └── persistence/ └── pkg/ └── result/Port 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 // internal/domain/auth/port.go package auth import &#34;context&#34; // LoginPort defines the login interface type LoginPort interface { Login(ctx context.Context, req LoginRequest) (LoginResult, error) Logout(ctx context.Context, req LogoutRequest) error } // LoginRequest represents login input type LoginRequest struct { Email string Password string } // LoginResult represents login output type LoginResult struct { Type string AccessToken string RefreshToken string ExpiresIn int64 Error string } // Result types const ( LoginSuccess = &#34;success&#34; LoginInvalidCredentials = &#34;invalid_credentials&#34; LoginAccountLocked = &#34;account_locked&#34; ) Adapter 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 // internal/domain/auth/adapter.go package auth import ( &#34;context&#34; &#34;my-api/internal/domain/users&#34; ) type LoginAdapter struct { userPort users.UserPort tokenPort TokenPort } func NewLoginAdapter(userPort users.UserPort, tokenPort TokenPort) *LoginAdapter { return &amp;LoginAdapter{ userPort: userPort, tokenPort: tokenPort, } } func (a *LoginAdapter) Login(ctx context.Context, req LoginRequest) (LoginResult, error) { // 1. Find user user, err := a.userPort.FindByEmail(ctx, req.Email) if err != nil { return LoginResult{Type: LoginInvalidCredentials}, nil } // 2. Verify password if !user.VerifyPassword(req.Password) { return LoginResult{Type: LoginInvalidCredentials}, nil } // 3. Generate tokens tokens, err := a.tokenPort.Generate(ctx, user.ID) if err != nil { return LoginResult{}, err } return LoginResult{ Type: LoginSuccess, AccessToken: tokens.AccessToken, RefreshToken: tokens.RefreshToken, ExpiresIn: tokens.ExpiresIn, }, nil } Rust# 디렉토리 구조# my-service/ ├── Cargo.toml ├── src/ │ ├── main.rs │ ├── domain/ │ │ ├── mod.rs │ │ ├── auth/ │ │ │ ├── mod.rs │ │ │ ├── port.rs │ │ │ ├── adapter.rs │ │ │ └── types.rs │ │ └── users/ │ │ ├── mod.rs │ │ └── port.rs │ ├── api/ │ │ └── handler.rs │ └── infrastructure/ │ └── persistence.rsPort 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 // src/domain/auth/port.rs use async_trait::async_trait; use crate::domain::auth::types::*; #[async_trait] pub trait LoginPort: Send &#43; Sync { async fn login(&amp;self, request: LoginRequest) -&gt; Result&lt;LoginResult, AuthError&gt;; async fn logout(&amp;self, request: LogoutRequest) -&gt; Result&lt;(), AuthError&gt;; } // src/domain/auth/types.rs #[derive(Debug, Clone)] pub struct LoginRequest { pub email: String, pub password: String, } #[derive(Debug, Clone)] pub enum LoginResult { Success { access_token: String, refresh_token: String, expires_in: i64, }, InvalidCredentials, AccountLocked, } #[derive(Debug, thiserror::Error)] pub enum AuthError { #[error(&#34;Internal error: {0}&#34;)] Internal(String), } Adapter 예시# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 // src/domain/auth/adapter.rs use async_trait::async_trait; use std::sync::Arc; use super::port::LoginPort; use super::types::*; use crate::domain::users::port::UserPort; pub struct LoginAdapter { user_port: Arc&lt;dyn UserPort&gt;, token_port: Arc&lt;dyn TokenPort&gt;, } impl LoginAdapter { pub fn new( user_port: Arc&lt;dyn UserPort&gt;, token_port: Arc&lt;dyn TokenPort&gt;, ) -&gt; Self { Self { user_port, token_port } } } #[async_trait] impl LoginPort for LoginAdapter { async fn login(&amp;self, request: LoginRequest) -&gt; Result&lt;LoginResult, AuthError&gt; { // 1. Find user let user = self.user_port .find_by_email(&amp;request.email) .await .map_err(|e| AuthError::Internal(e.to_string()))?; let user = match user { Some(u) =&gt; u, None =&gt; return Ok(LoginResult::InvalidCredentials), }; // 2. Verify password if !user.verify_password(&amp;request.password) { return Ok(LoginResult::InvalidCredentials); } // 3. Generate tokens let tokens = self.token_port .generate(&amp;user.id) .await .map_err(|e| AuthError::Internal(e.to_string()))?; Ok(LoginResult::Success { access_token: tokens.access_token, refresh_token: tokens.refresh_token, expires_in: tokens.expires_in, }) } } 다음 단계# Frontend 컨벤션">
+  <meta itemprop="wordCount" content="1805">
+
+<title>Backend 컨벤션 | PA-Layer</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="https://pa-layer.github.io/ko/docs/pa-layer/backend/">
+  <link rel="alternate" hreflang="en" href="https://pa-layer.github.io/en/docs/pa-layer/backend/" title="Backend Conventions">
+<link rel="stylesheet" href="/book.min.6970156cec683193d93c9c4edaf0d56574e4361df2e0c1be4f697ae81c3ba55f.css" integrity="sha256-aXAVbOxoMZPZPJxO2vDVZXTkNh3y4MG&#43;T2l66Bw7pV8=" crossorigin="anonymous">
+
+
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/ko.search.min.e9756793949413dae8c85e803ce1e02b13ffa1c302aec58e19bfbadb693819d3.js" integrity="sha256-6XVnk5SUE9royF6APOHgKxP/ocMCrsWOGb&#43;622k4GdM=" crossorigin="anonymous"></script>
+
+
+
+  
+</head>
+<body dir="ltr" class="book-kind-page book-type-docs">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    
+<aside class="book-menu">
+  <div class="book-menu-content">
+    
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/ko/"><img src="/images/pa-layer-logo.svg" alt="Logo" /><span>PA-Layer</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input id="book-search-input" type="text" 
+    placeholder="Search"
+    aria-label="Search"
+    maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+  
+
+
+  
+    
+  
+
+
+  
+
+
+<ul class="book-languages">
+  <li>
+    <input type="checkbox" id="languages" class="toggle" />
+    <label for="languages" class="flex">
+      <a role="button">
+        <img src="/icons/translate.svg" class="book-icon" alt="Languages" />
+        한국어
+      </a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+
+    <ul>
+      
+      <li>
+        <a href="/en/docs/pa-layer/backend/" class="flex flex-auto">
+          English
+        </a>
+      </li>
+      
+    </ul>
+  </li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-b056803e087b3464503e98766cccad1a" class="toggle"  />
+    <label for="section-b056803e087b3464503e98766cccad1a" class="flex">
+      <a href="/ko/docs/installation/" class="">
+        설치하기</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/macos/" class="">
+      macOS 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/windows/" class="">
+      Windows 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/linux/" class="">
+      Linux 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/workspace/" class="">
+      워크스페이스 구성</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-187b3aa4e29a5d5ef2738d28ac16df69" class="toggle"  />
+    <label for="section-187b3aa4e29a5d5ef2738d28ac16df69" class="flex">
+      <a href="/ko/docs/configuration/" class="">
+        설정하기</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/claude/" class="">
+      Claude 연동</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/obsidian/" class="">
+      Obsidian 설정</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/pa-config/" class="">
+      PA-Retriever 설정</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99ad2865f9541edb014cad9a350d886e" class="toggle" checked />
+    <label for="section-99ad2865f9541edb014cad9a350d886e" class="flex">
+      <a href="/ko/docs/pa-layer/" class="">
+        PA-Layer</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/overview/" class="">
+      아키텍처 개요</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/backend/" class="active">
+      Backend 컨벤션</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/frontend/" class="">
+      Frontend 컨벤션</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99cc806f10f29d7b76e63ff1539abbc7" class="toggle"  />
+    <label for="section-99cc806f10f29d7b76e63ff1539abbc7" class="flex">
+      <a href="/ko/docs/pa-retriever/" class="">
+        PA-Retriever</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/basic/" class="">
+      기본 사용법</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/search/" class="">
+      검색 가이드</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/code/" class="">
+      코드 인덱싱</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/with-claude/" class="">
+      Claude와 함께 사용</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/advanced/" class="">
+      고급 기능</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+<ul><li><a href="https://github.com/pa-layer/pa-retriever" target="_blank" rel="noopener">GitHub</a></li></ul>
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+
+  </div>
+</aside>
+ 
+
+    <div class="book-page">
+      <header class="book-header hidden">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/icons/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>Backend 컨벤션</h3>
+
+  <label for="toc-control">
+    
+    <img src="/icons/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#공통-원칙">공통 원칙</a>
+      <ul>
+        <li><a href="#디렉토리-구조">디렉토리 구조</a></li>
+        <li><a href="#네이밍-규칙">네이밍 규칙</a></li>
+      </ul>
+    </li>
+    <li><a href="#kotlin--spring-framework">Kotlin / Spring Framework</a>
+      <ul>
+        <li><a href="#gradle-멀티모듈-구조">Gradle 멀티모듈 구조</a></li>
+        <li><a href="#settingsgradlekts">settings.gradle.kts</a></li>
+        <li><a href="#l1-port-예시">L1 Port 예시</a></li>
+        <li><a href="#l2-port-예시">L2 Port 예시</a></li>
+        <li><a href="#adapter-예시">Adapter 예시</a></li>
+        <li><a href="#query-예시">Query 예시</a></li>
+      </ul>
+    </li>
+    <li><a href="#typescript--nestjs">TypeScript / NestJS</a>
+      <ul>
+        <li><a href="#디렉토리-구조-1">디렉토리 구조</a></li>
+        <li><a href="#l1-port-예시-1">L1 Port 예시</a></li>
+        <li><a href="#l2-port-예시-1">L2 Port 예시</a></li>
+        <li><a href="#adapter-예시-1">Adapter 예시</a></li>
+        <li><a href="#module-설정">Module 설정</a></li>
+      </ul>
+    </li>
+    <li><a href="#go">Go</a>
+      <ul>
+        <li><a href="#디렉토리-구조-2">디렉토리 구조</a></li>
+        <li><a href="#port-예시">Port 예시</a></li>
+        <li><a href="#adapter-예시-2">Adapter 예시</a></li>
+      </ul>
+    </li>
+    <li><a href="#rust">Rust</a>
+      <ul>
+        <li><a href="#디렉토리-구조-3">디렉토리 구조</a></li>
+        <li><a href="#port-예시-1">Port 예시</a></li>
+        <li><a href="#adapter-예시-3">Adapter 예시</a></li>
+      </ul>
+    </li>
+    <li><a href="#다음-단계">다음 단계</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="backend-컨벤션">Backend 컨벤션<a class="anchor" href="#backend-%ec%bb%a8%eb%b2%a4%ec%85%98">#</a></h1>
+<p>PA-Layer의 Backend 구현 가이드입니다.</p>
+<h2 id="공통-원칙">공통 원칙<a class="anchor" href="#%ea%b3%b5%ed%86%b5-%ec%9b%90%ec%b9%99">#</a></h2>
+<h3 id="디렉토리-구조">디렉토리 구조<a class="anchor" href="#%eb%94%94%eb%a0%89%ed%86%a0%eb%a6%ac-%ea%b5%ac%ec%a1%b0">#</a></h3>
+<pre tabindex="0"><code>src/
+├── domain/                    # 도메인별 분류
+│   ├── auth/
+│   │   ├── port/              # Port 인터페이스
+│   │   │   ├── AuthPort.kt
+│   │   │   └── TokenPort.kt
+│   │   ├── adapter/           # Adapter 구현체
+│   │   │   ├── AuthAdapter.kt
+│   │   │   └── TokenAdapter.kt
+│   │   └── model/             # 도메인 모델
+│   │       ├── User.kt
+│   │       └── Token.kt
+│   └── orders/
+│       ├── port/
+│       ├── adapter/
+│       └── model/
+├── api/                       # API 레이어
+│   └── controller/
+└── infrastructure/            # 인프라
+    ├── persistence/
+    └── external/</code></pre><h3 id="네이밍-규칙">네이밍 규칙<a class="anchor" href="#%eb%84%a4%ec%9d%b4%eb%b0%8d-%ea%b7%9c%ec%b9%99">#</a></h3>
+<table>
+  <thead>
+      <tr>
+          <th>구분</th>
+          <th>규칙</th>
+          <th>예시</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>L1 Port</td>
+          <td><code>{Domain}Port</code></td>
+          <td><code>UserPort</code>, <code>TokenPort</code></td>
+      </tr>
+      <tr>
+          <td>L2 Port</td>
+          <td><code>{Feature}Port</code></td>
+          <td><code>LoginPort</code>, <code>CheckoutPort</code></td>
+      </tr>
+      <tr>
+          <td>Adapter</td>
+          <td><code>{Port}Adapter</code></td>
+          <td><code>LoginAdapter</code></td>
+      </tr>
+      <tr>
+          <td>Query</td>
+          <td><code>{Domain}Query</code></td>
+          <td><code>UserQuery</code></td>
+      </tr>
+  </tbody>
+</table>
+<hr>
+<h2 id="kotlin--spring-framework">Kotlin / Spring Framework<a class="anchor" href="#kotlin--spring-framework">#</a></h2>
+<h3 id="gradle-멀티모듈-구조">Gradle 멀티모듈 구조<a class="anchor" href="#gradle-%eb%a9%80%ed%8b%b0%eb%aa%a8%eb%93%88-%ea%b5%ac%ec%a1%b0">#</a></h3>
+<pre tabindex="0"><code>my-backend/
+├── build.gradle.kts
+├── settings.gradle.kts
+├── domain/                    # 도메인 모듈
+│   ├── domain-auth/
+│   │   └── build.gradle.kts
+│   ├── domain-users/
+│   │   └── build.gradle.kts
+│   └── domain-orders/
+│       └── build.gradle.kts
+├── application/               # 애플리케이션 모듈
+│   ├── app-api/
+│   │   └── build.gradle.kts
+│   └── app-admin/
+│       └── build.gradle.kts
+└── infrastructure/            # 인프라 모듈
+    ├── infra-persistence/
+    │   └── build.gradle.kts
+    └── infra-external/
+        └── build.gradle.kts</code></pre><h3 id="settingsgradlekts">settings.gradle.kts<a class="anchor" href="#settingsgradlekts">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span>rootProject.name = <span style="color:#e6db74">&#34;my-backend&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>include(
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Domain
+</span></span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;domain:domain-auth&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;domain:domain-users&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;domain:domain-orders&#34;</span>,
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Application
+</span></span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;application:app-api&#34;</span>,
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Infrastructure
+</span></span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;infrastructure:infra-persistence&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;infrastructure:infra-external&#34;</span>
+</span></span><span style="display:flex;"><span>)</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="l1-port-예시">L1 Port 예시<a class="anchor" href="#l1-port-%ec%98%88%ec%8b%9c">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// domain/domain-users/src/.../port/UserPort.kt
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">package</span> com.example.domain.users.port
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">UserPort</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">create</span>(command: CreateUserCommand): CreateUserResult
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">update</span>(command: UpdateUserCommand): UpdateUserResult
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">delete</span>(command: DeleteUserCommand): DeleteUserResult
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Command 정의
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">data</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">CreateUserCommand</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> email: String,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> name: String,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> password: String
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Result 정의 (sealed class 권장)
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">sealed</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">CreateUserResult</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">data</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Success</span>(<span style="color:#66d9ef">val</span> userId: UserId) : CreateUserResult()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">data</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">EmailAlreadyExists</span>(<span style="color:#66d9ef">val</span> email: String) : CreateUserResult()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">data</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">ValidationFailed</span>(<span style="color:#66d9ef">val</span> errors: List&lt;String&gt;) : CreateUserResult()
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="l2-port-예시">L2 Port 예시<a class="anchor" href="#l2-port-%ec%98%88%ec%8b%9c">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// domain/domain-auth/src/.../port/LoginPort.kt
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">package</span> com.example.domain.auth.port
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">LoginPort</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">login</span>(request: LoginRequest): LoginResult
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">logout</span>(request: LogoutRequest): LogoutResult
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">refresh</span>(request: RefreshRequest): RefreshResult
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">data</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">LoginRequest</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> email: String,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> password: String,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> deviceInfo: DeviceInfo? = <span style="color:#66d9ef">null</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">sealed</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">LoginResult</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">data</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Success</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> accessToken: String,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> refreshToken: String,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> expiresIn: Long
+</span></span><span style="display:flex;"><span>    ) : LoginResult()
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">object</span> <span style="color:#a6e22e">InvalidCredentials</span> : LoginResult()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">object</span> <span style="color:#a6e22e">AccountLocked</span> : LoginResult()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">data</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TwoFactorRequired</span>(<span style="color:#66d9ef">val</span> challengeId: String) : LoginResult()
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="adapter-예시">Adapter 예시<a class="anchor" href="#adapter-%ec%98%88%ec%8b%9c">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// application/app-api/src/.../adapter/LoginAdapter.kt
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">package</span> com.example.application.adapter.auth
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Component</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">LoginAdapter</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> userPort: UserPort,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> tokenPort: TokenPort,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> sessionPort: SessionPort,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> eventPublisher: EventPublisher
+</span></span><span style="display:flex;"><span>) : LoginPort {
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Transactional</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">login</span>(request: LoginRequest): LoginResult {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 1. 사용자 조회 및 검증
+</span></span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> user = userPort.findByEmail(request.email)
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">?:</span> <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">LoginResult</span>.InvalidCredentials
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 2. 비밀번호 검증
+</span></span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (!user.verifyPassword(request.password)) {
+</span></span><span style="display:flex;"><span>            eventPublisher.publish(LoginFailedEvent(user.id))
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">LoginResult</span>.InvalidCredentials
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 3. 계정 상태 확인
+</span></span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (user.isLocked) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">LoginResult</span>.AccountLocked
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 4. 토큰 생성
+</span></span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> tokens = tokenPort.generate(user.id, request.deviceInfo)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 5. 세션 생성
+</span></span></span><span style="display:flex;"><span>        sessionPort.create(user.id, tokens.sessionId)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 6. 이벤트 발행
+</span></span></span><span style="display:flex;"><span>        eventPublisher.publish(LoginSuccessEvent(user.id))
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">LoginResult</span>.Success(
+</span></span><span style="display:flex;"><span>            accessToken = tokens.accessToken,
+</span></span><span style="display:flex;"><span>            refreshToken = tokens.refreshToken,
+</span></span><span style="display:flex;"><span>            expiresIn = tokens.expiresIn
+</span></span><span style="display:flex;"><span>        )
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="query-예시">Query 예시<a class="anchor" href="#query-%ec%98%88%ec%8b%9c">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// domain/domain-users/src/.../query/UserQuery.kt
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">package</span> com.example.domain.users.query
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">UserQuery</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">findById</span>(id: UserId): UserView?
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">findByEmail</span>(email: String): UserView?
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">search</span>(criteria: UserSearchCriteria): Page&lt;UserView&gt;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// View 모델 (Read-only)
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">data</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">UserView</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> id: String,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> email: String,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> name: String,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> status: String,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> createdAt: Instant
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">data</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">UserSearchCriteria</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> keyword: String? = <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> status: String? = <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> page: Int = <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> size: Int = <span style="color:#ae81ff">20</span>
+</span></span><span style="display:flex;"><span>)</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="typescript--nestjs">TypeScript / NestJS<a class="anchor" href="#typescript--nestjs">#</a></h2>
+<h3 id="디렉토리-구조-1">디렉토리 구조<a class="anchor" href="#%eb%94%94%eb%a0%89%ed%86%a0%eb%a6%ac-%ea%b5%ac%ec%a1%b0-1">#</a></h3>
+<pre tabindex="0"><code>src/
+├── domain/
+│   ├── auth/
+│   │   ├── port/
+│   │   │   ├── login.port.ts
+│   │   │   └── token.port.ts
+│   │   ├── adapter/
+│   │   │   └── login.adapter.ts
+│   │   └── model/
+│   │       └── auth.types.ts
+│   └── users/
+│       ├── port/
+│       ├── adapter/
+│       └── model/
+├── api/
+│   └── controller/
+└── infrastructure/
+    └── persistence/</code></pre><h3 id="l1-port-예시-1">L1 Port 예시<a class="anchor" href="#l1-port-%ec%98%88%ec%8b%9c-1">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#75715e">// src/domain/users/port/user.port.ts
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">export</span> <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">USER_PORT</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">Symbol</span>(<span style="color:#e6db74">&#39;USER_PORT&#39;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">export</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">UserPort</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">create</span>(<span style="color:#a6e22e">command</span>: <span style="color:#66d9ef">CreateUserCommand</span>)<span style="color:#f92672">:</span> <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">CreateUserResult</span>&gt;;
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">update</span>(<span style="color:#a6e22e">command</span>: <span style="color:#66d9ef">UpdateUserCommand</span>)<span style="color:#f92672">:</span> <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">UpdateUserResult</span>&gt;;
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">delete</span>(<span style="color:#a6e22e">command</span>: <span style="color:#66d9ef">DeleteUserCommand</span>)<span style="color:#f92672">:</span> <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">DeleteUserResult</span>&gt;;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Command
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">export</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">CreateUserCommand</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">email</span>: <span style="color:#66d9ef">string</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">name</span>: <span style="color:#66d9ef">string</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">password</span>: <span style="color:#66d9ef">string</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Result (Discriminated Union)
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">export</span> <span style="color:#66d9ef">type</span> <span style="color:#a6e22e">CreateUserResult</span> <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">|</span> { <span style="color:#66d9ef">type</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;success&#39;</span>; <span style="color:#a6e22e">userId</span>: <span style="color:#66d9ef">string</span> }
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">|</span> { <span style="color:#66d9ef">type</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;emailExists&#39;</span>; <span style="color:#a6e22e">email</span>: <span style="color:#66d9ef">string</span> }
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">|</span> { <span style="color:#66d9ef">type</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;validationFailed&#39;</span>; <span style="color:#a6e22e">errors</span>: <span style="color:#66d9ef">string</span>[] };</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="l2-port-예시-1">L2 Port 예시<a class="anchor" href="#l2-port-%ec%98%88%ec%8b%9c-1">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#75715e">// src/domain/auth/port/login.port.ts
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">export</span> <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">LOGIN_PORT</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">Symbol</span>(<span style="color:#e6db74">&#39;LOGIN_PORT&#39;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">export</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">LoginPort</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">login</span>(<span style="color:#a6e22e">request</span>: <span style="color:#66d9ef">LoginRequest</span>)<span style="color:#f92672">:</span> <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">LoginResult</span>&gt;;
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">logout</span>(<span style="color:#a6e22e">request</span>: <span style="color:#66d9ef">LogoutRequest</span>)<span style="color:#f92672">:</span> <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">void</span>&gt;;
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">refresh</span>(<span style="color:#a6e22e">request</span>: <span style="color:#66d9ef">RefreshRequest</span>)<span style="color:#f92672">:</span> <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">RefreshResult</span>&gt;;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">export</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">LoginRequest</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">email</span>: <span style="color:#66d9ef">string</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">password</span>: <span style="color:#66d9ef">string</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">deviceInfo?</span>: <span style="color:#66d9ef">DeviceInfo</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">export</span> <span style="color:#66d9ef">type</span> <span style="color:#a6e22e">LoginResult</span> <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">|</span> { <span style="color:#66d9ef">type</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;success&#39;</span>; <span style="color:#a6e22e">accessToken</span>: <span style="color:#66d9ef">string</span>; <span style="color:#a6e22e">refreshToken</span>: <span style="color:#66d9ef">string</span>; <span style="color:#a6e22e">expiresIn</span>: <span style="color:#66d9ef">number</span> }
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">|</span> { <span style="color:#66d9ef">type</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;invalidCredentials&#39;</span> }
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">|</span> { <span style="color:#66d9ef">type</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;accountLocked&#39;</span> }
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">|</span> { <span style="color:#66d9ef">type</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;twoFactorRequired&#39;</span>; <span style="color:#a6e22e">challengeId</span>: <span style="color:#66d9ef">string</span> };</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="adapter-예시-1">Adapter 예시<a class="anchor" href="#adapter-%ec%98%88%ec%8b%9c-1">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#75715e">// src/domain/auth/adapter/login.adapter.ts
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">import</span> { <span style="color:#a6e22e">Injectable</span>, <span style="color:#a6e22e">Inject</span> } <span style="color:#66d9ef">from</span> <span style="color:#e6db74">&#39;@nestjs/common&#39;</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">import</span> { <span style="color:#a6e22e">LoginPort</span>, <span style="color:#a6e22e">LoginRequest</span>, <span style="color:#a6e22e">LoginResult</span> } <span style="color:#66d9ef">from</span> <span style="color:#e6db74">&#39;../port/login.port&#39;</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">import</span> { <span style="color:#a6e22e">USER_PORT</span>, <span style="color:#a6e22e">UserPort</span> } <span style="color:#66d9ef">from</span> <span style="color:#e6db74">&#39;../../users/port/user.port&#39;</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">import</span> { <span style="color:#a6e22e">TOKEN_PORT</span>, <span style="color:#a6e22e">TokenPort</span> } <span style="color:#66d9ef">from</span> <span style="color:#e6db74">&#39;../port/token.port&#39;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">@Injectable</span>()
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">export</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">LoginAdapter</span> <span style="color:#66d9ef">implements</span> <span style="color:#a6e22e">LoginPort</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">constructor</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">@Inject</span>(<span style="color:#a6e22e">USER_PORT</span>) <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">readonly</span> <span style="color:#a6e22e">userPort</span>: <span style="color:#66d9ef">UserPort</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">@Inject</span>(<span style="color:#a6e22e">TOKEN_PORT</span>) <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">readonly</span> <span style="color:#a6e22e">tokenPort</span>: <span style="color:#66d9ef">TokenPort</span>,
+</span></span><span style="display:flex;"><span>  ) {}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">async</span> <span style="color:#a6e22e">login</span>(<span style="color:#a6e22e">request</span>: <span style="color:#66d9ef">LoginRequest</span>)<span style="color:#f92672">:</span> <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">LoginResult</span>&gt; {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 1. 사용자 조회
+</span></span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">user</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">userPort</span>.<span style="color:#a6e22e">findByEmail</span>(<span style="color:#a6e22e">request</span>.<span style="color:#a6e22e">email</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">user</span>) {
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">return</span> { <span style="color:#66d9ef">type</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;invalidCredentials&#39;</span> };
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 2. 비밀번호 검증
+</span></span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">isValid</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">userPort</span>.<span style="color:#a6e22e">verifyPassword</span>(
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">user</span>.<span style="color:#a6e22e">id</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">request</span>.<span style="color:#a6e22e">password</span>
+</span></span><span style="display:flex;"><span>    );
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">isValid</span>) {
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">return</span> { <span style="color:#66d9ef">type</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;invalidCredentials&#39;</span> };
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 3. 토큰 생성
+</span></span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">tokens</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">tokenPort</span>.<span style="color:#a6e22e">generate</span>(<span style="color:#a6e22e">user</span>.<span style="color:#a6e22e">id</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> {
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">type</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;success&#39;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">accessToken</span>: <span style="color:#66d9ef">tokens.accessToken</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">refreshToken</span>: <span style="color:#66d9ef">tokens.refreshToken</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">expiresIn</span>: <span style="color:#66d9ef">tokens.expiresIn</span>,
+</span></span><span style="display:flex;"><span>    };
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="module-설정">Module 설정<a class="anchor" href="#module-%ec%84%a4%ec%a0%95">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#75715e">// src/domain/auth/auth.module.ts
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">import</span> { <span style="color:#a6e22e">Module</span> } <span style="color:#66d9ef">from</span> <span style="color:#e6db74">&#39;@nestjs/common&#39;</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">import</span> { <span style="color:#a6e22e">LOGIN_PORT</span> } <span style="color:#66d9ef">from</span> <span style="color:#e6db74">&#39;./port/login.port&#39;</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">import</span> { <span style="color:#a6e22e">LoginAdapter</span> } <span style="color:#66d9ef">from</span> <span style="color:#e6db74">&#39;./adapter/login.adapter&#39;</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">import</span> { <span style="color:#a6e22e">UsersModule</span> } <span style="color:#66d9ef">from</span> <span style="color:#e6db74">&#39;../users/users.module&#39;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">@Module</span>({
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">imports</span><span style="color:#f92672">:</span> [<span style="color:#a6e22e">UsersModule</span>],
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">providers</span><span style="color:#f92672">:</span> [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">provide</span>: <span style="color:#66d9ef">LOGIN_PORT</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">useClass</span>: <span style="color:#66d9ef">LoginAdapter</span>,
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>  ],
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">exports</span><span style="color:#f92672">:</span> [<span style="color:#a6e22e">LOGIN_PORT</span>],
+</span></span><span style="display:flex;"><span>})
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">export</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">AuthModule</span> {}</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="go">Go<a class="anchor" href="#go">#</a></h2>
+<h3 id="디렉토리-구조-2">디렉토리 구조<a class="anchor" href="#%eb%94%94%eb%a0%89%ed%86%a0%eb%a6%ac-%ea%b5%ac%ec%a1%b0-2">#</a></h3>
+<pre tabindex="0"><code>my-api/
+├── go.mod
+├── cmd/
+│   └── api/
+│       └── main.go
+├── internal/
+│   ├── domain/
+│   │   ├── auth/
+│   │   │   ├── port.go
+│   │   │   ├── adapter.go
+│   │   │   └── types.go
+│   │   └── users/
+│   │       ├── port.go
+│   │       └── types.go
+│   ├── api/
+│   │   └── handler/
+│   └── infrastructure/
+│       └── persistence/
+└── pkg/
+    └── result/</code></pre><h3 id="port-예시">Port 예시<a class="anchor" href="#port-%ec%98%88%ec%8b%9c">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// internal/domain/auth/port.go</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">auth</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> <span style="color:#e6db74">&#34;context&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// LoginPort defines the login interface</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">LoginPort</span> <span style="color:#66d9ef">interface</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Login</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">req</span> <span style="color:#a6e22e">LoginRequest</span>) (<span style="color:#a6e22e">LoginResult</span>, <span style="color:#66d9ef">error</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Logout</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">req</span> <span style="color:#a6e22e">LogoutRequest</span>) <span style="color:#66d9ef">error</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// LoginRequest represents login input</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">LoginRequest</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Email</span>    <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Password</span> <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// LoginResult represents login output</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">LoginResult</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Type</span>         <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">AccessToken</span>  <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">RefreshToken</span> <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">ExpiresIn</span>    <span style="color:#66d9ef">int64</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Error</span>        <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Result types</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> (
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">LoginSuccess</span>           = <span style="color:#e6db74">&#34;success&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">LoginInvalidCredentials</span> = <span style="color:#e6db74">&#34;invalid_credentials&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">LoginAccountLocked</span>     = <span style="color:#e6db74">&#34;account_locked&#34;</span>
+</span></span><span style="display:flex;"><span>)</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="adapter-예시-2">Adapter 예시<a class="anchor" href="#adapter-%ec%98%88%ec%8b%9c-2">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// internal/domain/auth/adapter.go</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">auth</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> (
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;context&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;my-api/internal/domain/users&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">LoginAdapter</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">userPort</span>  <span style="color:#a6e22e">users</span>.<span style="color:#a6e22e">UserPort</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">tokenPort</span> <span style="color:#a6e22e">TokenPort</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">NewLoginAdapter</span>(<span style="color:#a6e22e">userPort</span> <span style="color:#a6e22e">users</span>.<span style="color:#a6e22e">UserPort</span>, <span style="color:#a6e22e">tokenPort</span> <span style="color:#a6e22e">TokenPort</span>) <span style="color:#f92672">*</span><span style="color:#a6e22e">LoginAdapter</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">LoginAdapter</span>{
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">userPort</span>:  <span style="color:#a6e22e">userPort</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">tokenPort</span>: <span style="color:#a6e22e">tokenPort</span>,
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">a</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">LoginAdapter</span>) <span style="color:#a6e22e">Login</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">req</span> <span style="color:#a6e22e">LoginRequest</span>) (<span style="color:#a6e22e">LoginResult</span>, <span style="color:#66d9ef">error</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 1. Find user</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">user</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">userPort</span>.<span style="color:#a6e22e">FindByEmail</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">req</span>.<span style="color:#a6e22e">Email</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">LoginResult</span>{<span style="color:#a6e22e">Type</span>: <span style="color:#a6e22e">LoginInvalidCredentials</span>}, <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 2. Verify password</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> !<span style="color:#a6e22e">user</span>.<span style="color:#a6e22e">VerifyPassword</span>(<span style="color:#a6e22e">req</span>.<span style="color:#a6e22e">Password</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">LoginResult</span>{<span style="color:#a6e22e">Type</span>: <span style="color:#a6e22e">LoginInvalidCredentials</span>}, <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 3. Generate tokens</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">tokens</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">tokenPort</span>.<span style="color:#a6e22e">Generate</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">user</span>.<span style="color:#a6e22e">ID</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">LoginResult</span>{}, <span style="color:#a6e22e">err</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">LoginResult</span>{
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">Type</span>:         <span style="color:#a6e22e">LoginSuccess</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">AccessToken</span>:  <span style="color:#a6e22e">tokens</span>.<span style="color:#a6e22e">AccessToken</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">RefreshToken</span>: <span style="color:#a6e22e">tokens</span>.<span style="color:#a6e22e">RefreshToken</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">ExpiresIn</span>:    <span style="color:#a6e22e">tokens</span>.<span style="color:#a6e22e">ExpiresIn</span>,
+</span></span><span style="display:flex;"><span>    }, <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="rust">Rust<a class="anchor" href="#rust">#</a></h2>
+<h3 id="디렉토리-구조-3">디렉토리 구조<a class="anchor" href="#%eb%94%94%eb%a0%89%ed%86%a0%eb%a6%ac-%ea%b5%ac%ec%a1%b0-3">#</a></h3>
+<pre tabindex="0"><code>my-service/
+├── Cargo.toml
+├── src/
+│   ├── main.rs
+│   ├── domain/
+│   │   ├── mod.rs
+│   │   ├── auth/
+│   │   │   ├── mod.rs
+│   │   │   ├── port.rs
+│   │   │   ├── adapter.rs
+│   │   │   └── types.rs
+│   │   └── users/
+│   │       ├── mod.rs
+│   │       └── port.rs
+│   ├── api/
+│   │   └── handler.rs
+│   └── infrastructure/
+│       └── persistence.rs</code></pre><h3 id="port-예시-1">Port 예시<a class="anchor" href="#port-%ec%98%88%ec%8b%9c-1">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#75715e">// src/domain/auth/port.rs
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> async_trait::async_trait;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> <span style="color:#66d9ef">crate</span>::domain::auth::types::<span style="color:#f92672">*</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#[async_trait]</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">trait</span> LoginPort: Send <span style="color:#f92672">+</span> Sync {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">async</span> <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">login</span>(<span style="color:#f92672">&amp;</span>self, request: <span style="color:#a6e22e">LoginRequest</span>) -&gt; Result<span style="color:#f92672">&lt;</span>LoginResult, AuthError<span style="color:#f92672">&gt;</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">async</span> <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">logout</span>(<span style="color:#f92672">&amp;</span>self, request: <span style="color:#a6e22e">LogoutRequest</span>) -&gt; Result<span style="color:#f92672">&lt;</span>(), AuthError<span style="color:#f92672">&gt;</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// src/domain/auth/types.rs
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#[derive(Debug, Clone)]</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">LoginRequest</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">pub</span> email: String,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">pub</span> password: String,
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#[derive(Debug, Clone)]</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">enum</span> <span style="color:#a6e22e">LoginResult</span> {
+</span></span><span style="display:flex;"><span>    Success {
+</span></span><span style="display:flex;"><span>        access_token: String,
+</span></span><span style="display:flex;"><span>        refresh_token: String,
+</span></span><span style="display:flex;"><span>        expires_in: <span style="color:#66d9ef">i64</span>,
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    InvalidCredentials,
+</span></span><span style="display:flex;"><span>    AccountLocked,
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#[derive(Debug, thiserror::Error)]</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">enum</span> <span style="color:#a6e22e">AuthError</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">#[error(</span><span style="color:#e6db74">&#34;Internal error: {0}&#34;</span><span style="color:#75715e">)]</span>
+</span></span><span style="display:flex;"><span>    Internal(String),
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="adapter-예시-3">Adapter 예시<a class="anchor" href="#adapter-%ec%98%88%ec%8b%9c-3">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#75715e">// src/domain/auth/adapter.rs
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> async_trait::async_trait;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> std::sync::Arc;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> <span style="color:#66d9ef">super</span>::port::LoginPort;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> <span style="color:#66d9ef">super</span>::types::<span style="color:#f92672">*</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> <span style="color:#66d9ef">crate</span>::domain::users::port::UserPort;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">LoginAdapter</span> {
+</span></span><span style="display:flex;"><span>    user_port: <span style="color:#a6e22e">Arc</span><span style="color:#f92672">&lt;</span><span style="color:#66d9ef">dyn</span> UserPort<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>    token_port: <span style="color:#a6e22e">Arc</span><span style="color:#f92672">&lt;</span><span style="color:#66d9ef">dyn</span> TokenPort<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">impl</span> LoginAdapter {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">new</span>(
+</span></span><span style="display:flex;"><span>        user_port: <span style="color:#a6e22e">Arc</span><span style="color:#f92672">&lt;</span><span style="color:#66d9ef">dyn</span> UserPort<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>        token_port: <span style="color:#a6e22e">Arc</span><span style="color:#f92672">&lt;</span><span style="color:#66d9ef">dyn</span> TokenPort<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>    ) -&gt; <span style="color:#a6e22e">Self</span> {
+</span></span><span style="display:flex;"><span>        Self { user_port, token_port }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#[async_trait]</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">impl</span> LoginPort <span style="color:#66d9ef">for</span> LoginAdapter {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">async</span> <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">login</span>(<span style="color:#f92672">&amp;</span>self, request: <span style="color:#a6e22e">LoginRequest</span>) -&gt; Result<span style="color:#f92672">&lt;</span>LoginResult, AuthError<span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 1. Find user
+</span></span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">let</span> user <span style="color:#f92672">=</span> self.user_port
+</span></span><span style="display:flex;"><span>            .find_by_email(<span style="color:#f92672">&amp;</span>request.email)
+</span></span><span style="display:flex;"><span>            .<span style="color:#66d9ef">await</span>
+</span></span><span style="display:flex;"><span>            .map_err(<span style="color:#f92672">|</span>e<span style="color:#f92672">|</span> AuthError::Internal(e.to_string()))<span style="color:#f92672">?</span>;
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">let</span> user <span style="color:#f92672">=</span> <span style="color:#66d9ef">match</span> user {
+</span></span><span style="display:flex;"><span>            Some(u) <span style="color:#f92672">=&gt;</span> u,
+</span></span><span style="display:flex;"><span>            None <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">return</span> Ok(LoginResult::InvalidCredentials),
+</span></span><span style="display:flex;"><span>        };
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 2. Verify password
+</span></span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">!</span>user.verify_password(<span style="color:#f92672">&amp;</span>request.password) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> Ok(LoginResult::InvalidCredentials);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 3. Generate tokens
+</span></span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">let</span> tokens <span style="color:#f92672">=</span> self.token_port
+</span></span><span style="display:flex;"><span>            .generate(<span style="color:#f92672">&amp;</span>user.id)
+</span></span><span style="display:flex;"><span>            .<span style="color:#66d9ef">await</span>
+</span></span><span style="display:flex;"><span>            .map_err(<span style="color:#f92672">|</span>e<span style="color:#f92672">|</span> AuthError::Internal(e.to_string()))<span style="color:#f92672">?</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        Ok(LoginResult::Success {
+</span></span><span style="display:flex;"><span>            access_token: <span style="color:#a6e22e">tokens</span>.access_token,
+</span></span><span style="display:flex;"><span>            refresh_token: <span style="color:#a6e22e">tokens</span>.refresh_token,
+</span></span><span style="display:flex;"><span>            expires_in: <span style="color:#a6e22e">tokens</span>.expires_in,
+</span></span><span style="display:flex;"><span>        })
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="다음-단계">다음 단계<a class="anchor" href="#%eb%8b%a4%ec%9d%8c-%eb%8b%a8%ea%b3%84">#</a></h2>
+<ul>
+<li><a href="/ko/docs/pa-layer/frontend/">Frontend 컨벤션</a></li>
+</ul>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+<div>
+
+</div>
+
+<div>
+
+</div>
+
+</div>
+
+
+
+
+
+  
+  
+  
+  <div class="flex flex-wrap justify-between">
+    <span>
+    
+      <a href="/ko/docs/pa-layer/overview/" class="flex align-center">
+        <img src="/icons/backward.svg" class="book-icon" alt="Backward" />
+        <span>아키텍처 개요</span>
+      </a>
+    
+    </span>
+    <span>
+    
+      <a href="/ko/docs/pa-layer/frontend/" class="flex align-center">
+        <span>Frontend 컨벤션</span>
+        <img src="/icons/forward.svg" class="book-icon" alt="Forward" />
+      </a>
+    
+    </span>
+  </div>
+  
+
+
+ 
+        
+  
+ 
+        
+        
+  
+ 
+        
+  
+  
+    <script>(function(){document.querySelectorAll("pre:has(code)").forEach(e=>{e.addEventListener("click",e.focus),e.addEventListener("copy",function(t){if(t.preventDefault(),navigator.clipboard){const t=window.getSelection().toString()||e.textContent;navigator.clipboard.writeText(t)}})})})()</script>
+  
+
+      </footer>
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+  
+  <aside class="book-toc">
+    <div class="book-toc-content">
+      
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#공통-원칙">공통 원칙</a>
+      <ul>
+        <li><a href="#디렉토리-구조">디렉토리 구조</a></li>
+        <li><a href="#네이밍-규칙">네이밍 규칙</a></li>
+      </ul>
+    </li>
+    <li><a href="#kotlin--spring-framework">Kotlin / Spring Framework</a>
+      <ul>
+        <li><a href="#gradle-멀티모듈-구조">Gradle 멀티모듈 구조</a></li>
+        <li><a href="#settingsgradlekts">settings.gradle.kts</a></li>
+        <li><a href="#l1-port-예시">L1 Port 예시</a></li>
+        <li><a href="#l2-port-예시">L2 Port 예시</a></li>
+        <li><a href="#adapter-예시">Adapter 예시</a></li>
+        <li><a href="#query-예시">Query 예시</a></li>
+      </ul>
+    </li>
+    <li><a href="#typescript--nestjs">TypeScript / NestJS</a>
+      <ul>
+        <li><a href="#디렉토리-구조-1">디렉토리 구조</a></li>
+        <li><a href="#l1-port-예시-1">L1 Port 예시</a></li>
+        <li><a href="#l2-port-예시-1">L2 Port 예시</a></li>
+        <li><a href="#adapter-예시-1">Adapter 예시</a></li>
+        <li><a href="#module-설정">Module 설정</a></li>
+      </ul>
+    </li>
+    <li><a href="#go">Go</a>
+      <ul>
+        <li><a href="#디렉토리-구조-2">디렉토리 구조</a></li>
+        <li><a href="#port-예시">Port 예시</a></li>
+        <li><a href="#adapter-예시-2">Adapter 예시</a></li>
+      </ul>
+    </li>
+    <li><a href="#rust">Rust</a>
+      <ul>
+        <li><a href="#디렉토리-구조-3">디렉토리 구조</a></li>
+        <li><a href="#port-예시-1">Port 예시</a></li>
+        <li><a href="#adapter-예시-3">Adapter 예시</a></li>
+      </ul>
+    </li>
+    <li><a href="#다음-단계">다음 단계</a></li>
+  </ul>
+</nav>
+
+
+
+    </div>
+  </aside>
+  
+ 
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

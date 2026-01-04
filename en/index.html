@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+	<meta name="generator" content="Hugo 0.154.2">
+  <!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="PA-Layer# Architecture Convention for Working with AI Agents
+🎯 Token Efficient# Efficiently utilizes the context window. Selectively load only the necessary documents so AI agents can work with accurate context.
+🔌 Agent Friendly# Provides a structured document format that AI agents like Claude and GPT can easily understand. Real-time integration via MCP protocol.
+🏗️ Proven Architecture# A practical software architecture convention based on Hexagonal Architecture and CQS patterns.
+Quick Start# macOS (Apple Silicon / Intel)# 1 2 3 4 5 6 7 8 9 10 11 # Install with Homebrew brew install pa-layer/tap/pa-retriever # Initialize pa init # Index documents pa index # Connect with Claude pa mcp install Windows# 1 2 3 4 5 6 7 8 9 10 11 12 # Install with Scoop scoop bucket add pa-layer https://github.com/pa-layer/scoop-bucket scoop install pa-retriever # Initialize pa init # Index documents pa index # Connect with Claude pa mcp install Linux# 1 2 3 4 5 6 7 8 9 10 11 # Download binary curl -sSL https://pa-layer.github.io/install.sh | bash # Initialize pa init # Index documents pa index # Connect with Claude pa mcp install Documentation# Section Description Installation Platform-specific installation guide, workspace setup Configuration Claude, Obsidian, PA-Retriever integration PA-Layer Architecture convention, Backend/Frontend guide PA-Retriever CLI usage, from basic to advanced Downloads# Platform Architecture Download macOS Apple Silicon (arm64) pa-retriever-darwin-arm64.tar.gz macOS Intel (amd64) pa-retriever-darwin-amd64.tar.gz Windows x64 pa-retriever-windows-amd64.zip Linux x64 pa-retriever-linux-amd64.tar.gz Linux arm64 pa-retriever-linux-arm64.tar.gz ">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://pa-layer.github.io/en/">
+  <meta property="og:site_name" content="PA-Layer">
+  <meta property="og:title" content="PA-Layer">
+  <meta property="og:description" content="PA-Layer# Architecture Convention for Working with AI Agents
+🎯 Token Efficient# Efficiently utilizes the context window. Selectively load only the necessary documents so AI agents can work with accurate context.
+🔌 Agent Friendly# Provides a structured document format that AI agents like Claude and GPT can easily understand. Real-time integration via MCP protocol.
+🏗️ Proven Architecture# A practical software architecture convention based on Hexagonal Architecture and CQS patterns.
+Quick Start# macOS (Apple Silicon / Intel)# 1 2 3 4 5 6 7 8 9 10 11 # Install with Homebrew brew install pa-layer/tap/pa-retriever # Initialize pa init # Index documents pa index # Connect with Claude pa mcp install Windows# 1 2 3 4 5 6 7 8 9 10 11 12 # Install with Scoop scoop bucket add pa-layer https://github.com/pa-layer/scoop-bucket scoop install pa-retriever # Initialize pa init # Index documents pa index # Connect with Claude pa mcp install Linux# 1 2 3 4 5 6 7 8 9 10 11 # Download binary curl -sSL https://pa-layer.github.io/install.sh | bash # Initialize pa init # Index documents pa index # Connect with Claude pa mcp install Documentation# Section Description Installation Platform-specific installation guide, workspace setup Configuration Claude, Obsidian, PA-Retriever integration PA-Layer Architecture convention, Backend/Frontend guide PA-Retriever CLI usage, from basic to advanced Downloads# Platform Architecture Download macOS Apple Silicon (arm64) pa-retriever-darwin-arm64.tar.gz macOS Intel (amd64) pa-retriever-darwin-amd64.tar.gz Windows x64 pa-retriever-windows-amd64.zip Linux x64 pa-retriever-linux-amd64.tar.gz Linux arm64 pa-retriever-linux-arm64.tar.gz">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="website">
+
+
+  <meta itemprop="name" content="PA-Layer">
+  <meta itemprop="description" content="PA-Layer# Architecture Convention for Working with AI Agents
+🎯 Token Efficient# Efficiently utilizes the context window. Selectively load only the necessary documents so AI agents can work with accurate context.
+🔌 Agent Friendly# Provides a structured document format that AI agents like Claude and GPT can easily understand. Real-time integration via MCP protocol.
+🏗️ Proven Architecture# A practical software architecture convention based on Hexagonal Architecture and CQS patterns.
+Quick Start# macOS (Apple Silicon / Intel)# 1 2 3 4 5 6 7 8 9 10 11 # Install with Homebrew brew install pa-layer/tap/pa-retriever # Initialize pa init # Index documents pa index # Connect with Claude pa mcp install Windows# 1 2 3 4 5 6 7 8 9 10 11 12 # Install with Scoop scoop bucket add pa-layer https://github.com/pa-layer/scoop-bucket scoop install pa-retriever # Initialize pa init # Index documents pa index # Connect with Claude pa mcp install Linux# 1 2 3 4 5 6 7 8 9 10 11 # Download binary curl -sSL https://pa-layer.github.io/install.sh | bash # Initialize pa init # Index documents pa index # Connect with Claude pa mcp install Documentation# Section Description Installation Platform-specific installation guide, workspace setup Configuration Claude, Obsidian, PA-Retriever integration PA-Layer Architecture convention, Backend/Frontend guide PA-Retriever CLI usage, from basic to advanced Downloads# Platform Architecture Download macOS Apple Silicon (arm64) pa-retriever-darwin-arm64.tar.gz macOS Intel (amd64) pa-retriever-darwin-amd64.tar.gz Windows x64 pa-retriever-windows-amd64.zip Linux x64 pa-retriever-linux-amd64.tar.gz Linux arm64 pa-retriever-linux-arm64.tar.gz">
+  <meta itemprop="wordCount" content="234">
+
+<title>PA-Layer | PA-Layer</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="https://pa-layer.github.io/en/">
+  <link rel="alternate" hreflang="ko" href="https://pa-layer.github.io/ko/" title="PA-Layer">
+<link rel="stylesheet" href="/book.min.6970156cec683193d93c9c4edaf0d56574e4361df2e0c1be4f697ae81c3ba55f.css" integrity="sha256-aXAVbOxoMZPZPJxO2vDVZXTkNh3y4MG&#43;T2l66Bw7pV8=" crossorigin="anonymous">
+
+
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.b5456745024e721c0ed5066be46dd05983568404556d91df1ba7a31dc5a41591.js" integrity="sha256-tUVnRQJOchwO1QZr5G3QWYNWhARVbZHfG6ejHcWkFZE=" crossorigin="anonymous"></script>
+
+
+<link rel="alternate" type="application/rss+xml" href="https://pa-layer.github.io/en/index.xml" title="PA-Layer" />
+
+  
+</head>
+<body dir="ltr" class="book-kind-home book-type-docs">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    
+<aside class="book-menu">
+  <div class="book-menu-content">
+    
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/en/"><img src="/images/pa-layer-logo.svg" alt="Logo" /><span>PA-Layer</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input id="book-search-input" type="text" 
+    placeholder="Search"
+    aria-label="Search"
+    maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+  
+
+
+  
+    
+  
+
+
+  
+
+
+<ul class="book-languages">
+  <li>
+    <input type="checkbox" id="languages" class="toggle" />
+    <label for="languages" class="flex">
+      <a role="button">
+        <img src="/icons/translate.svg" class="book-icon" alt="Languages" />
+        English
+      </a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+
+    <ul>
+      
+      <li>
+        <a href="/ko/" class="flex flex-auto">
+          한국어
+        </a>
+      </li>
+      
+    </ul>
+  </li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-6236be1b89680b92e3aefa016e21a142" class="toggle"  />
+    <label for="section-6236be1b89680b92e3aefa016e21a142" class="flex">
+      <a href="/en/docs/installation/" class="">
+        Installation</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/macos/" class="">
+      macOS Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/windows/" class="">
+      Windows Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/linux/" class="">
+      Linux Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/workspace/" class="">
+      Workspace Setup</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c57e8d2542437d90ac12ebccc18f7bd6" class="toggle"  />
+    <label for="section-c57e8d2542437d90ac12ebccc18f7bd6" class="flex">
+      <a href="/en/docs/configuration/" class="">
+        Configuration</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/claude/" class="">
+      Claude Integration</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/obsidian/" class="">
+      Obsidian Settings</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/pa-config/" class="">
+      PA-Retriever Config</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e28c43a16f6ea811813d9b83e9c091a1" class="toggle"  />
+    <label for="section-e28c43a16f6ea811813d9b83e9c091a1" class="flex">
+      <a href="/en/docs/pa-layer/" class="">
+        PA-Layer</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/overview/" class="">
+      Architecture Overview</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/backend/" class="">
+      Backend Conventions</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/frontend/" class="">
+      Frontend Conventions</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-2e7de72bf7fb1d60035ad67e5a7421f2" class="toggle"  />
+    <label for="section-2e7de72bf7fb1d60035ad67e5a7421f2" class="flex">
+      <a href="/en/docs/pa-retriever/" class="">
+        PA-Retriever</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/basic/" class="">
+      Basic Usage</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/search/" class="">
+      Search Guide</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/code/" class="">
+      Code Indexing</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/with-claude/" class="">
+      Using with Claude</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/advanced/" class="">
+      Advanced Features</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+<ul><li><a href="https://github.com/pa-layer/pa-retriever" target="_blank" rel="noopener">GitHub</a></li></ul>
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+
+  </div>
+</aside>
+ 
+
+    <div class="book-page">
+      <header class="book-header hidden">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/icons/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>PA-Layer</h3>
+
+  <label for="toc-control">
+    
+    <img src="/icons/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#-token-efficient">🎯 Token Efficient</a></li>
+    <li><a href="#-agent-friendly">🔌 Agent Friendly</a></li>
+    <li><a href="#-proven-architecture">🏗️ Proven Architecture</a></li>
+    <li><a href="#quick-start">Quick Start</a>
+      <ul>
+        <li><a href="#macos-apple-silicon--intel">macOS (Apple Silicon / Intel)</a></li>
+        <li><a href="#windows">Windows</a></li>
+        <li><a href="#linux">Linux</a></li>
+      </ul>
+    </li>
+    <li><a href="#documentation">Documentation</a></li>
+    <li><a href="#downloads">Downloads</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="pa-layer">PA-Layer<a class="anchor" href="#pa-layer">#</a></h1>
+<p><strong>Architecture Convention for Working with AI Agents</strong></p>
+<hr>
+<h2 id="-token-efficient">🎯 Token Efficient<a class="anchor" href="#-token-efficient">#</a></h2>
+<p>Efficiently utilizes the context window. Selectively load only the necessary documents so AI agents can work with accurate context.</p>
+<h2 id="-agent-friendly">🔌 Agent Friendly<a class="anchor" href="#-agent-friendly">#</a></h2>
+<p>Provides a structured document format that AI agents like Claude and GPT can easily understand. Real-time integration via MCP protocol.</p>
+<h2 id="-proven-architecture">🏗️ Proven Architecture<a class="anchor" href="#-proven-architecture">#</a></h2>
+<p>A practical software architecture convention based on Hexagonal Architecture and CQS patterns.</p>
+<hr>
+<h2 id="quick-start">Quick Start<a class="anchor" href="#quick-start">#</a></h2>
+<h3 id="macos-apple-silicon--intel">macOS (Apple Silicon / Intel)<a class="anchor" href="#macos-apple-silicon--intel">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Install with Homebrew</span>
+</span></span><span style="display:flex;"><span>brew install pa-layer/tap/pa-retriever
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Initialize</span>
+</span></span><span style="display:flex;"><span>pa init
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Index documents</span>
+</span></span><span style="display:flex;"><span>pa index
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Connect with Claude</span>
+</span></span><span style="display:flex;"><span>pa mcp install</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="windows">Windows<a class="anchor" href="#windows">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span><span style="color:#75715e"># Install with Scoop</span>
+</span></span><span style="display:flex;"><span>scoop bucket add pa-layer https<span style="color:#960050;background-color:#1e0010">:</span>//github.com/pa-layer/scoop-bucket
+</span></span><span style="display:flex;"><span>scoop install pa-retriever
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Initialize</span>
+</span></span><span style="display:flex;"><span>pa init
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Index documents</span>
+</span></span><span style="display:flex;"><span>pa index
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Connect with Claude</span>
+</span></span><span style="display:flex;"><span>pa mcp install</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="linux">Linux<a class="anchor" href="#linux">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Download binary</span>
+</span></span><span style="display:flex;"><span>curl -sSL https://pa-layer.github.io/install.sh | bash
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Initialize</span>
+</span></span><span style="display:flex;"><span>pa init
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Index documents</span>
+</span></span><span style="display:flex;"><span>pa index
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Connect with Claude</span>
+</span></span><span style="display:flex;"><span>pa mcp install</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="documentation">Documentation<a class="anchor" href="#documentation">#</a></h2>
+<table>
+  <thead>
+      <tr>
+          <th>Section</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><a href="/en/docs/installation/">Installation</a></td>
+          <td>Platform-specific installation guide, workspace setup</td>
+      </tr>
+      <tr>
+          <td><a href="/en/docs/configuration/">Configuration</a></td>
+          <td>Claude, Obsidian, PA-Retriever integration</td>
+      </tr>
+      <tr>
+          <td><a href="/en/docs/pa-layer/">PA-Layer</a></td>
+          <td>Architecture convention, Backend/Frontend guide</td>
+      </tr>
+      <tr>
+          <td><a href="/en/docs/pa-retriever/">PA-Retriever</a></td>
+          <td>CLI usage, from basic to advanced</td>
+      </tr>
+  </tbody>
+</table>
+<hr>
+<h2 id="downloads">Downloads<a class="anchor" href="#downloads">#</a></h2>
+<table>
+  <thead>
+      <tr>
+          <th>Platform</th>
+          <th>Architecture</th>
+          <th>Download</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>macOS</td>
+          <td>Apple Silicon (arm64)</td>
+          <td><a href="https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-darwin-arm64.tar.gz">pa-retriever-darwin-arm64.tar.gz</a></td>
+      </tr>
+      <tr>
+          <td>macOS</td>
+          <td>Intel (amd64)</td>
+          <td><a href="https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-darwin-amd64.tar.gz">pa-retriever-darwin-amd64.tar.gz</a></td>
+      </tr>
+      <tr>
+          <td>Windows</td>
+          <td>x64</td>
+          <td><a href="https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-windows-amd64.zip">pa-retriever-windows-amd64.zip</a></td>
+      </tr>
+      <tr>
+          <td>Linux</td>
+          <td>x64</td>
+          <td><a href="https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-linux-amd64.tar.gz">pa-retriever-linux-amd64.tar.gz</a></td>
+      </tr>
+      <tr>
+          <td>Linux</td>
+          <td>arm64</td>
+          <td><a href="https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-linux-arm64.tar.gz">pa-retriever-linux-arm64.tar.gz</a></td>
+      </tr>
+  </tbody>
+</table>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+<div>
+
+</div>
+
+<div>
+
+</div>
+
+</div>
+
+
+
+
+
+  
+  
+  
+
+
+ 
+        
+  
+ 
+        
+        
+  
+ 
+        
+  
+  
+    <script>(function(){document.querySelectorAll("pre:has(code)").forEach(e=>{e.addEventListener("click",e.focus),e.addEventListener("copy",function(t){if(t.preventDefault(),navigator.clipboard){const t=window.getSelection().toString()||e.textContent;navigator.clipboard.writeText(t)}})})})()</script>
+  
+
+      </footer>
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+  
+  <aside class="book-toc">
+    <div class="book-toc-content">
+      
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#-token-efficient">🎯 Token Efficient</a></li>
+    <li><a href="#-agent-friendly">🔌 Agent Friendly</a></li>
+    <li><a href="#-proven-architecture">🏗️ Proven Architecture</a></li>
+    <li><a href="#quick-start">Quick Start</a>
+      <ul>
+        <li><a href="#macos-apple-silicon--intel">macOS (Apple Silicon / Intel)</a></li>
+        <li><a href="#windows">Windows</a></li>
+        <li><a href="#linux">Linux</a></li>
+      </ul>
+    </li>
+    <li><a href="#documentation">Documentation</a></li>
+    <li><a href="#downloads">Downloads</a></li>
+  </ul>
+</nav>
+
+
+
+    </div>
+  </aside>
+  
+ 
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

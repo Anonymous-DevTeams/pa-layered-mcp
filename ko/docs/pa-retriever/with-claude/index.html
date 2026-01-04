@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="ko" dir="ltr">
+<head>
+  <!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Claude와 함께 사용# Claude Desktop 및 Claude Code에서 PA-Retriever를 활용하는 방법입니다.
+MCP 연결 설정# 1 2 3 4 5 # 자동 설정 pa mcp install # 상태 확인 pa mcp status 설정 후 Claude Desktop을 재시작하세요.
+기본 대화 명령# 문서 검색# 사용자: auth 도메인의 L2 Port들을 찾아줘 Claude: [search_docs 호출] auth 도메인에서 다음 L2 Port를 찾았습니다: 1. L2-LoginPort - 로그인 프로세스 2. L2-SignupPort - 회원가입 프로세스 3. L2-PasswordResetPort - 비밀번호 재설정문서 조회# 사용자: L2-LoginPort 문서 전체를 보여줘 Claude: [get_doc 호출] # L2-LoginPort ## 개요 로그인 프로세스를 처리하는 L2 Port입니다. ## 인터페이스 ...Port 찾기# 사용자: LoginPort의 명세와 구현체를 찾아줘 Claude: [find_port 호출] LoginPort를 찾았습니다: 📄 문서: auth.L2-LoginPort 💻 코드: - my-backend/src/.../LoginPort.kt (interface) - my-backend/src/.../LoginAdapter.kt (class)통계 확인# 사용자: 현재 인덱싱 상태를 알려줘 Claude: [get_stats 호출] 📊 인덱스 통계: - 총 문서: 47개 - 타입별: l1(12), l2(18), api(8), query(5), guide(4) - 총 토큰: 45,230 - 마지막 인덱싱: 2024-01-05 14:30 실용적인 대화 시나리오# 시나리오 1: 새 문서 작성# 사용자: 결제 도메인의 L2-CheckoutPort 문서를 작성해줘. 기존 L2 문서 형식을 참고해서. Claude: 먼저 기존 L2 문서 형식을 확인하겠습니다. [search_docs type:l2 limit:2] 기존 문서 형식을 참고하여 작성하겠습니다: --- type: l2 domain: payment status: draft depends_on: [L1-PaymentPort, L1-CartPort] --- # L2-CheckoutPort ## 개요 &gt; 결제 프로세스를 처리하는 L2 Port입니다. ## 인터페이스 ```kotlin interface CheckoutPort { suspend fun checkout(request: CheckoutRequest): CheckoutResult suspend fun cancel(orderId: OrderId): CancelResult } ``` ...시나리오 2: 코드 생성# 사용자: L2-LoginPort 명세를 보고 Kotlin 구현체를 만들어줘 Claude: 먼저 L2-LoginPort 명세를 확인하겠습니다. [get_doc id:auth.L2-LoginPort] 의존성도 확인하겠습니다. [get_doc id:auth.L1-UserPort] [get_doc id:auth.L1-TokenPort] 명세에 따라 구현체를 작성하겠습니다: ```kotlin @Component class LoginAdapter( private val userPort: UserPort, private val tokenPort: TokenPort, private val sessionPort: SessionPort ) : LoginPort { @Transactional override suspend fun login(request: LoginRequest): LoginResult { // 1. 사용자 조회 val user = userPort.findByEmail(request.email) ?: return LoginResult.InvalidCredentials // 2. 비밀번호 검증 if (!user.verifyPassword(request.password)) { return LoginResult.InvalidCredentials } // 3. 토큰 생성 val tokens = tokenPort.generate(user.id) return LoginResult.Success( accessToken = tokens.accessToken, refreshToken = tokens.refreshToken, expiresIn = tokens.expiresIn ) } } ```시나리오 3: 아키텍처 검토# 사용자: 현재 auth 도메인의 아키텍처를 분석해줘 Claude: auth 도메인의 문서를 분석하겠습니다. [search_docs domain:auth] ## Auth 도메인 아키텍처 분석 ### 레이어 구조 ``` API Layer └── API-Login, API-Signup L2 (Feature) └── L2-LoginPort, L2-SignupPort, L2-PasswordResetPort L1 (Domain) └── L1-UserPort, L1-TokenPort, L1-SessionPort Query └── Q-AuthQuery ``` ### 의존성 관계 - L2-LoginPort → L1-UserPort, L1-TokenPort - L2-SignupPort → L1-UserPort ### 개선 제안 1. L1-SessionPort가 L2-LoginPort에서만 사용됨 → 통합 검토 2. Q-AuthQuery가 분리되어 있어 CQS 패턴 잘 적용됨 ✓시나리오 4: 문서 업데이트# 사용자: L2-LoginPort에 2FA 지원을 추가하고 싶어. 문서를 어떻게 수정하면 좋을까? Claude: 현재 L2-LoginPort 문서를 확인하겠습니다. [get_doc id:auth.L2-LoginPort] 2FA 지원을 위해 다음과 같이 수정을 제안합니다: ### 인터페이스 변경 ```kotlin interface LoginPort { suspend fun login(request: LoginRequest): LoginResult suspend fun verifyTwoFactor(request: TwoFactorRequest): TwoFactorResult } sealed class LoginResult { data class Success(...) object InvalidCredentials data class TwoFactorRequired( // 추가 val challengeId: String, val method: TwoFactorMethod ) } ``` ### 흐름 변경 ```mermaid sequenceDiagram Client-&gt;&gt;LoginPort: login() LoginPort-&gt;&gt;UserPort: findByEmail() LoginPort-&gt;&gt;LoginPort: verify password alt 2FA 활성화 LoginPort--&gt;&gt;Client: TwoFactorRequired Client-&gt;&gt;LoginPort: verifyTwoFactor() LoginPort--&gt;&gt;Client: Success else 2FA 비활성화 LoginPort--&gt;&gt;Client: Success end ``` Obsidian에서 이 내용으로 수정하시겠습니까?시나리오 5: 구현 체크# 사용자: 문서는 있는데 코드 구현이 안 된 Port가 있어? Claude: 문서와 코드를 비교해보겠습니다. [search_docs type:l2] [find_port name:*] (각 Port별로) ## 구현 상태 체크 | Port | 문서 | 코드 | 상태 | |------|------|------|------| | L2-LoginPort | ✓ | ✓ | 완료 | | L2-SignupPort | ✓ | ✓ | 완료 | | L2-CheckoutPort | ✓ | ✗ | 구현 필요 | | L2-PaymentPort | ✓ | ✗ | 구현 필요 | ### 구현이 필요한 Port 1. **L2-CheckoutPort** (payment 도메인) 2. **L2-PaymentPort** (payment 도메인) 어떤 것부터 구현하시겠습니까? Claude Code에서 사용# 터미널 명령어 실행# Claude Code에서는 터미널 명령어를 직접 실행할 수 있습니다:
+">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://pa-layer.github.io/ko/docs/pa-retriever/with-claude/">
+  <meta property="og:site_name" content="PA-Layer">
+  <meta property="og:title" content="Claude와 함께 사용">
+  <meta property="og:description" content="Claude와 함께 사용# Claude Desktop 및 Claude Code에서 PA-Retriever를 활용하는 방법입니다.
+MCP 연결 설정# 1 2 3 4 5 # 자동 설정 pa mcp install # 상태 확인 pa mcp status 설정 후 Claude Desktop을 재시작하세요.
+기본 대화 명령# 문서 검색# 사용자: auth 도메인의 L2 Port들을 찾아줘 Claude: [search_docs 호출] auth 도메인에서 다음 L2 Port를 찾았습니다: 1. L2-LoginPort - 로그인 프로세스 2. L2-SignupPort - 회원가입 프로세스 3. L2-PasswordResetPort - 비밀번호 재설정문서 조회# 사용자: L2-LoginPort 문서 전체를 보여줘 Claude: [get_doc 호출] # L2-LoginPort ## 개요 로그인 프로세스를 처리하는 L2 Port입니다. ## 인터페이스 ...Port 찾기# 사용자: LoginPort의 명세와 구현체를 찾아줘 Claude: [find_port 호출] LoginPort를 찾았습니다: 📄 문서: auth.L2-LoginPort 💻 코드: - my-backend/src/.../LoginPort.kt (interface) - my-backend/src/.../LoginAdapter.kt (class)통계 확인# 사용자: 현재 인덱싱 상태를 알려줘 Claude: [get_stats 호출] 📊 인덱스 통계: - 총 문서: 47개 - 타입별: l1(12), l2(18), api(8), query(5), guide(4) - 총 토큰: 45,230 - 마지막 인덱싱: 2024-01-05 14:30 실용적인 대화 시나리오# 시나리오 1: 새 문서 작성# 사용자: 결제 도메인의 L2-CheckoutPort 문서를 작성해줘. 기존 L2 문서 형식을 참고해서. Claude: 먼저 기존 L2 문서 형식을 확인하겠습니다. [search_docs type:l2 limit:2] 기존 문서 형식을 참고하여 작성하겠습니다: --- type: l2 domain: payment status: draft depends_on: [L1-PaymentPort, L1-CartPort] --- # L2-CheckoutPort ## 개요 &gt; 결제 프로세스를 처리하는 L2 Port입니다. ## 인터페이스 ```kotlin interface CheckoutPort { suspend fun checkout(request: CheckoutRequest): CheckoutResult suspend fun cancel(orderId: OrderId): CancelResult } ``` ...시나리오 2: 코드 생성# 사용자: L2-LoginPort 명세를 보고 Kotlin 구현체를 만들어줘 Claude: 먼저 L2-LoginPort 명세를 확인하겠습니다. [get_doc id:auth.L2-LoginPort] 의존성도 확인하겠습니다. [get_doc id:auth.L1-UserPort] [get_doc id:auth.L1-TokenPort] 명세에 따라 구현체를 작성하겠습니다: ```kotlin @Component class LoginAdapter( private val userPort: UserPort, private val tokenPort: TokenPort, private val sessionPort: SessionPort ) : LoginPort { @Transactional override suspend fun login(request: LoginRequest): LoginResult { // 1. 사용자 조회 val user = userPort.findByEmail(request.email) ?: return LoginResult.InvalidCredentials // 2. 비밀번호 검증 if (!user.verifyPassword(request.password)) { return LoginResult.InvalidCredentials } // 3. 토큰 생성 val tokens = tokenPort.generate(user.id) return LoginResult.Success( accessToken = tokens.accessToken, refreshToken = tokens.refreshToken, expiresIn = tokens.expiresIn ) } } ```시나리오 3: 아키텍처 검토# 사용자: 현재 auth 도메인의 아키텍처를 분석해줘 Claude: auth 도메인의 문서를 분석하겠습니다. [search_docs domain:auth] ## Auth 도메인 아키텍처 분석 ### 레이어 구조 ``` API Layer └── API-Login, API-Signup L2 (Feature) └── L2-LoginPort, L2-SignupPort, L2-PasswordResetPort L1 (Domain) └── L1-UserPort, L1-TokenPort, L1-SessionPort Query └── Q-AuthQuery ``` ### 의존성 관계 - L2-LoginPort → L1-UserPort, L1-TokenPort - L2-SignupPort → L1-UserPort ### 개선 제안 1. L1-SessionPort가 L2-LoginPort에서만 사용됨 → 통합 검토 2. Q-AuthQuery가 분리되어 있어 CQS 패턴 잘 적용됨 ✓시나리오 4: 문서 업데이트# 사용자: L2-LoginPort에 2FA 지원을 추가하고 싶어. 문서를 어떻게 수정하면 좋을까? Claude: 현재 L2-LoginPort 문서를 확인하겠습니다. [get_doc id:auth.L2-LoginPort] 2FA 지원을 위해 다음과 같이 수정을 제안합니다: ### 인터페이스 변경 ```kotlin interface LoginPort { suspend fun login(request: LoginRequest): LoginResult suspend fun verifyTwoFactor(request: TwoFactorRequest): TwoFactorResult } sealed class LoginResult { data class Success(...) object InvalidCredentials data class TwoFactorRequired( // 추가 val challengeId: String, val method: TwoFactorMethod ) } ``` ### 흐름 변경 ```mermaid sequenceDiagram Client-&gt;&gt;LoginPort: login() LoginPort-&gt;&gt;UserPort: findByEmail() LoginPort-&gt;&gt;LoginPort: verify password alt 2FA 활성화 LoginPort--&gt;&gt;Client: TwoFactorRequired Client-&gt;&gt;LoginPort: verifyTwoFactor() LoginPort--&gt;&gt;Client: Success else 2FA 비활성화 LoginPort--&gt;&gt;Client: Success end ``` Obsidian에서 이 내용으로 수정하시겠습니까?시나리오 5: 구현 체크# 사용자: 문서는 있는데 코드 구현이 안 된 Port가 있어? Claude: 문서와 코드를 비교해보겠습니다. [search_docs type:l2] [find_port name:*] (각 Port별로) ## 구현 상태 체크 | Port | 문서 | 코드 | 상태 | |------|------|------|------| | L2-LoginPort | ✓ | ✓ | 완료 | | L2-SignupPort | ✓ | ✓ | 완료 | | L2-CheckoutPort | ✓ | ✗ | 구현 필요 | | L2-PaymentPort | ✓ | ✗ | 구현 필요 | ### 구현이 필요한 Port 1. **L2-CheckoutPort** (payment 도메인) 2. **L2-PaymentPort** (payment 도메인) 어떤 것부터 구현하시겠습니까? Claude Code에서 사용# 터미널 명령어 실행# Claude Code에서는 터미널 명령어를 직접 실행할 수 있습니다:">
+  <meta property="og:locale" content="ko">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+
+
+  <meta itemprop="name" content="Claude와 함께 사용">
+  <meta itemprop="description" content="Claude와 함께 사용# Claude Desktop 및 Claude Code에서 PA-Retriever를 활용하는 방법입니다.
+MCP 연결 설정# 1 2 3 4 5 # 자동 설정 pa mcp install # 상태 확인 pa mcp status 설정 후 Claude Desktop을 재시작하세요.
+기본 대화 명령# 문서 검색# 사용자: auth 도메인의 L2 Port들을 찾아줘 Claude: [search_docs 호출] auth 도메인에서 다음 L2 Port를 찾았습니다: 1. L2-LoginPort - 로그인 프로세스 2. L2-SignupPort - 회원가입 프로세스 3. L2-PasswordResetPort - 비밀번호 재설정문서 조회# 사용자: L2-LoginPort 문서 전체를 보여줘 Claude: [get_doc 호출] # L2-LoginPort ## 개요 로그인 프로세스를 처리하는 L2 Port입니다. ## 인터페이스 ...Port 찾기# 사용자: LoginPort의 명세와 구현체를 찾아줘 Claude: [find_port 호출] LoginPort를 찾았습니다: 📄 문서: auth.L2-LoginPort 💻 코드: - my-backend/src/.../LoginPort.kt (interface) - my-backend/src/.../LoginAdapter.kt (class)통계 확인# 사용자: 현재 인덱싱 상태를 알려줘 Claude: [get_stats 호출] 📊 인덱스 통계: - 총 문서: 47개 - 타입별: l1(12), l2(18), api(8), query(5), guide(4) - 총 토큰: 45,230 - 마지막 인덱싱: 2024-01-05 14:30 실용적인 대화 시나리오# 시나리오 1: 새 문서 작성# 사용자: 결제 도메인의 L2-CheckoutPort 문서를 작성해줘. 기존 L2 문서 형식을 참고해서. Claude: 먼저 기존 L2 문서 형식을 확인하겠습니다. [search_docs type:l2 limit:2] 기존 문서 형식을 참고하여 작성하겠습니다: --- type: l2 domain: payment status: draft depends_on: [L1-PaymentPort, L1-CartPort] --- # L2-CheckoutPort ## 개요 &gt; 결제 프로세스를 처리하는 L2 Port입니다. ## 인터페이스 ```kotlin interface CheckoutPort { suspend fun checkout(request: CheckoutRequest): CheckoutResult suspend fun cancel(orderId: OrderId): CancelResult } ``` ...시나리오 2: 코드 생성# 사용자: L2-LoginPort 명세를 보고 Kotlin 구현체를 만들어줘 Claude: 먼저 L2-LoginPort 명세를 확인하겠습니다. [get_doc id:auth.L2-LoginPort] 의존성도 확인하겠습니다. [get_doc id:auth.L1-UserPort] [get_doc id:auth.L1-TokenPort] 명세에 따라 구현체를 작성하겠습니다: ```kotlin @Component class LoginAdapter( private val userPort: UserPort, private val tokenPort: TokenPort, private val sessionPort: SessionPort ) : LoginPort { @Transactional override suspend fun login(request: LoginRequest): LoginResult { // 1. 사용자 조회 val user = userPort.findByEmail(request.email) ?: return LoginResult.InvalidCredentials // 2. 비밀번호 검증 if (!user.verifyPassword(request.password)) { return LoginResult.InvalidCredentials } // 3. 토큰 생성 val tokens = tokenPort.generate(user.id) return LoginResult.Success( accessToken = tokens.accessToken, refreshToken = tokens.refreshToken, expiresIn = tokens.expiresIn ) } } ```시나리오 3: 아키텍처 검토# 사용자: 현재 auth 도메인의 아키텍처를 분석해줘 Claude: auth 도메인의 문서를 분석하겠습니다. [search_docs domain:auth] ## Auth 도메인 아키텍처 분석 ### 레이어 구조 ``` API Layer └── API-Login, API-Signup L2 (Feature) └── L2-LoginPort, L2-SignupPort, L2-PasswordResetPort L1 (Domain) └── L1-UserPort, L1-TokenPort, L1-SessionPort Query └── Q-AuthQuery ``` ### 의존성 관계 - L2-LoginPort → L1-UserPort, L1-TokenPort - L2-SignupPort → L1-UserPort ### 개선 제안 1. L1-SessionPort가 L2-LoginPort에서만 사용됨 → 통합 검토 2. Q-AuthQuery가 분리되어 있어 CQS 패턴 잘 적용됨 ✓시나리오 4: 문서 업데이트# 사용자: L2-LoginPort에 2FA 지원을 추가하고 싶어. 문서를 어떻게 수정하면 좋을까? Claude: 현재 L2-LoginPort 문서를 확인하겠습니다. [get_doc id:auth.L2-LoginPort] 2FA 지원을 위해 다음과 같이 수정을 제안합니다: ### 인터페이스 변경 ```kotlin interface LoginPort { suspend fun login(request: LoginRequest): LoginResult suspend fun verifyTwoFactor(request: TwoFactorRequest): TwoFactorResult } sealed class LoginResult { data class Success(...) object InvalidCredentials data class TwoFactorRequired( // 추가 val challengeId: String, val method: TwoFactorMethod ) } ``` ### 흐름 변경 ```mermaid sequenceDiagram Client-&gt;&gt;LoginPort: login() LoginPort-&gt;&gt;UserPort: findByEmail() LoginPort-&gt;&gt;LoginPort: verify password alt 2FA 활성화 LoginPort--&gt;&gt;Client: TwoFactorRequired Client-&gt;&gt;LoginPort: verifyTwoFactor() LoginPort--&gt;&gt;Client: Success else 2FA 비활성화 LoginPort--&gt;&gt;Client: Success end ``` Obsidian에서 이 내용으로 수정하시겠습니까?시나리오 5: 구현 체크# 사용자: 문서는 있는데 코드 구현이 안 된 Port가 있어? Claude: 문서와 코드를 비교해보겠습니다. [search_docs type:l2] [find_port name:*] (각 Port별로) ## 구현 상태 체크 | Port | 문서 | 코드 | 상태 | |------|------|------|------| | L2-LoginPort | ✓ | ✓ | 완료 | | L2-SignupPort | ✓ | ✓ | 완료 | | L2-CheckoutPort | ✓ | ✗ | 구현 필요 | | L2-PaymentPort | ✓ | ✗ | 구현 필요 | ### 구현이 필요한 Port 1. **L2-CheckoutPort** (payment 도메인) 2. **L2-PaymentPort** (payment 도메인) 어떤 것부터 구현하시겠습니까? Claude Code에서 사용# 터미널 명령어 실행# Claude Code에서는 터미널 명령어를 직접 실행할 수 있습니다:">
+  <meta itemprop="wordCount" content="731">
+
+<title>Claude와 함께 사용 | PA-Layer</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="https://pa-layer.github.io/ko/docs/pa-retriever/with-claude/">
+  <link rel="alternate" hreflang="en" href="https://pa-layer.github.io/en/docs/pa-retriever/with-claude/" title="Using with Claude">
+<link rel="stylesheet" href="/book.min.6970156cec683193d93c9c4edaf0d56574e4361df2e0c1be4f697ae81c3ba55f.css" integrity="sha256-aXAVbOxoMZPZPJxO2vDVZXTkNh3y4MG&#43;T2l66Bw7pV8=" crossorigin="anonymous">
+
+
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/ko.search.min.e9756793949413dae8c85e803ce1e02b13ffa1c302aec58e19bfbadb693819d3.js" integrity="sha256-6XVnk5SUE9royF6APOHgKxP/ocMCrsWOGb&#43;622k4GdM=" crossorigin="anonymous"></script>
+
+
+
+  
+</head>
+<body dir="ltr" class="book-kind-page book-type-docs">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    
+<aside class="book-menu">
+  <div class="book-menu-content">
+    
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/ko/"><img src="/images/pa-layer-logo.svg" alt="Logo" /><span>PA-Layer</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input id="book-search-input" type="text" 
+    placeholder="Search"
+    aria-label="Search"
+    maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+  
+
+
+  
+    
+  
+
+
+  
+
+
+<ul class="book-languages">
+  <li>
+    <input type="checkbox" id="languages" class="toggle" />
+    <label for="languages" class="flex">
+      <a role="button">
+        <img src="/icons/translate.svg" class="book-icon" alt="Languages" />
+        한국어
+      </a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+
+    <ul>
+      
+      <li>
+        <a href="/en/docs/pa-retriever/with-claude/" class="flex flex-auto">
+          English
+        </a>
+      </li>
+      
+    </ul>
+  </li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-b056803e087b3464503e98766cccad1a" class="toggle"  />
+    <label for="section-b056803e087b3464503e98766cccad1a" class="flex">
+      <a href="/ko/docs/installation/" class="">
+        설치하기</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/macos/" class="">
+      macOS 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/windows/" class="">
+      Windows 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/linux/" class="">
+      Linux 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/workspace/" class="">
+      워크스페이스 구성</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-187b3aa4e29a5d5ef2738d28ac16df69" class="toggle"  />
+    <label for="section-187b3aa4e29a5d5ef2738d28ac16df69" class="flex">
+      <a href="/ko/docs/configuration/" class="">
+        설정하기</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/claude/" class="">
+      Claude 연동</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/obsidian/" class="">
+      Obsidian 설정</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/pa-config/" class="">
+      PA-Retriever 설정</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99ad2865f9541edb014cad9a350d886e" class="toggle"  />
+    <label for="section-99ad2865f9541edb014cad9a350d886e" class="flex">
+      <a href="/ko/docs/pa-layer/" class="">
+        PA-Layer</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/overview/" class="">
+      아키텍처 개요</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/backend/" class="">
+      Backend 컨벤션</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/frontend/" class="">
+      Frontend 컨벤션</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99cc806f10f29d7b76e63ff1539abbc7" class="toggle" checked />
+    <label for="section-99cc806f10f29d7b76e63ff1539abbc7" class="flex">
+      <a href="/ko/docs/pa-retriever/" class="">
+        PA-Retriever</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/basic/" class="">
+      기본 사용법</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/search/" class="">
+      검색 가이드</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/code/" class="">
+      코드 인덱싱</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/with-claude/" class="active">
+      Claude와 함께 사용</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/advanced/" class="">
+      고급 기능</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+<ul><li><a href="https://github.com/pa-layer/pa-retriever" target="_blank" rel="noopener">GitHub</a></li></ul>
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+
+  </div>
+</aside>
+ 
+
+    <div class="book-page">
+      <header class="book-header hidden">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/icons/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>Claude와 함께 사용</h3>
+
+  <label for="toc-control">
+    
+    <img src="/icons/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#mcp-연결-설정">MCP 연결 설정</a></li>
+    <li><a href="#기본-대화-명령">기본 대화 명령</a>
+      <ul>
+        <li><a href="#문서-검색">문서 검색</a></li>
+        <li><a href="#문서-조회">문서 조회</a></li>
+        <li><a href="#port-찾기">Port 찾기</a></li>
+        <li><a href="#통계-확인">통계 확인</a></li>
+      </ul>
+    </li>
+    <li><a href="#실용적인-대화-시나리오">실용적인 대화 시나리오</a>
+      <ul>
+        <li><a href="#시나리오-1-새-문서-작성">시나리오 1: 새 문서 작성</a></li>
+        <li><a href="#시나리오-2-코드-생성">시나리오 2: 코드 생성</a></li>
+        <li><a href="#시나리오-3-아키텍처-검토">시나리오 3: 아키텍처 검토</a></li>
+        <li><a href="#시나리오-4-문서-업데이트">시나리오 4: 문서 업데이트</a></li>
+        <li><a href="#시나리오-5-구현-체크">시나리오 5: 구현 체크</a></li>
+      </ul>
+    </li>
+    <li><a href="#claude-code에서-사용">Claude Code에서 사용</a>
+      <ul>
+        <li><a href="#터미널-명령어-실행">터미널 명령어 실행</a></li>
+        <li><a href="#프로젝트-컨텍스트">프로젝트 컨텍스트</a></li>
+      </ul>
+    </li>
+    <li><a href="#팁">팁</a>
+      <ul>
+        <li><a href="#효율적인-대화">효율적인 대화</a></li>
+        <li><a href="#mcp-도구-직접-호출">MCP 도구 직접 호출</a></li>
+      </ul>
+    </li>
+    <li><a href="#다음-단계">다음 단계</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="claude와-함께-사용">Claude와 함께 사용<a class="anchor" href="#claude%ec%99%80-%ed%95%a8%ea%bb%98-%ec%82%ac%ec%9a%a9">#</a></h1>
+<p>Claude Desktop 및 Claude Code에서 PA-Retriever를 활용하는 방법입니다.</p>
+<h2 id="mcp-연결-설정">MCP 연결 설정<a class="anchor" href="#mcp-%ec%97%b0%ea%b2%b0-%ec%84%a4%ec%a0%95">#</a></h2>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 자동 설정</span>
+</span></span><span style="display:flex;"><span>pa mcp install
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 상태 확인</span>
+</span></span><span style="display:flex;"><span>pa mcp status</span></span></code></pre></td></tr></table>
+</div>
+</div><p>설정 후 <strong>Claude Desktop을 재시작</strong>하세요.</p>
+<h2 id="기본-대화-명령">기본 대화 명령<a class="anchor" href="#%ea%b8%b0%eb%b3%b8-%eb%8c%80%ed%99%94-%eb%aa%85%eb%a0%b9">#</a></h2>
+<h3 id="문서-검색">문서 검색<a class="anchor" href="#%eb%ac%b8%ec%84%9c-%ea%b2%80%ec%83%89">#</a></h3>
+<pre tabindex="0"><code>사용자: auth 도메인의 L2 Port들을 찾아줘
+
+Claude: [search_docs 호출]
+auth 도메인에서 다음 L2 Port를 찾았습니다:
+1. L2-LoginPort - 로그인 프로세스
+2. L2-SignupPort - 회원가입 프로세스
+3. L2-PasswordResetPort - 비밀번호 재설정</code></pre><h3 id="문서-조회">문서 조회<a class="anchor" href="#%eb%ac%b8%ec%84%9c-%ec%a1%b0%ed%9a%8c">#</a></h3>
+<pre tabindex="0"><code>사용자: L2-LoginPort 문서 전체를 보여줘
+
+Claude: [get_doc 호출]
+# L2-LoginPort
+
+## 개요
+로그인 프로세스를 처리하는 L2 Port입니다.
+
+## 인터페이스
+...</code></pre><h3 id="port-찾기">Port 찾기<a class="anchor" href="#port-%ec%b0%be%ea%b8%b0">#</a></h3>
+<pre tabindex="0"><code>사용자: LoginPort의 명세와 구현체를 찾아줘
+
+Claude: [find_port 호출]
+LoginPort를 찾았습니다:
+
+📄 문서: auth.L2-LoginPort
+💻 코드:
+  - my-backend/src/.../LoginPort.kt (interface)
+  - my-backend/src/.../LoginAdapter.kt (class)</code></pre><h3 id="통계-확인">통계 확인<a class="anchor" href="#%ed%86%b5%ea%b3%84-%ed%99%95%ec%9d%b8">#</a></h3>
+<pre tabindex="0"><code>사용자: 현재 인덱싱 상태를 알려줘
+
+Claude: [get_stats 호출]
+📊 인덱스 통계:
+- 총 문서: 47개
+- 타입별: l1(12), l2(18), api(8), query(5), guide(4)
+- 총 토큰: 45,230
+- 마지막 인덱싱: 2024-01-05 14:30</code></pre><hr>
+<h2 id="실용적인-대화-시나리오">실용적인 대화 시나리오<a class="anchor" href="#%ec%8b%a4%ec%9a%a9%ec%a0%81%ec%9d%b8-%eb%8c%80%ed%99%94-%ec%8b%9c%eb%82%98%eb%a6%ac%ec%98%a4">#</a></h2>
+<h3 id="시나리오-1-새-문서-작성">시나리오 1: 새 문서 작성<a class="anchor" href="#%ec%8b%9c%eb%82%98%eb%a6%ac%ec%98%a4-1-%ec%83%88-%eb%ac%b8%ec%84%9c-%ec%9e%91%ec%84%b1">#</a></h3>
+<pre tabindex="0"><code>사용자: 결제 도메인의 L2-CheckoutPort 문서를 작성해줘. 
+       기존 L2 문서 형식을 참고해서.
+
+Claude: 먼저 기존 L2 문서 형식을 확인하겠습니다.
+        [search_docs type:l2 limit:2]
+        
+        기존 문서 형식을 참고하여 작성하겠습니다:
+        
+        ---
+        type: l2
+        domain: payment
+        status: draft
+        depends_on: [L1-PaymentPort, L1-CartPort]
+        ---
+        
+        # L2-CheckoutPort
+        
+        ## 개요
+        &gt; 결제 프로세스를 처리하는 L2 Port입니다.
+        
+        ## 인터페이스
+        ```kotlin
+        interface CheckoutPort {
+            suspend fun checkout(request: CheckoutRequest): CheckoutResult
+            suspend fun cancel(orderId: OrderId): CancelResult
+        }
+        ```
+        ...</code></pre><h3 id="시나리오-2-코드-생성">시나리오 2: 코드 생성<a class="anchor" href="#%ec%8b%9c%eb%82%98%eb%a6%ac%ec%98%a4-2-%ec%bd%94%eb%93%9c-%ec%83%9d%ec%84%b1">#</a></h3>
+<pre tabindex="0"><code>사용자: L2-LoginPort 명세를 보고 Kotlin 구현체를 만들어줘
+
+Claude: 먼저 L2-LoginPort 명세를 확인하겠습니다.
+        [get_doc id:auth.L2-LoginPort]
+        
+        의존성도 확인하겠습니다.
+        [get_doc id:auth.L1-UserPort]
+        [get_doc id:auth.L1-TokenPort]
+        
+        명세에 따라 구현체를 작성하겠습니다:
+        
+        ```kotlin
+        @Component
+        class LoginAdapter(
+            private val userPort: UserPort,
+            private val tokenPort: TokenPort,
+            private val sessionPort: SessionPort
+        ) : LoginPort {
+            
+            @Transactional
+            override suspend fun login(request: LoginRequest): LoginResult {
+                // 1. 사용자 조회
+                val user = userPort.findByEmail(request.email)
+                    ?: return LoginResult.InvalidCredentials
+                    
+                // 2. 비밀번호 검증
+                if (!user.verifyPassword(request.password)) {
+                    return LoginResult.InvalidCredentials
+                }
+                
+                // 3. 토큰 생성
+                val tokens = tokenPort.generate(user.id)
+                
+                return LoginResult.Success(
+                    accessToken = tokens.accessToken,
+                    refreshToken = tokens.refreshToken,
+                    expiresIn = tokens.expiresIn
+                )
+            }
+        }
+        ```</code></pre><h3 id="시나리오-3-아키텍처-검토">시나리오 3: 아키텍처 검토<a class="anchor" href="#%ec%8b%9c%eb%82%98%eb%a6%ac%ec%98%a4-3-%ec%95%84%ed%82%a4%ed%85%8d%ec%b2%98-%ea%b2%80%ed%86%a0">#</a></h3>
+<pre tabindex="0"><code>사용자: 현재 auth 도메인의 아키텍처를 분석해줘
+
+Claude: auth 도메인의 문서를 분석하겠습니다.
+        [search_docs domain:auth]
+        
+        ## Auth 도메인 아키텍처 분석
+        
+        ### 레이어 구조
+        ```
+        API Layer
+        └── API-Login, API-Signup
+        
+        L2 (Feature)
+        └── L2-LoginPort, L2-SignupPort, L2-PasswordResetPort
+        
+        L1 (Domain)
+        └── L1-UserPort, L1-TokenPort, L1-SessionPort
+        
+        Query
+        └── Q-AuthQuery
+        ```
+        
+        ### 의존성 관계
+        - L2-LoginPort → L1-UserPort, L1-TokenPort
+        - L2-SignupPort → L1-UserPort
+        
+        ### 개선 제안
+        1. L1-SessionPort가 L2-LoginPort에서만 사용됨 → 통합 검토
+        2. Q-AuthQuery가 분리되어 있어 CQS 패턴 잘 적용됨 ✓</code></pre><h3 id="시나리오-4-문서-업데이트">시나리오 4: 문서 업데이트<a class="anchor" href="#%ec%8b%9c%eb%82%98%eb%a6%ac%ec%98%a4-4-%eb%ac%b8%ec%84%9c-%ec%97%85%eb%8d%b0%ec%9d%b4%ed%8a%b8">#</a></h3>
+<pre tabindex="0"><code>사용자: L2-LoginPort에 2FA 지원을 추가하고 싶어. 
+       문서를 어떻게 수정하면 좋을까?
+
+Claude: 현재 L2-LoginPort 문서를 확인하겠습니다.
+        [get_doc id:auth.L2-LoginPort]
+        
+        2FA 지원을 위해 다음과 같이 수정을 제안합니다:
+        
+        ### 인터페이스 변경
+        ```kotlin
+        interface LoginPort {
+            suspend fun login(request: LoginRequest): LoginResult
+            suspend fun verifyTwoFactor(request: TwoFactorRequest): TwoFactorResult
+        }
+        
+        sealed class LoginResult {
+            data class Success(...)
+            object InvalidCredentials
+            data class TwoFactorRequired(  // 추가
+                val challengeId: String,
+                val method: TwoFactorMethod
+            )
+        }
+        ```
+        
+        ### 흐름 변경
+        ```mermaid
+        sequenceDiagram
+            Client-&gt;&gt;LoginPort: login()
+            LoginPort-&gt;&gt;UserPort: findByEmail()
+            LoginPort-&gt;&gt;LoginPort: verify password
+            alt 2FA 활성화
+                LoginPort--&gt;&gt;Client: TwoFactorRequired
+                Client-&gt;&gt;LoginPort: verifyTwoFactor()
+                LoginPort--&gt;&gt;Client: Success
+            else 2FA 비활성화
+                LoginPort--&gt;&gt;Client: Success
+            end
+        ```
+        
+        Obsidian에서 이 내용으로 수정하시겠습니까?</code></pre><h3 id="시나리오-5-구현-체크">시나리오 5: 구현 체크<a class="anchor" href="#%ec%8b%9c%eb%82%98%eb%a6%ac%ec%98%a4-5-%ea%b5%ac%ed%98%84-%ec%b2%b4%ed%81%ac">#</a></h3>
+<pre tabindex="0"><code>사용자: 문서는 있는데 코드 구현이 안 된 Port가 있어?
+
+Claude: 문서와 코드를 비교해보겠습니다.
+        [search_docs type:l2]
+        [find_port name:*]  (각 Port별로)
+        
+        ## 구현 상태 체크
+        
+        | Port | 문서 | 코드 | 상태 |
+        |------|------|------|------|
+        | L2-LoginPort | ✓ | ✓ | 완료 |
+        | L2-SignupPort | ✓ | ✓ | 완료 |
+        | L2-CheckoutPort | ✓ | ✗ | 구현 필요 |
+        | L2-PaymentPort | ✓ | ✗ | 구현 필요 |
+        
+        ### 구현이 필요한 Port
+        1. **L2-CheckoutPort** (payment 도메인)
+        2. **L2-PaymentPort** (payment 도메인)
+        
+        어떤 것부터 구현하시겠습니까?</code></pre><hr>
+<h2 id="claude-code에서-사용">Claude Code에서 사용<a class="anchor" href="#claude-code%ec%97%90%ec%84%9c-%ec%82%ac%ec%9a%a9">#</a></h2>
+<h3 id="터미널-명령어-실행">터미널 명령어 실행<a class="anchor" href="#%ed%84%b0%eb%af%b8%eb%84%90-%eb%aa%85%eb%a0%b9%ec%96%b4-%ec%8b%a4%ed%96%89">#</a></h3>
+<p>Claude Code에서는 터미널 명령어를 직접 실행할 수 있습니다:</p>
+<pre tabindex="0"><code>사용자: auth 도메인 문서를 검색해서 보여줘
+
+Claude: 터미널에서 PA-Retriever를 실행하겠습니다.
+        
+        $ pa search &#34;domain:auth&#34;
+        
+        🔍 검색 결과: &#34;domain:auth&#34; (6건)
+        
+        1. [l2] auth.L2-LoginPort
+        2. [l2] auth.L2-SignupPort
+        ...</code></pre><h3 id="프로젝트-컨텍스트">프로젝트 컨텍스트<a class="anchor" href="#%ed%94%84%eb%a1%9c%ec%a0%9d%ed%8a%b8-%ec%bb%a8%ed%85%8d%ec%8a%a4%ed%8a%b8">#</a></h3>
+<pre tabindex="0"><code>사용자: 현재 프로젝트의 Port 구조를 파악해줘
+
+Claude: 프로젝트 구조와 PA-Retriever 인덱스를 확인하겠습니다.
+        
+        $ ls -la src/domain/
+        $ pa status --compact
+        $ pa code list
+        
+        현재 프로젝트 구조:
+        - domain/auth: 3개 Port
+        - domain/users: 2개 Port
+        - domain/orders: 4개 Port
+        
+        문서화 상태: 80% (9/11)</code></pre><hr>
+<h2 id="팁">팁<a class="anchor" href="#%ed%8c%81">#</a></h2>
+<h3 id="효율적인-대화">효율적인 대화<a class="anchor" href="#%ed%9a%a8%ec%9c%a8%ec%a0%81%ec%9d%b8-%eb%8c%80%ed%99%94">#</a></h3>
+<ol>
+<li><strong>구체적으로 요청</strong>: &ldquo;문서 보여줘&rdquo; → &ldquo;auth 도메인의 L2-LoginPort 문서 보여줘&rdquo;</li>
+<li><strong>컨텍스트 제공</strong>: &ldquo;새 문서 작성해줘&rdquo; → &ldquo;기존 L2 형식으로 PaymentPort 문서 작성해줘&rdquo;</li>
+<li><strong>단계별 요청</strong>: 복잡한 작업은 여러 단계로 나눠서 요청</li>
+</ol>
+<h3 id="mcp-도구-직접-호출">MCP 도구 직접 호출<a class="anchor" href="#mcp-%eb%8f%84%ea%b5%ac-%ec%a7%81%ec%a0%91-%ed%98%b8%ec%b6%9c">#</a></h3>
+<p>Claude에게 특정 도구를 명시적으로 요청할 수 있습니다:</p>
+<pre tabindex="0"><code>사용자: search_docs로 type:api인 문서를 검색해줘
+사용자: get_architecture로 PA-Layer 규칙을 알려줘
+사용자: find_port로 LoginPort를 찾아줘</code></pre><hr>
+<h2 id="다음-단계">다음 단계<a class="anchor" href="#%eb%8b%a4%ec%9d%8c-%eb%8b%a8%ea%b3%84">#</a></h2>
+<ul>
+<li><a href="/ko/docs/pa-retriever/advanced/">고급 기능</a></li>
+</ul>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+<div>
+
+</div>
+
+<div>
+
+</div>
+
+</div>
+
+
+
+
+
+  
+  
+  
+  <div class="flex flex-wrap justify-between">
+    <span>
+    
+      <a href="/ko/docs/pa-retriever/code/" class="flex align-center">
+        <img src="/icons/backward.svg" class="book-icon" alt="Backward" />
+        <span>코드 인덱싱</span>
+      </a>
+    
+    </span>
+    <span>
+    
+      <a href="/ko/docs/pa-retriever/advanced/" class="flex align-center">
+        <span>고급 기능</span>
+        <img src="/icons/forward.svg" class="book-icon" alt="Forward" />
+      </a>
+    
+    </span>
+  </div>
+  
+
+
+ 
+        
+  
+ 
+        
+        
+  
+ 
+        
+  
+  
+    <script>(function(){document.querySelectorAll("pre:has(code)").forEach(e=>{e.addEventListener("click",e.focus),e.addEventListener("copy",function(t){if(t.preventDefault(),navigator.clipboard){const t=window.getSelection().toString()||e.textContent;navigator.clipboard.writeText(t)}})})})()</script>
+  
+
+      </footer>
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+  
+  <aside class="book-toc">
+    <div class="book-toc-content">
+      
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#mcp-연결-설정">MCP 연결 설정</a></li>
+    <li><a href="#기본-대화-명령">기본 대화 명령</a>
+      <ul>
+        <li><a href="#문서-검색">문서 검색</a></li>
+        <li><a href="#문서-조회">문서 조회</a></li>
+        <li><a href="#port-찾기">Port 찾기</a></li>
+        <li><a href="#통계-확인">통계 확인</a></li>
+      </ul>
+    </li>
+    <li><a href="#실용적인-대화-시나리오">실용적인 대화 시나리오</a>
+      <ul>
+        <li><a href="#시나리오-1-새-문서-작성">시나리오 1: 새 문서 작성</a></li>
+        <li><a href="#시나리오-2-코드-생성">시나리오 2: 코드 생성</a></li>
+        <li><a href="#시나리오-3-아키텍처-검토">시나리오 3: 아키텍처 검토</a></li>
+        <li><a href="#시나리오-4-문서-업데이트">시나리오 4: 문서 업데이트</a></li>
+        <li><a href="#시나리오-5-구현-체크">시나리오 5: 구현 체크</a></li>
+      </ul>
+    </li>
+    <li><a href="#claude-code에서-사용">Claude Code에서 사용</a>
+      <ul>
+        <li><a href="#터미널-명령어-실행">터미널 명령어 실행</a></li>
+        <li><a href="#프로젝트-컨텍스트">프로젝트 컨텍스트</a></li>
+      </ul>
+    </li>
+    <li><a href="#팁">팁</a>
+      <ul>
+        <li><a href="#효율적인-대화">효율적인 대화</a></li>
+        <li><a href="#mcp-도구-직접-호출">MCP 도구 직접 호출</a></li>
+      </ul>
+    </li>
+    <li><a href="#다음-단계">다음 단계</a></li>
+  </ul>
+</nav>
+
+
+
+    </div>
+  </aside>
+  
+ 
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

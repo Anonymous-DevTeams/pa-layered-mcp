@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Obsidian Settings# Obsidian configuration for PA-Layer document authoring.
+Open Vault# 1 2 3 4 5 6 # 1. Create mcp-docs directory (if not exists) mkdir -p ~/playground/mcp-docs # 2. Launch Obsidian # 3. Select &#34;Open folder as vault&#34; # 4. Select ~/playground/mcp-docs Recommended Plugins# Required# Plugin Purpose Templater Document template automation Dataview Document query/filtering Recommended# Plugin Purpose Git Git synchronization Excalidraw Diagrams Kanban Task boards Directory Structure# mcp-docs/ ├── .obsidian/ # Obsidian settings ├── templates/ # Templater templates │ ├── tpl-l1-port.md │ ├── tpl-l2-port.md │ └── tpl-api-port.md ├── ports/ # Port documents │ ├── auth/ │ └── users/ ├── guides/ # Guide documents └── .pa-index.yaml # PA-Retriever settingsTemplate Example# tpl-l2-port.md# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 --- type: l2 domain: status: draft created: {{date}} --- # L2-{{title}} ## Overview &gt; [!info] Port Summary &gt; - **Purpose**: &gt; - **Domain**: &gt; - **Dependencies**: ## Interface ```kotlin interface {{title}} { // TODO: Define methods } Related Documents# [[]] ## Dataview Queries ### All L2 Ports ```dataview TABLE domain, status, updated FROM &#34;&#34; WHERE type = &#34;l2&#34; SORT domain, file.name Next Steps# PA-Retriever Config ">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://pa-layer.github.io/en/docs/configuration/obsidian/">
+  <meta property="og:site_name" content="PA-Layer">
+  <meta property="og:title" content="Obsidian Settings">
+  <meta property="og:description" content="Obsidian Settings# Obsidian configuration for PA-Layer document authoring.
+Open Vault# 1 2 3 4 5 6 # 1. Create mcp-docs directory (if not exists) mkdir -p ~/playground/mcp-docs # 2. Launch Obsidian # 3. Select &#34;Open folder as vault&#34; # 4. Select ~/playground/mcp-docs Recommended Plugins# Required# Plugin Purpose Templater Document template automation Dataview Document query/filtering Recommended# Plugin Purpose Git Git synchronization Excalidraw Diagrams Kanban Task boards Directory Structure# mcp-docs/ ├── .obsidian/ # Obsidian settings ├── templates/ # Templater templates │ ├── tpl-l1-port.md │ ├── tpl-l2-port.md │ └── tpl-api-port.md ├── ports/ # Port documents │ ├── auth/ │ └── users/ ├── guides/ # Guide documents └── .pa-index.yaml # PA-Retriever settingsTemplate Example# tpl-l2-port.md# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 --- type: l2 domain: status: draft created: {{date}} --- # L2-{{title}} ## Overview &gt; [!info] Port Summary &gt; - **Purpose**: &gt; - **Domain**: &gt; - **Dependencies**: ## Interface ```kotlin interface {{title}} { // TODO: Define methods } Related Documents# [[]] ## Dataview Queries ### All L2 Ports ```dataview TABLE domain, status, updated FROM &#34;&#34; WHERE type = &#34;l2&#34; SORT domain, file.name Next Steps# PA-Retriever Config">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+
+
+  <meta itemprop="name" content="Obsidian Settings">
+  <meta itemprop="description" content="Obsidian Settings# Obsidian configuration for PA-Layer document authoring.
+Open Vault# 1 2 3 4 5 6 # 1. Create mcp-docs directory (if not exists) mkdir -p ~/playground/mcp-docs # 2. Launch Obsidian # 3. Select &#34;Open folder as vault&#34; # 4. Select ~/playground/mcp-docs Recommended Plugins# Required# Plugin Purpose Templater Document template automation Dataview Document query/filtering Recommended# Plugin Purpose Git Git synchronization Excalidraw Diagrams Kanban Task boards Directory Structure# mcp-docs/ ├── .obsidian/ # Obsidian settings ├── templates/ # Templater templates │ ├── tpl-l1-port.md │ ├── tpl-l2-port.md │ └── tpl-api-port.md ├── ports/ # Port documents │ ├── auth/ │ └── users/ ├── guides/ # Guide documents └── .pa-index.yaml # PA-Retriever settingsTemplate Example# tpl-l2-port.md# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 --- type: l2 domain: status: draft created: {{date}} --- # L2-{{title}} ## Overview &gt; [!info] Port Summary &gt; - **Purpose**: &gt; - **Domain**: &gt; - **Dependencies**: ## Interface ```kotlin interface {{title}} { // TODO: Define methods } Related Documents# [[]] ## Dataview Queries ### All L2 Ports ```dataview TABLE domain, status, updated FROM &#34;&#34; WHERE type = &#34;l2&#34; SORT domain, file.name Next Steps# PA-Retriever Config">
+  <meta itemprop="wordCount" content="197">
+
+<title>Obsidian Settings | PA-Layer</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="https://pa-layer.github.io/en/docs/configuration/obsidian/">
+  <link rel="alternate" hreflang="ko" href="https://pa-layer.github.io/ko/docs/configuration/obsidian/" title="Obsidian 설정">
+<link rel="stylesheet" href="/book.min.6970156cec683193d93c9c4edaf0d56574e4361df2e0c1be4f697ae81c3ba55f.css" integrity="sha256-aXAVbOxoMZPZPJxO2vDVZXTkNh3y4MG&#43;T2l66Bw7pV8=" crossorigin="anonymous">
+
+
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.b5456745024e721c0ed5066be46dd05983568404556d91df1ba7a31dc5a41591.js" integrity="sha256-tUVnRQJOchwO1QZr5G3QWYNWhARVbZHfG6ejHcWkFZE=" crossorigin="anonymous"></script>
+
+
+
+  
+</head>
+<body dir="ltr" class="book-kind-page book-type-docs">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    
+<aside class="book-menu">
+  <div class="book-menu-content">
+    
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/en/"><img src="/images/pa-layer-logo.svg" alt="Logo" /><span>PA-Layer</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input id="book-search-input" type="text" 
+    placeholder="Search"
+    aria-label="Search"
+    maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+  
+
+
+  
+    
+  
+
+
+  
+
+
+<ul class="book-languages">
+  <li>
+    <input type="checkbox" id="languages" class="toggle" />
+    <label for="languages" class="flex">
+      <a role="button">
+        <img src="/icons/translate.svg" class="book-icon" alt="Languages" />
+        English
+      </a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+
+    <ul>
+      
+      <li>
+        <a href="/ko/docs/configuration/obsidian/" class="flex flex-auto">
+          한국어
+        </a>
+      </li>
+      
+    </ul>
+  </li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-6236be1b89680b92e3aefa016e21a142" class="toggle"  />
+    <label for="section-6236be1b89680b92e3aefa016e21a142" class="flex">
+      <a href="/en/docs/installation/" class="">
+        Installation</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/macos/" class="">
+      macOS Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/windows/" class="">
+      Windows Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/linux/" class="">
+      Linux Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/workspace/" class="">
+      Workspace Setup</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c57e8d2542437d90ac12ebccc18f7bd6" class="toggle" checked />
+    <label for="section-c57e8d2542437d90ac12ebccc18f7bd6" class="flex">
+      <a href="/en/docs/configuration/" class="">
+        Configuration</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/claude/" class="">
+      Claude Integration</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/obsidian/" class="active">
+      Obsidian Settings</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/pa-config/" class="">
+      PA-Retriever Config</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e28c43a16f6ea811813d9b83e9c091a1" class="toggle"  />
+    <label for="section-e28c43a16f6ea811813d9b83e9c091a1" class="flex">
+      <a href="/en/docs/pa-layer/" class="">
+        PA-Layer</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/overview/" class="">
+      Architecture Overview</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/backend/" class="">
+      Backend Conventions</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/frontend/" class="">
+      Frontend Conventions</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-2e7de72bf7fb1d60035ad67e5a7421f2" class="toggle"  />
+    <label for="section-2e7de72bf7fb1d60035ad67e5a7421f2" class="flex">
+      <a href="/en/docs/pa-retriever/" class="">
+        PA-Retriever</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/basic/" class="">
+      Basic Usage</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/search/" class="">
+      Search Guide</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/code/" class="">
+      Code Indexing</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/with-claude/" class="">
+      Using with Claude</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/advanced/" class="">
+      Advanced Features</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+<ul><li><a href="https://github.com/pa-layer/pa-retriever" target="_blank" rel="noopener">GitHub</a></li></ul>
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+
+  </div>
+</aside>
+ 
+
+    <div class="book-page">
+      <header class="book-header hidden">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/icons/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>Obsidian Settings</h3>
+
+  <label for="toc-control">
+    
+    <img src="/icons/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#open-vault">Open Vault</a></li>
+    <li><a href="#recommended-plugins">Recommended Plugins</a>
+      <ul>
+        <li><a href="#required">Required</a></li>
+        <li><a href="#recommended">Recommended</a></li>
+      </ul>
+    </li>
+    <li><a href="#directory-structure">Directory Structure</a></li>
+    <li><a href="#template-example">Template Example</a>
+      <ul>
+        <li><a href="#tpl-l2-portmd">tpl-l2-port.md</a></li>
+      </ul>
+    </li>
+    <li><a href="#related-documents">Related Documents</a></li>
+    <li><a href="#next-steps">Next Steps</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="obsidian-settings">Obsidian Settings<a class="anchor" href="#obsidian-settings">#</a></h1>
+<p>Obsidian configuration for PA-Layer document authoring.</p>
+<h2 id="open-vault">Open Vault<a class="anchor" href="#open-vault">#</a></h2>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 1. Create mcp-docs directory (if not exists)</span>
+</span></span><span style="display:flex;"><span>mkdir -p ~/playground/mcp-docs
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 2. Launch Obsidian</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 3. Select &#34;Open folder as vault&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 4. Select ~/playground/mcp-docs</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="recommended-plugins">Recommended Plugins<a class="anchor" href="#recommended-plugins">#</a></h2>
+<h3 id="required">Required<a class="anchor" href="#required">#</a></h3>
+<table>
+  <thead>
+      <tr>
+          <th>Plugin</th>
+          <th>Purpose</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><strong>Templater</strong></td>
+          <td>Document template automation</td>
+      </tr>
+      <tr>
+          <td><strong>Dataview</strong></td>
+          <td>Document query/filtering</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="recommended">Recommended<a class="anchor" href="#recommended">#</a></h3>
+<table>
+  <thead>
+      <tr>
+          <th>Plugin</th>
+          <th>Purpose</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><strong>Git</strong></td>
+          <td>Git synchronization</td>
+      </tr>
+      <tr>
+          <td><strong>Excalidraw</strong></td>
+          <td>Diagrams</td>
+      </tr>
+      <tr>
+          <td><strong>Kanban</strong></td>
+          <td>Task boards</td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="directory-structure">Directory Structure<a class="anchor" href="#directory-structure">#</a></h2>
+<pre tabindex="0"><code>mcp-docs/
+├── .obsidian/              # Obsidian settings
+├── templates/              # Templater templates
+│   ├── tpl-l1-port.md
+│   ├── tpl-l2-port.md
+│   └── tpl-api-port.md
+├── ports/                  # Port documents
+│   ├── auth/
+│   └── users/
+├── guides/                 # Guide documents
+└── .pa-index.yaml          # PA-Retriever settings</code></pre><h2 id="template-example">Template Example<a class="anchor" href="#template-example">#</a></h2>
+<h3 id="tpl-l2-portmd">tpl-l2-port.md<a class="anchor" href="#tpl-l2-portmd">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-markdown" data-lang="markdown"><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span>type: l2
+</span></span><span style="display:flex;"><span>domain: 
+</span></span><span style="display:flex;"><span>status: draft
+</span></span><span style="display:flex;"><span>created: {{date}}
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span># L2-{{title}}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">## Overview
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">&gt; </span><span style="font-style:italic">[!info] Port Summary
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">&gt; </span><span style="font-style:italic">- **Purpose**: 
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">&gt; </span><span style="font-style:italic">- **Domain**: 
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">&gt; </span><span style="font-style:italic">- **Dependencies**: 
+</span></span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">## Interface
+</span></span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>```kotlin
+</span></span><span style="display:flex;"><span>interface {{title}} {
+</span></span><span style="display:flex;"><span>    // TODO: Define methods
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="related-documents">Related Documents<a class="anchor" href="#related-documents">#</a></h2>
+<ul>
+<li>[[]]</li>
+</ul>
+<pre tabindex="0"><code>
+## Dataview Queries
+
+### All L2 Ports
+
+```dataview
+TABLE domain, status, updated
+FROM &#34;&#34;
+WHERE type = &#34;l2&#34;
+SORT domain, file.name</code></pre><hr>
+<h2 id="next-steps">Next Steps<a class="anchor" href="#next-steps">#</a></h2>
+<ul>
+<li><a href="/en/docs/configuration/pa-config/">PA-Retriever Config</a></li>
+</ul>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+<div>
+
+</div>
+
+<div>
+
+</div>
+
+</div>
+
+
+
+
+
+  
+  
+  
+  <div class="flex flex-wrap justify-between">
+    <span>
+    
+      <a href="/en/docs/configuration/claude/" class="flex align-center">
+        <img src="/icons/backward.svg" class="book-icon" alt="Backward" />
+        <span>Claude Integration</span>
+      </a>
+    
+    </span>
+    <span>
+    
+      <a href="/en/docs/configuration/pa-config/" class="flex align-center">
+        <span>PA-Retriever Config</span>
+        <img src="/icons/forward.svg" class="book-icon" alt="Forward" />
+      </a>
+    
+    </span>
+  </div>
+  
+
+
+ 
+        
+  
+ 
+        
+        
+  
+ 
+        
+  
+  
+    <script>(function(){document.querySelectorAll("pre:has(code)").forEach(e=>{e.addEventListener("click",e.focus),e.addEventListener("copy",function(t){if(t.preventDefault(),navigator.clipboard){const t=window.getSelection().toString()||e.textContent;navigator.clipboard.writeText(t)}})})})()</script>
+  
+
+      </footer>
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+  
+  <aside class="book-toc">
+    <div class="book-toc-content">
+      
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#open-vault">Open Vault</a></li>
+    <li><a href="#recommended-plugins">Recommended Plugins</a>
+      <ul>
+        <li><a href="#required">Required</a></li>
+        <li><a href="#recommended">Recommended</a></li>
+      </ul>
+    </li>
+    <li><a href="#directory-structure">Directory Structure</a></li>
+    <li><a href="#template-example">Template Example</a>
+      <ul>
+        <li><a href="#tpl-l2-portmd">tpl-l2-port.md</a></li>
+      </ul>
+    </li>
+    <li><a href="#related-documents">Related Documents</a></li>
+    <li><a href="#next-steps">Next Steps</a></li>
+  </ul>
+</nav>
+
+
+
+    </div>
+  </aside>
+  
+ 
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="ko" dir="ltr">
+<head>
+  <!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Windows 설치 가이드# Windows 10/11에서 PA-Layer 환경을 구성합니다.
+1. Scoop으로 설치 (권장)# 1 2 3 4 5 6 7 8 9 10 # Scoop 설치 (없는 경우) Set-ExecutionPolicy RemoteSigned -Scope CurrentUser irm get.scoop.sh | iex # PA-Retriever 설치 scoop bucket add pa-layer https://github.com/pa-layer/scoop-bucket scoop install pa-retriever # 설치 확인 pa version 2. 수동 설치# PowerShell로 다운로드# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 # 다운로드 디렉토리로 이동 cd $HOME\Downloads # 다운로드 Invoke-WebRequest -Uri &#34;https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-windows-amd64.zip&#34; -OutFile &#34;pa-retriever.zip&#34; # 압축 해제 Expand-Archive -Path &#34;pa-retriever.zip&#34; -DestinationPath &#34;pa-retriever&#34; # 설치 디렉토리 생성 New-Item -ItemType Directory -Force -Path &#34;$HOME\.local\bin&#34; # 이동 Move-Item -Path &#34;pa-retriever\pa.exe&#34; -Destination &#34;$HOME\.local\bin\pa.exe&#34; PATH 환경변수 추가# 1 2 3 4 5 6 7 8 9 10 # 현재 사용자의 PATH에 추가 $currentPath = [Environment]::GetEnvironmentVariable(&#34;Path&#34;, &#34;User&#34;) $newPath = &#34;$HOME\.local\bin&#34; if ($currentPath -notlike &#34;*$newPath*&#34;) { [Environment]::SetEnvironmentVariable(&#34;Path&#34;, &#34;$currentPath;$newPath&#34;, &#34;User&#34;) } # PowerShell 재시작 또는 $env:Path = [Environment]::GetEnvironmentVariable(&#34;Path&#34;, &#34;User&#34;) 3. 필수 도구 설치# Claude Desktop# claude.ai/download에서 Windows 버전 다운로드 설치 프로그램 실행 설치 완료 후 로그인 Obsidian# 1 2 3 4 5 # Scoop으로 설치 scoop install obsidian # 또는 공식 사이트에서 다운로드 # https://obsidian.md Git (필수)# 1 2 3 4 5 # Scoop으로 설치 scoop install git # 또는 공식 사이트에서 다운로드 # https://git-scm.com/download/win 4. PowerShell 프로필 설정# 프로필 파일 위치# 1 2 3 4 # 프로필 경로 확인 $PROFILE # 일반적으로: C:\Users\&lt;username&gt;\Documents\PowerShell\Microsoft.PowerShell_profile.ps1 프로필 설정 (~\Documents\PowerShell\Microsoft.PowerShell_profile.ps1)# 1 2 3 4 5 6 7 8 9 10 11 12 # PA-Layer 환경 변수 $env:PA_HOME = &#34;$HOME\.pa&#34; $env:PA_WORKSPACE = &#34;$HOME\playground&#34; # 단축 명령어 (선택) Set-Alias -Name pas -Value &#34;pa search&#34; Set-Alias -Name pai -Value &#34;pa index&#34; # 함수로 정의 (인자 전달이 필요한 경우) function pas { pa search $args } function pai { pa index $args } function pac { pa code $args } Windows Terminal 설정 (선택)# settings.json에서 기본 시작 디렉토리 설정:
+">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://pa-layer.github.io/ko/docs/installation/windows/">
+  <meta property="og:site_name" content="PA-Layer">
+  <meta property="og:title" content="Windows 설치">
+  <meta property="og:description" content="Windows 설치 가이드# Windows 10/11에서 PA-Layer 환경을 구성합니다.
+1. Scoop으로 설치 (권장)# 1 2 3 4 5 6 7 8 9 10 # Scoop 설치 (없는 경우) Set-ExecutionPolicy RemoteSigned -Scope CurrentUser irm get.scoop.sh | iex # PA-Retriever 설치 scoop bucket add pa-layer https://github.com/pa-layer/scoop-bucket scoop install pa-retriever # 설치 확인 pa version 2. 수동 설치# PowerShell로 다운로드# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 # 다운로드 디렉토리로 이동 cd $HOME\Downloads # 다운로드 Invoke-WebRequest -Uri &#34;https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-windows-amd64.zip&#34; -OutFile &#34;pa-retriever.zip&#34; # 압축 해제 Expand-Archive -Path &#34;pa-retriever.zip&#34; -DestinationPath &#34;pa-retriever&#34; # 설치 디렉토리 생성 New-Item -ItemType Directory -Force -Path &#34;$HOME\.local\bin&#34; # 이동 Move-Item -Path &#34;pa-retriever\pa.exe&#34; -Destination &#34;$HOME\.local\bin\pa.exe&#34; PATH 환경변수 추가# 1 2 3 4 5 6 7 8 9 10 # 현재 사용자의 PATH에 추가 $currentPath = [Environment]::GetEnvironmentVariable(&#34;Path&#34;, &#34;User&#34;) $newPath = &#34;$HOME\.local\bin&#34; if ($currentPath -notlike &#34;*$newPath*&#34;) { [Environment]::SetEnvironmentVariable(&#34;Path&#34;, &#34;$currentPath;$newPath&#34;, &#34;User&#34;) } # PowerShell 재시작 또는 $env:Path = [Environment]::GetEnvironmentVariable(&#34;Path&#34;, &#34;User&#34;) 3. 필수 도구 설치# Claude Desktop# claude.ai/download에서 Windows 버전 다운로드 설치 프로그램 실행 설치 완료 후 로그인 Obsidian# 1 2 3 4 5 # Scoop으로 설치 scoop install obsidian # 또는 공식 사이트에서 다운로드 # https://obsidian.md Git (필수)# 1 2 3 4 5 # Scoop으로 설치 scoop install git # 또는 공식 사이트에서 다운로드 # https://git-scm.com/download/win 4. PowerShell 프로필 설정# 프로필 파일 위치# 1 2 3 4 # 프로필 경로 확인 $PROFILE # 일반적으로: C:\Users\&lt;username&gt;\Documents\PowerShell\Microsoft.PowerShell_profile.ps1 프로필 설정 (~\Documents\PowerShell\Microsoft.PowerShell_profile.ps1)# 1 2 3 4 5 6 7 8 9 10 11 12 # PA-Layer 환경 변수 $env:PA_HOME = &#34;$HOME\.pa&#34; $env:PA_WORKSPACE = &#34;$HOME\playground&#34; # 단축 명령어 (선택) Set-Alias -Name pas -Value &#34;pa search&#34; Set-Alias -Name pai -Value &#34;pa index&#34; # 함수로 정의 (인자 전달이 필요한 경우) function pas { pa search $args } function pai { pa index $args } function pac { pa code $args } Windows Terminal 설정 (선택)# settings.json에서 기본 시작 디렉토리 설정:">
+  <meta property="og:locale" content="ko">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+
+
+  <meta itemprop="name" content="Windows 설치">
+  <meta itemprop="description" content="Windows 설치 가이드# Windows 10/11에서 PA-Layer 환경을 구성합니다.
+1. Scoop으로 설치 (권장)# 1 2 3 4 5 6 7 8 9 10 # Scoop 설치 (없는 경우) Set-ExecutionPolicy RemoteSigned -Scope CurrentUser irm get.scoop.sh | iex # PA-Retriever 설치 scoop bucket add pa-layer https://github.com/pa-layer/scoop-bucket scoop install pa-retriever # 설치 확인 pa version 2. 수동 설치# PowerShell로 다운로드# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 # 다운로드 디렉토리로 이동 cd $HOME\Downloads # 다운로드 Invoke-WebRequest -Uri &#34;https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-windows-amd64.zip&#34; -OutFile &#34;pa-retriever.zip&#34; # 압축 해제 Expand-Archive -Path &#34;pa-retriever.zip&#34; -DestinationPath &#34;pa-retriever&#34; # 설치 디렉토리 생성 New-Item -ItemType Directory -Force -Path &#34;$HOME\.local\bin&#34; # 이동 Move-Item -Path &#34;pa-retriever\pa.exe&#34; -Destination &#34;$HOME\.local\bin\pa.exe&#34; PATH 환경변수 추가# 1 2 3 4 5 6 7 8 9 10 # 현재 사용자의 PATH에 추가 $currentPath = [Environment]::GetEnvironmentVariable(&#34;Path&#34;, &#34;User&#34;) $newPath = &#34;$HOME\.local\bin&#34; if ($currentPath -notlike &#34;*$newPath*&#34;) { [Environment]::SetEnvironmentVariable(&#34;Path&#34;, &#34;$currentPath;$newPath&#34;, &#34;User&#34;) } # PowerShell 재시작 또는 $env:Path = [Environment]::GetEnvironmentVariable(&#34;Path&#34;, &#34;User&#34;) 3. 필수 도구 설치# Claude Desktop# claude.ai/download에서 Windows 버전 다운로드 설치 프로그램 실행 설치 완료 후 로그인 Obsidian# 1 2 3 4 5 # Scoop으로 설치 scoop install obsidian # 또는 공식 사이트에서 다운로드 # https://obsidian.md Git (필수)# 1 2 3 4 5 # Scoop으로 설치 scoop install git # 또는 공식 사이트에서 다운로드 # https://git-scm.com/download/win 4. PowerShell 프로필 설정# 프로필 파일 위치# 1 2 3 4 # 프로필 경로 확인 $PROFILE # 일반적으로: C:\Users\&lt;username&gt;\Documents\PowerShell\Microsoft.PowerShell_profile.ps1 프로필 설정 (~\Documents\PowerShell\Microsoft.PowerShell_profile.ps1)# 1 2 3 4 5 6 7 8 9 10 11 12 # PA-Layer 환경 변수 $env:PA_HOME = &#34;$HOME\.pa&#34; $env:PA_WORKSPACE = &#34;$HOME\playground&#34; # 단축 명령어 (선택) Set-Alias -Name pas -Value &#34;pa search&#34; Set-Alias -Name pai -Value &#34;pa index&#34; # 함수로 정의 (인자 전달이 필요한 경우) function pas { pa search $args } function pai { pa index $args } function pac { pa code $args } Windows Terminal 설정 (선택)# settings.json에서 기본 시작 디렉토리 설정:">
+  <meta itemprop="wordCount" content="572">
+
+<title>Windows 설치 | PA-Layer</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="https://pa-layer.github.io/ko/docs/installation/windows/">
+  <link rel="alternate" hreflang="en" href="https://pa-layer.github.io/en/docs/installation/windows/" title="Windows Installation">
+<link rel="stylesheet" href="/book.min.6970156cec683193d93c9c4edaf0d56574e4361df2e0c1be4f697ae81c3ba55f.css" integrity="sha256-aXAVbOxoMZPZPJxO2vDVZXTkNh3y4MG&#43;T2l66Bw7pV8=" crossorigin="anonymous">
+
+
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/ko.search.min.e9756793949413dae8c85e803ce1e02b13ffa1c302aec58e19bfbadb693819d3.js" integrity="sha256-6XVnk5SUE9royF6APOHgKxP/ocMCrsWOGb&#43;622k4GdM=" crossorigin="anonymous"></script>
+
+
+
+  
+</head>
+<body dir="ltr" class="book-kind-page book-type-docs">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    
+<aside class="book-menu">
+  <div class="book-menu-content">
+    
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/ko/"><img src="/images/pa-layer-logo.svg" alt="Logo" /><span>PA-Layer</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input id="book-search-input" type="text" 
+    placeholder="Search"
+    aria-label="Search"
+    maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+  
+
+
+  
+    
+  
+
+
+  
+
+
+<ul class="book-languages">
+  <li>
+    <input type="checkbox" id="languages" class="toggle" />
+    <label for="languages" class="flex">
+      <a role="button">
+        <img src="/icons/translate.svg" class="book-icon" alt="Languages" />
+        한국어
+      </a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+
+    <ul>
+      
+      <li>
+        <a href="/en/docs/installation/windows/" class="flex flex-auto">
+          English
+        </a>
+      </li>
+      
+    </ul>
+  </li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-b056803e087b3464503e98766cccad1a" class="toggle" checked />
+    <label for="section-b056803e087b3464503e98766cccad1a" class="flex">
+      <a href="/ko/docs/installation/" class="">
+        설치하기</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/macos/" class="">
+      macOS 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/windows/" class="active">
+      Windows 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/linux/" class="">
+      Linux 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/workspace/" class="">
+      워크스페이스 구성</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-187b3aa4e29a5d5ef2738d28ac16df69" class="toggle"  />
+    <label for="section-187b3aa4e29a5d5ef2738d28ac16df69" class="flex">
+      <a href="/ko/docs/configuration/" class="">
+        설정하기</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/claude/" class="">
+      Claude 연동</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/obsidian/" class="">
+      Obsidian 설정</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/pa-config/" class="">
+      PA-Retriever 설정</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99ad2865f9541edb014cad9a350d886e" class="toggle"  />
+    <label for="section-99ad2865f9541edb014cad9a350d886e" class="flex">
+      <a href="/ko/docs/pa-layer/" class="">
+        PA-Layer</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/overview/" class="">
+      아키텍처 개요</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/backend/" class="">
+      Backend 컨벤션</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/frontend/" class="">
+      Frontend 컨벤션</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99cc806f10f29d7b76e63ff1539abbc7" class="toggle"  />
+    <label for="section-99cc806f10f29d7b76e63ff1539abbc7" class="flex">
+      <a href="/ko/docs/pa-retriever/" class="">
+        PA-Retriever</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/basic/" class="">
+      기본 사용법</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/search/" class="">
+      검색 가이드</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/code/" class="">
+      코드 인덱싱</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/with-claude/" class="">
+      Claude와 함께 사용</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/advanced/" class="">
+      고급 기능</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+<ul><li><a href="https://github.com/pa-layer/pa-retriever" target="_blank" rel="noopener">GitHub</a></li></ul>
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+
+  </div>
+</aside>
+ 
+
+    <div class="book-page">
+      <header class="book-header hidden">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/icons/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>Windows 설치</h3>
+
+  <label for="toc-control">
+    
+    <img src="/icons/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#1-scoop으로-설치-권장">1. Scoop으로 설치 (권장)</a></li>
+    <li><a href="#2-수동-설치">2. 수동 설치</a>
+      <ul>
+        <li><a href="#powershell로-다운로드">PowerShell로 다운로드</a></li>
+        <li><a href="#path-환경변수-추가">PATH 환경변수 추가</a></li>
+      </ul>
+    </li>
+    <li><a href="#3-필수-도구-설치">3. 필수 도구 설치</a>
+      <ul>
+        <li><a href="#claude-desktop">Claude Desktop</a></li>
+        <li><a href="#obsidian">Obsidian</a></li>
+        <li><a href="#git-필수">Git (필수)</a></li>
+      </ul>
+    </li>
+    <li><a href="#4-powershell-프로필-설정">4. PowerShell 프로필 설정</a>
+      <ul>
+        <li><a href="#프로필-파일-위치">프로필 파일 위치</a></li>
+        <li><a href="#프로필-설정-documentspowershellmicrosoftpowershell_profileps1">프로필 설정 (~\Documents\PowerShell\Microsoft.PowerShell_profile.ps1)</a></li>
+        <li><a href="#windows-terminal-설정-선택">Windows Terminal 설정 (선택)</a></li>
+      </ul>
+    </li>
+    <li><a href="#5-디렉토리-구조-생성">5. 디렉토리 구조 생성</a></li>
+    <li><a href="#6-설치-확인">6. 설치 확인</a></li>
+    <li><a href="#7-초기화">7. 초기화</a></li>
+    <li><a href="#다음-단계">다음 단계</a></li>
+    <li><a href="#문제-해결">문제 해결</a>
+      <ul>
+        <li><a href="#pa-the-term-pa-is-not-recognized">&ldquo;pa: The term &lsquo;pa&rsquo; is not recognized&rdquo;</a></li>
+        <li><a href="#실행-권한-오류">실행 권한 오류</a></li>
+        <li><a href="#windows-defender-차단">Windows Defender 차단</a></li>
+        <li><a href="#claude-desktop-mcp-연결-안됨">Claude Desktop MCP 연결 안됨</a></li>
+      </ul>
+    </li>
+    <li><a href="#wsl2-사용자를-위한-참고">WSL2 사용자를 위한 참고</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="windows-설치-가이드">Windows 설치 가이드<a class="anchor" href="#windows-%ec%84%a4%ec%b9%98-%ea%b0%80%ec%9d%b4%eb%93%9c">#</a></h1>
+<p>Windows 10/11에서 PA-Layer 환경을 구성합니다.</p>
+<h2 id="1-scoop으로-설치-권장">1. Scoop으로 설치 (권장)<a class="anchor" href="#1-scoop%ec%9c%bc%eb%a1%9c-%ec%84%a4%ec%b9%98-%ea%b6%8c%ec%9e%a5">#</a></h2>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span><span style="color:#75715e"># Scoop 설치 (없는 경우)</span>
+</span></span><span style="display:flex;"><span>Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+</span></span><span style="display:flex;"><span>irm get.scoop.sh | iex
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># PA-Retriever 설치</span>
+</span></span><span style="display:flex;"><span>scoop bucket add pa-layer https<span style="color:#960050;background-color:#1e0010">:</span>//github.com/pa-layer/scoop-bucket
+</span></span><span style="display:flex;"><span>scoop install pa-retriever
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 설치 확인</span>
+</span></span><span style="display:flex;"><span>pa version</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="2-수동-설치">2. 수동 설치<a class="anchor" href="#2-%ec%88%98%eb%8f%99-%ec%84%a4%ec%b9%98">#</a></h2>
+<h3 id="powershell로-다운로드">PowerShell로 다운로드<a class="anchor" href="#powershell%eb%a1%9c-%eb%8b%a4%ec%9a%b4%eb%a1%9c%eb%93%9c">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span><span style="color:#75715e"># 다운로드 디렉토리로 이동</span>
+</span></span><span style="display:flex;"><span>cd $HOME\Downloads
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 다운로드</span>
+</span></span><span style="display:flex;"><span>Invoke-WebRequest -Uri <span style="color:#e6db74">&#34;https://github.com/pa-layer/pa-retriever/releases/latest/download/pa-retriever-windows-amd64.zip&#34;</span> -OutFile <span style="color:#e6db74">&#34;pa-retriever.zip&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 압축 해제</span>
+</span></span><span style="display:flex;"><span>Expand-Archive -Path <span style="color:#e6db74">&#34;pa-retriever.zip&#34;</span> -DestinationPath <span style="color:#e6db74">&#34;pa-retriever&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 설치 디렉토리 생성</span>
+</span></span><span style="display:flex;"><span>New-Item -ItemType Directory -Force -Path <span style="color:#e6db74">&#34;</span>$HOME<span style="color:#e6db74">\.local\bin&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 이동</span>
+</span></span><span style="display:flex;"><span>Move-Item -Path <span style="color:#e6db74">&#34;pa-retriever\pa.exe&#34;</span> -Destination <span style="color:#e6db74">&#34;</span>$HOME<span style="color:#e6db74">\.local\bin\pa.exe&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="path-환경변수-추가">PATH 환경변수 추가<a class="anchor" href="#path-%ed%99%98%ea%b2%bd%eb%b3%80%ec%88%98-%ec%b6%94%ea%b0%80">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span><span style="color:#75715e"># 현재 사용자의 PATH에 추가</span>
+</span></span><span style="display:flex;"><span>$currentPath = [<span style="color:#66d9ef">Environment</span>]::GetEnvironmentVariable(<span style="color:#e6db74">&#34;Path&#34;</span>, <span style="color:#e6db74">&#34;User&#34;</span>)
+</span></span><span style="display:flex;"><span>$newPath = <span style="color:#e6db74">&#34;</span>$HOME<span style="color:#e6db74">\.local\bin&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> ($currentPath <span style="color:#f92672">-notlike</span> <span style="color:#e6db74">&#34;*</span>$newPath<span style="color:#e6db74">*&#34;</span>) {
+</span></span><span style="display:flex;"><span>    [<span style="color:#66d9ef">Environment</span>]::SetEnvironmentVariable(<span style="color:#e6db74">&#34;Path&#34;</span>, <span style="color:#e6db74">&#34;</span>$currentPath<span style="color:#e6db74">;</span>$newPath<span style="color:#e6db74">&#34;</span>, <span style="color:#e6db74">&#34;User&#34;</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># PowerShell 재시작 또는</span>
+</span></span><span style="display:flex;"><span>$env:Path = [<span style="color:#66d9ef">Environment</span>]::GetEnvironmentVariable(<span style="color:#e6db74">&#34;Path&#34;</span>, <span style="color:#e6db74">&#34;User&#34;</span>)</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="3-필수-도구-설치">3. 필수 도구 설치<a class="anchor" href="#3-%ed%95%84%ec%88%98-%eb%8f%84%ea%b5%ac-%ec%84%a4%ec%b9%98">#</a></h2>
+<h3 id="claude-desktop">Claude Desktop<a class="anchor" href="#claude-desktop">#</a></h3>
+<ol>
+<li><a href="https://claude.ai/download">claude.ai/download</a>에서 Windows 버전 다운로드</li>
+<li>설치 프로그램 실행</li>
+<li>설치 완료 후 로그인</li>
+</ol>
+<h3 id="obsidian">Obsidian<a class="anchor" href="#obsidian">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span><span style="color:#75715e"># Scoop으로 설치</span>
+</span></span><span style="display:flex;"><span>scoop install obsidian
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 또는 공식 사이트에서 다운로드</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># https://obsidian.md</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="git-필수">Git (필수)<a class="anchor" href="#git-%ed%95%84%ec%88%98">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span><span style="color:#75715e"># Scoop으로 설치</span>
+</span></span><span style="display:flex;"><span>scoop install git
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 또는 공식 사이트에서 다운로드</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># https://git-scm.com/download/win</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="4-powershell-프로필-설정">4. PowerShell 프로필 설정<a class="anchor" href="#4-powershell-%ed%94%84%eb%a1%9c%ed%95%84-%ec%84%a4%ec%a0%95">#</a></h2>
+<h3 id="프로필-파일-위치">프로필 파일 위치<a class="anchor" href="#%ed%94%84%eb%a1%9c%ed%95%84-%ed%8c%8c%ec%9d%bc-%ec%9c%84%ec%b9%98">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span><span style="color:#75715e"># 프로필 경로 확인</span>
+</span></span><span style="display:flex;"><span>$PROFILE
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 일반적으로: C:\Users\&lt;username&gt;\Documents\PowerShell\Microsoft.PowerShell_profile.ps1</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="프로필-설정-documentspowershellmicrosoftpowershell_profileps1">프로필 설정 (~\Documents\PowerShell\Microsoft.PowerShell_profile.ps1)<a class="anchor" href="#%ed%94%84%eb%a1%9c%ed%95%84-%ec%84%a4%ec%a0%95-documentspowershellmicrosoftpowershell_profileps1">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span><span style="color:#75715e"># PA-Layer 환경 변수</span>
+</span></span><span style="display:flex;"><span>$env:PA_HOME = <span style="color:#e6db74">&#34;</span>$HOME<span style="color:#e6db74">\.pa&#34;</span>
+</span></span><span style="display:flex;"><span>$env:PA_WORKSPACE = <span style="color:#e6db74">&#34;</span>$HOME<span style="color:#e6db74">\playground&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 단축 명령어 (선택)</span>
+</span></span><span style="display:flex;"><span>Set-Alias -Name pas -Value <span style="color:#e6db74">&#34;pa search&#34;</span>
+</span></span><span style="display:flex;"><span>Set-Alias -Name pai -Value <span style="color:#e6db74">&#34;pa index&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 함수로 정의 (인자 전달이 필요한 경우)</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> pas { pa search $args }
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> pai { pa index $args }
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> pac { pa code $args }</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="windows-terminal-설정-선택">Windows Terminal 설정 (선택)<a class="anchor" href="#windows-terminal-%ec%84%a4%ec%a0%95-%ec%84%a0%ed%83%9d">#</a></h3>
+<p>settings.json에서 기본 시작 디렉토리 설정:</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;profiles&#34;</span>: {
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;defaults&#34;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&#34;startingDirectory&#34;</span>: <span style="color:#e6db74">&#34;%USERPROFILE%\\playground&#34;</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="5-디렉토리-구조-생성">5. 디렉토리 구조 생성<a class="anchor" href="#5-%eb%94%94%eb%a0%89%ed%86%a0%eb%a6%ac-%ea%b5%ac%ec%a1%b0-%ec%83%9d%ec%84%b1">#</a></h2>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span><span style="color:#75715e"># 워크스페이스 생성</span>
+</span></span><span style="display:flex;"><span>New-Item -ItemType Directory -Force -Path <span style="color:#e6db74">&#34;</span>$HOME<span style="color:#e6db74">\playground&#34;</span>
+</span></span><span style="display:flex;"><span>New-Item -ItemType Directory -Force -Path <span style="color:#e6db74">&#34;</span>$HOME<span style="color:#e6db74">\playground\mcp-docs&#34;</span>
+</span></span><span style="display:flex;"><span>New-Item -ItemType Directory -Force -Path <span style="color:#e6db74">&#34;</span>$HOME<span style="color:#e6db74">\playground\CodeSpace&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># PA 설정 디렉토리</span>
+</span></span><span style="display:flex;"><span>New-Item -ItemType Directory -Force -Path <span style="color:#e6db74">&#34;</span>$HOME<span style="color:#e6db74">\.pa&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="6-설치-확인">6. 설치 확인<a class="anchor" href="#6-%ec%84%a4%ec%b9%98-%ed%99%95%ec%9d%b8">#</a></h2>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span><span style="color:#75715e"># 버전 확인</span>
+</span></span><span style="display:flex;"><span>pa version
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 도움말</span>
+</span></span><span style="display:flex;"><span>pa --help
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 상태 확인</span>
+</span></span><span style="display:flex;"><span>pa status</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="7-초기화">7. 초기화<a class="anchor" href="#7-%ec%b4%88%ea%b8%b0%ed%99%94">#</a></h2>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span><span style="color:#75715e"># 대화형 초기화 (권장)</span>
+</span></span><span style="display:flex;"><span>pa init
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 또는 기본값으로 빠른 초기화</span>
+</span></span><span style="display:flex;"><span>pa init --yes</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="다음-단계">다음 단계<a class="anchor" href="#%eb%8b%a4%ec%9d%8c-%eb%8b%a8%ea%b3%84">#</a></h2>
+<ul>
+<li><a href="/ko/docs/installation/workspace/">워크스페이스 구성</a> - 디렉토리 구조 설정</li>
+<li><a href="/ko/docs/configuration/">설정하기</a> - Claude 연동</li>
+</ul>
+<hr>
+<h2 id="문제-해결">문제 해결<a class="anchor" href="#%eb%ac%b8%ec%a0%9c-%ed%95%b4%ea%b2%b0">#</a></h2>
+<h3 id="pa-the-term-pa-is-not-recognized">&ldquo;pa: The term &lsquo;pa&rsquo; is not recognized&rdquo;<a class="anchor" href="#pa-the-term-pa-is-not-recognized">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span><span style="color:#75715e"># PATH 확인</span>
+</span></span><span style="display:flex;"><span>$env:Path -split <span style="color:#e6db74">&#39;;&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 바이너리 위치 확인</span>
+</span></span><span style="display:flex;"><span>Get-Command pa -ErrorAction SilentlyContinue
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># PATH 재설정</span>
+</span></span><span style="display:flex;"><span>$env:Path = [<span style="color:#66d9ef">Environment</span>]::GetEnvironmentVariable(<span style="color:#e6db74">&#34;Path&#34;</span>, <span style="color:#e6db74">&#34;User&#34;</span>) + <span style="color:#e6db74">&#34;;&#34;</span> + [<span style="color:#66d9ef">Environment</span>]::GetEnvironmentVariable(<span style="color:#e6db74">&#34;Path&#34;</span>, <span style="color:#e6db74">&#34;Machine&#34;</span>)</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="실행-권한-오류">실행 권한 오류<a class="anchor" href="#%ec%8b%a4%ed%96%89-%ea%b6%8c%ed%95%9c-%ec%98%a4%eb%a5%98">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span><span style="color:#75715e"># 실행 정책 확인</span>
+</span></span><span style="display:flex;"><span>Get-ExecutionPolicy
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 현재 사용자에 대해 실행 허용</span>
+</span></span><span style="display:flex;"><span>Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="windows-defender-차단">Windows Defender 차단<a class="anchor" href="#windows-defender-%ec%b0%a8%eb%8b%a8">#</a></h3>
+<ol>
+<li>Windows 보안 &gt; 바이러스 및 위협 방지</li>
+<li>보호 기록에서 차단된 항목 확인</li>
+<li>&ldquo;디바이스에서 허용&rdquo; 선택</li>
+</ol>
+<h3 id="claude-desktop-mcp-연결-안됨">Claude Desktop MCP 연결 안됨<a class="anchor" href="#claude-desktop-mcp-%ec%97%b0%ea%b2%b0-%ec%95%88%eb%90%a8">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span><span style="color:#75715e"># 설정 파일 위치 확인</span>
+</span></span><span style="display:flex;"><span>$configPath = <span style="color:#e6db74">&#34;</span>$env:APPDATA<span style="color:#e6db74">\Claude\claude_desktop_config.json&#34;</span>
+</span></span><span style="display:flex;"><span>Test-Path $configPath
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># MCP 설정 재설치</span>
+</span></span><span style="display:flex;"><span>pa mcp install --desktop</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="wsl2-사용자를-위한-참고">WSL2 사용자를 위한 참고<a class="anchor" href="#wsl2-%ec%82%ac%ec%9a%a9%ec%9e%90%eb%a5%bc-%ec%9c%84%ed%95%9c-%ec%b0%b8%ea%b3%a0">#</a></h2>
+<p>WSL2에서 실행하는 경우 Linux 설치 가이드를 참조하세요. Windows와 WSL2 환경을 동시에 사용할 수 있습니다.</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># WSL2에서</span>
+</span></span><span style="display:flex;"><span>curl -sSL https://pa-layer.github.io/install.sh | bash
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Windows의 Obsidian Vault를 WSL2에서 접근</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># /mnt/c/Users/&lt;username&gt;/playground/mcp-docs</span></span></span></code></pre></td></tr></table>
+</div>
+</div></article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+<div>
+
+</div>
+
+<div>
+
+</div>
+
+</div>
+
+
+
+
+
+  
+  
+  
+  <div class="flex flex-wrap justify-between">
+    <span>
+    
+      <a href="/ko/docs/installation/macos/" class="flex align-center">
+        <img src="/icons/backward.svg" class="book-icon" alt="Backward" />
+        <span>macOS 설치</span>
+      </a>
+    
+    </span>
+    <span>
+    
+      <a href="/ko/docs/installation/linux/" class="flex align-center">
+        <span>Linux 설치</span>
+        <img src="/icons/forward.svg" class="book-icon" alt="Forward" />
+      </a>
+    
+    </span>
+  </div>
+  
+
+
+ 
+        
+  
+ 
+        
+        
+  
+ 
+        
+  
+  
+    <script>(function(){document.querySelectorAll("pre:has(code)").forEach(e=>{e.addEventListener("click",e.focus),e.addEventListener("copy",function(t){if(t.preventDefault(),navigator.clipboard){const t=window.getSelection().toString()||e.textContent;navigator.clipboard.writeText(t)}})})})()</script>
+  
+
+      </footer>
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+  
+  <aside class="book-toc">
+    <div class="book-toc-content">
+      
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#1-scoop으로-설치-권장">1. Scoop으로 설치 (권장)</a></li>
+    <li><a href="#2-수동-설치">2. 수동 설치</a>
+      <ul>
+        <li><a href="#powershell로-다운로드">PowerShell로 다운로드</a></li>
+        <li><a href="#path-환경변수-추가">PATH 환경변수 추가</a></li>
+      </ul>
+    </li>
+    <li><a href="#3-필수-도구-설치">3. 필수 도구 설치</a>
+      <ul>
+        <li><a href="#claude-desktop">Claude Desktop</a></li>
+        <li><a href="#obsidian">Obsidian</a></li>
+        <li><a href="#git-필수">Git (필수)</a></li>
+      </ul>
+    </li>
+    <li><a href="#4-powershell-프로필-설정">4. PowerShell 프로필 설정</a>
+      <ul>
+        <li><a href="#프로필-파일-위치">프로필 파일 위치</a></li>
+        <li><a href="#프로필-설정-documentspowershellmicrosoftpowershell_profileps1">프로필 설정 (~\Documents\PowerShell\Microsoft.PowerShell_profile.ps1)</a></li>
+        <li><a href="#windows-terminal-설정-선택">Windows Terminal 설정 (선택)</a></li>
+      </ul>
+    </li>
+    <li><a href="#5-디렉토리-구조-생성">5. 디렉토리 구조 생성</a></li>
+    <li><a href="#6-설치-확인">6. 설치 확인</a></li>
+    <li><a href="#7-초기화">7. 초기화</a></li>
+    <li><a href="#다음-단계">다음 단계</a></li>
+    <li><a href="#문제-해결">문제 해결</a>
+      <ul>
+        <li><a href="#pa-the-term-pa-is-not-recognized">&ldquo;pa: The term &lsquo;pa&rsquo; is not recognized&rdquo;</a></li>
+        <li><a href="#실행-권한-오류">실행 권한 오류</a></li>
+        <li><a href="#windows-defender-차단">Windows Defender 차단</a></li>
+        <li><a href="#claude-desktop-mcp-연결-안됨">Claude Desktop MCP 연결 안됨</a></li>
+      </ul>
+    </li>
+    <li><a href="#wsl2-사용자를-위한-참고">WSL2 사용자를 위한 참고</a></li>
+  </ul>
+</nav>
+
+
+
+    </div>
+  </aside>
+  
+ 
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

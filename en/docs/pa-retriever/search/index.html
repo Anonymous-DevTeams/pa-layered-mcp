@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Search Guide# Advanced search syntax for PA-Retriever.
+Search Command# 1 2 3 4 5 6 pa search &lt;query&gt; [options] Options: --limit=N Limit results (default: 10) --json JSON output --content Include body content Basic Search# Keyword Search# 1 2 3 4 5 # Single keyword pa search &#34;login&#34; # Multiple keywords (implicit AND) pa search &#34;login auth&#34; Field Search# Syntax# field:valueSupported Fields# Field Description Example type Document type type:l2 domain Domain domain:auth status Status status:active priority Priority priority:high author Author author:john tag Tag tag:jwt Examples# 1 2 3 4 5 6 7 8 # L2 type only pa search &#34;type:l2&#34; # auth domain only pa search &#34;domain:auth&#34; # Specific tag pa search &#34;tag:jwt&#34; Complex Queries# AND Operation# 1 2 3 4 5 # Explicit AND pa search &#34;type:l2 AND domain:auth&#34; # Implicit AND (space) pa search &#34;type:l2 domain:auth&#34; OR Operation# 1 2 3 4 5 # L1 or L2 type pa search &#34;type:l1 OR type:l2&#34; # auth or users domain pa search &#34;domain:auth OR domain:users&#34; NOT Operation# 1 2 3 4 5 # Exclude deprecated pa search &#34;type:l2 NOT status:deprecated&#34; # Exclude drafts pa search &#34;domain:auth NOT status:draft&#34; Parentheses Grouping# 1 2 3 4 5 # (auth OR users) domain L2s pa search &#34;type:l2 AND (domain:auth OR domain:users)&#34; # Complex combination pa search &#34;(type:l1 OR type:l2) AND domain:orders NOT status:draft&#34; Range Search# Token Count# 1 2 3 4 5 # More than 1000 tokens pa search &#34;tokens:&gt;1000&#34; # Less than 500 tokens pa search &#34;tokens:&lt;500&#34; Full-text Search (FTS)# Content Search# 1 2 3 4 5 # Body contains &#34;suspend fun&#34; pa search &#34;suspend fun&#34; # Body contains &#34;interface&#34; pa search &#34;interface&#34; JSON Output# 1 2 3 4 5 6 7 8 # JSON format pa search &#34;type:l2&#34; --json # With jq pa search &#34;type:l2&#34; --json | jq &#39;.[] | .id&#39; # Save to file pa search &#34;domain:auth&#34; --json &gt; auth-docs.json Next Steps# Code Indexing Using with Claude ">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://pa-layer.github.io/en/docs/pa-retriever/search/">
+  <meta property="og:site_name" content="PA-Layer">
+  <meta property="og:title" content="Search Guide">
+  <meta property="og:description" content="Search Guide# Advanced search syntax for PA-Retriever.
+Search Command# 1 2 3 4 5 6 pa search &lt;query&gt; [options] Options: --limit=N Limit results (default: 10) --json JSON output --content Include body content Basic Search# Keyword Search# 1 2 3 4 5 # Single keyword pa search &#34;login&#34; # Multiple keywords (implicit AND) pa search &#34;login auth&#34; Field Search# Syntax# field:valueSupported Fields# Field Description Example type Document type type:l2 domain Domain domain:auth status Status status:active priority Priority priority:high author Author author:john tag Tag tag:jwt Examples# 1 2 3 4 5 6 7 8 # L2 type only pa search &#34;type:l2&#34; # auth domain only pa search &#34;domain:auth&#34; # Specific tag pa search &#34;tag:jwt&#34; Complex Queries# AND Operation# 1 2 3 4 5 # Explicit AND pa search &#34;type:l2 AND domain:auth&#34; # Implicit AND (space) pa search &#34;type:l2 domain:auth&#34; OR Operation# 1 2 3 4 5 # L1 or L2 type pa search &#34;type:l1 OR type:l2&#34; # auth or users domain pa search &#34;domain:auth OR domain:users&#34; NOT Operation# 1 2 3 4 5 # Exclude deprecated pa search &#34;type:l2 NOT status:deprecated&#34; # Exclude drafts pa search &#34;domain:auth NOT status:draft&#34; Parentheses Grouping# 1 2 3 4 5 # (auth OR users) domain L2s pa search &#34;type:l2 AND (domain:auth OR domain:users)&#34; # Complex combination pa search &#34;(type:l1 OR type:l2) AND domain:orders NOT status:draft&#34; Range Search# Token Count# 1 2 3 4 5 # More than 1000 tokens pa search &#34;tokens:&gt;1000&#34; # Less than 500 tokens pa search &#34;tokens:&lt;500&#34; Full-text Search (FTS)# Content Search# 1 2 3 4 5 # Body contains &#34;suspend fun&#34; pa search &#34;suspend fun&#34; # Body contains &#34;interface&#34; pa search &#34;interface&#34; JSON Output# 1 2 3 4 5 6 7 8 # JSON format pa search &#34;type:l2&#34; --json # With jq pa search &#34;type:l2&#34; --json | jq &#39;.[] | .id&#39; # Save to file pa search &#34;domain:auth&#34; --json &gt; auth-docs.json Next Steps# Code Indexing Using with Claude">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+
+
+  <meta itemprop="name" content="Search Guide">
+  <meta itemprop="description" content="Search Guide# Advanced search syntax for PA-Retriever.
+Search Command# 1 2 3 4 5 6 pa search &lt;query&gt; [options] Options: --limit=N Limit results (default: 10) --json JSON output --content Include body content Basic Search# Keyword Search# 1 2 3 4 5 # Single keyword pa search &#34;login&#34; # Multiple keywords (implicit AND) pa search &#34;login auth&#34; Field Search# Syntax# field:valueSupported Fields# Field Description Example type Document type type:l2 domain Domain domain:auth status Status status:active priority Priority priority:high author Author author:john tag Tag tag:jwt Examples# 1 2 3 4 5 6 7 8 # L2 type only pa search &#34;type:l2&#34; # auth domain only pa search &#34;domain:auth&#34; # Specific tag pa search &#34;tag:jwt&#34; Complex Queries# AND Operation# 1 2 3 4 5 # Explicit AND pa search &#34;type:l2 AND domain:auth&#34; # Implicit AND (space) pa search &#34;type:l2 domain:auth&#34; OR Operation# 1 2 3 4 5 # L1 or L2 type pa search &#34;type:l1 OR type:l2&#34; # auth or users domain pa search &#34;domain:auth OR domain:users&#34; NOT Operation# 1 2 3 4 5 # Exclude deprecated pa search &#34;type:l2 NOT status:deprecated&#34; # Exclude drafts pa search &#34;domain:auth NOT status:draft&#34; Parentheses Grouping# 1 2 3 4 5 # (auth OR users) domain L2s pa search &#34;type:l2 AND (domain:auth OR domain:users)&#34; # Complex combination pa search &#34;(type:l1 OR type:l2) AND domain:orders NOT status:draft&#34; Range Search# Token Count# 1 2 3 4 5 # More than 1000 tokens pa search &#34;tokens:&gt;1000&#34; # Less than 500 tokens pa search &#34;tokens:&lt;500&#34; Full-text Search (FTS)# Content Search# 1 2 3 4 5 # Body contains &#34;suspend fun&#34; pa search &#34;suspend fun&#34; # Body contains &#34;interface&#34; pa search &#34;interface&#34; JSON Output# 1 2 3 4 5 6 7 8 # JSON format pa search &#34;type:l2&#34; --json # With jq pa search &#34;type:l2&#34; --json | jq &#39;.[] | .id&#39; # Save to file pa search &#34;domain:auth&#34; --json &gt; auth-docs.json Next Steps# Code Indexing Using with Claude">
+  <meta itemprop="wordCount" content="316">
+
+<title>Search Guide | PA-Layer</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="https://pa-layer.github.io/en/docs/pa-retriever/search/">
+  <link rel="alternate" hreflang="ko" href="https://pa-layer.github.io/ko/docs/pa-retriever/search/" title="검색 가이드">
+<link rel="stylesheet" href="/book.min.6970156cec683193d93c9c4edaf0d56574e4361df2e0c1be4f697ae81c3ba55f.css" integrity="sha256-aXAVbOxoMZPZPJxO2vDVZXTkNh3y4MG&#43;T2l66Bw7pV8=" crossorigin="anonymous">
+
+
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.b5456745024e721c0ed5066be46dd05983568404556d91df1ba7a31dc5a41591.js" integrity="sha256-tUVnRQJOchwO1QZr5G3QWYNWhARVbZHfG6ejHcWkFZE=" crossorigin="anonymous"></script>
+
+
+
+  
+</head>
+<body dir="ltr" class="book-kind-page book-type-docs">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    
+<aside class="book-menu">
+  <div class="book-menu-content">
+    
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/en/"><img src="/images/pa-layer-logo.svg" alt="Logo" /><span>PA-Layer</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input id="book-search-input" type="text" 
+    placeholder="Search"
+    aria-label="Search"
+    maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+  
+
+
+  
+    
+  
+
+
+  
+
+
+<ul class="book-languages">
+  <li>
+    <input type="checkbox" id="languages" class="toggle" />
+    <label for="languages" class="flex">
+      <a role="button">
+        <img src="/icons/translate.svg" class="book-icon" alt="Languages" />
+        English
+      </a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+
+    <ul>
+      
+      <li>
+        <a href="/ko/docs/pa-retriever/search/" class="flex flex-auto">
+          한국어
+        </a>
+      </li>
+      
+    </ul>
+  </li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-6236be1b89680b92e3aefa016e21a142" class="toggle"  />
+    <label for="section-6236be1b89680b92e3aefa016e21a142" class="flex">
+      <a href="/en/docs/installation/" class="">
+        Installation</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/macos/" class="">
+      macOS Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/windows/" class="">
+      Windows Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/linux/" class="">
+      Linux Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/workspace/" class="">
+      Workspace Setup</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c57e8d2542437d90ac12ebccc18f7bd6" class="toggle"  />
+    <label for="section-c57e8d2542437d90ac12ebccc18f7bd6" class="flex">
+      <a href="/en/docs/configuration/" class="">
+        Configuration</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/claude/" class="">
+      Claude Integration</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/obsidian/" class="">
+      Obsidian Settings</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/pa-config/" class="">
+      PA-Retriever Config</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e28c43a16f6ea811813d9b83e9c091a1" class="toggle"  />
+    <label for="section-e28c43a16f6ea811813d9b83e9c091a1" class="flex">
+      <a href="/en/docs/pa-layer/" class="">
+        PA-Layer</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/overview/" class="">
+      Architecture Overview</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/backend/" class="">
+      Backend Conventions</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/frontend/" class="">
+      Frontend Conventions</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-2e7de72bf7fb1d60035ad67e5a7421f2" class="toggle" checked />
+    <label for="section-2e7de72bf7fb1d60035ad67e5a7421f2" class="flex">
+      <a href="/en/docs/pa-retriever/" class="">
+        PA-Retriever</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/basic/" class="">
+      Basic Usage</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/search/" class="active">
+      Search Guide</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/code/" class="">
+      Code Indexing</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/with-claude/" class="">
+      Using with Claude</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/advanced/" class="">
+      Advanced Features</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+<ul><li><a href="https://github.com/pa-layer/pa-retriever" target="_blank" rel="noopener">GitHub</a></li></ul>
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+
+  </div>
+</aside>
+ 
+
+    <div class="book-page">
+      <header class="book-header hidden">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/icons/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>Search Guide</h3>
+
+  <label for="toc-control">
+    
+    <img src="/icons/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#search-command">Search Command</a></li>
+    <li><a href="#basic-search">Basic Search</a>
+      <ul>
+        <li><a href="#keyword-search">Keyword Search</a></li>
+      </ul>
+    </li>
+    <li><a href="#field-search">Field Search</a>
+      <ul>
+        <li><a href="#syntax">Syntax</a></li>
+        <li><a href="#supported-fields">Supported Fields</a></li>
+        <li><a href="#examples">Examples</a></li>
+      </ul>
+    </li>
+    <li><a href="#complex-queries">Complex Queries</a>
+      <ul>
+        <li><a href="#and-operation">AND Operation</a></li>
+        <li><a href="#or-operation">OR Operation</a></li>
+        <li><a href="#not-operation">NOT Operation</a></li>
+        <li><a href="#parentheses-grouping">Parentheses Grouping</a></li>
+      </ul>
+    </li>
+    <li><a href="#range-search">Range Search</a>
+      <ul>
+        <li><a href="#token-count">Token Count</a></li>
+      </ul>
+    </li>
+    <li><a href="#full-text-search-fts">Full-text Search (FTS)</a>
+      <ul>
+        <li><a href="#content-search">Content Search</a></li>
+      </ul>
+    </li>
+    <li><a href="#json-output">JSON Output</a></li>
+    <li><a href="#next-steps">Next Steps</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="search-guide">Search Guide<a class="anchor" href="#search-guide">#</a></h1>
+<p>Advanced search syntax for PA-Retriever.</p>
+<h2 id="search-command">Search Command<a class="anchor" href="#search-command">#</a></h2>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>pa search &lt;query&gt; <span style="color:#f92672">[</span>options<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Options:
+</span></span><span style="display:flex;"><span>  --limit<span style="color:#f92672">=</span>N     Limit results <span style="color:#f92672">(</span>default: 10<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>  --json        JSON output
+</span></span><span style="display:flex;"><span>  --content     Include body content</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="basic-search">Basic Search<a class="anchor" href="#basic-search">#</a></h2>
+<h3 id="keyword-search">Keyword Search<a class="anchor" href="#keyword-search">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Single keyword</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;login&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Multiple keywords (implicit AND)</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;login auth&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="field-search">Field Search<a class="anchor" href="#field-search">#</a></h2>
+<h3 id="syntax">Syntax<a class="anchor" href="#syntax">#</a></h3>
+<pre tabindex="0"><code>field:value</code></pre><h3 id="supported-fields">Supported Fields<a class="anchor" href="#supported-fields">#</a></h3>
+<table>
+  <thead>
+      <tr>
+          <th>Field</th>
+          <th>Description</th>
+          <th>Example</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>type</code></td>
+          <td>Document type</td>
+          <td><code>type:l2</code></td>
+      </tr>
+      <tr>
+          <td><code>domain</code></td>
+          <td>Domain</td>
+          <td><code>domain:auth</code></td>
+      </tr>
+      <tr>
+          <td><code>status</code></td>
+          <td>Status</td>
+          <td><code>status:active</code></td>
+      </tr>
+      <tr>
+          <td><code>priority</code></td>
+          <td>Priority</td>
+          <td><code>priority:high</code></td>
+      </tr>
+      <tr>
+          <td><code>author</code></td>
+          <td>Author</td>
+          <td><code>author:john</code></td>
+      </tr>
+      <tr>
+          <td><code>tag</code></td>
+          <td>Tag</td>
+          <td><code>tag:jwt</code></td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="examples">Examples<a class="anchor" href="#examples">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># L2 type only</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;type:l2&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># auth domain only</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;domain:auth&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Specific tag</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;tag:jwt&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="complex-queries">Complex Queries<a class="anchor" href="#complex-queries">#</a></h2>
+<h3 id="and-operation">AND Operation<a class="anchor" href="#and-operation">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Explicit AND</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;type:l2 AND domain:auth&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Implicit AND (space)</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;type:l2 domain:auth&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="or-operation">OR Operation<a class="anchor" href="#or-operation">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># L1 or L2 type</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;type:l1 OR type:l2&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># auth or users domain</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;domain:auth OR domain:users&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="not-operation">NOT Operation<a class="anchor" href="#not-operation">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Exclude deprecated</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;type:l2 NOT status:deprecated&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Exclude drafts</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;domain:auth NOT status:draft&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="parentheses-grouping">Parentheses Grouping<a class="anchor" href="#parentheses-grouping">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># (auth OR users) domain L2s</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;type:l2 AND (domain:auth OR domain:users)&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Complex combination</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;(type:l1 OR type:l2) AND domain:orders NOT status:draft&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="range-search">Range Search<a class="anchor" href="#range-search">#</a></h2>
+<h3 id="token-count">Token Count<a class="anchor" href="#token-count">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># More than 1000 tokens</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;tokens:&gt;1000&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Less than 500 tokens</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;tokens:&lt;500&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="full-text-search-fts">Full-text Search (FTS)<a class="anchor" href="#full-text-search-fts">#</a></h2>
+<h3 id="content-search">Content Search<a class="anchor" href="#content-search">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Body contains &#34;suspend fun&#34;</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;suspend fun&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Body contains &#34;interface&#34;</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;interface&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="json-output">JSON Output<a class="anchor" href="#json-output">#</a></h2>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># JSON format</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;type:l2&#34;</span> --json
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># With jq</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;type:l2&#34;</span> --json | jq <span style="color:#e6db74">&#39;.[] | .id&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Save to file</span>
+</span></span><span style="display:flex;"><span>pa search <span style="color:#e6db74">&#34;domain:auth&#34;</span> --json &gt; auth-docs.json</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="next-steps">Next Steps<a class="anchor" href="#next-steps">#</a></h2>
+<ul>
+<li><a href="/en/docs/pa-retriever/code/">Code Indexing</a></li>
+<li><a href="/en/docs/pa-retriever/with-claude/">Using with Claude</a></li>
+</ul>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+<div>
+
+</div>
+
+<div>
+
+</div>
+
+</div>
+
+
+
+
+
+  
+  
+  
+  <div class="flex flex-wrap justify-between">
+    <span>
+    
+      <a href="/en/docs/pa-retriever/basic/" class="flex align-center">
+        <img src="/icons/backward.svg" class="book-icon" alt="Backward" />
+        <span>Basic Usage</span>
+      </a>
+    
+    </span>
+    <span>
+    
+      <a href="/en/docs/pa-retriever/code/" class="flex align-center">
+        <span>Code Indexing</span>
+        <img src="/icons/forward.svg" class="book-icon" alt="Forward" />
+      </a>
+    
+    </span>
+  </div>
+  
+
+
+ 
+        
+  
+ 
+        
+        
+  
+ 
+        
+  
+  
+    <script>(function(){document.querySelectorAll("pre:has(code)").forEach(e=>{e.addEventListener("click",e.focus),e.addEventListener("copy",function(t){if(t.preventDefault(),navigator.clipboard){const t=window.getSelection().toString()||e.textContent;navigator.clipboard.writeText(t)}})})})()</script>
+  
+
+      </footer>
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+  
+  <aside class="book-toc">
+    <div class="book-toc-content">
+      
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#search-command">Search Command</a></li>
+    <li><a href="#basic-search">Basic Search</a>
+      <ul>
+        <li><a href="#keyword-search">Keyword Search</a></li>
+      </ul>
+    </li>
+    <li><a href="#field-search">Field Search</a>
+      <ul>
+        <li><a href="#syntax">Syntax</a></li>
+        <li><a href="#supported-fields">Supported Fields</a></li>
+        <li><a href="#examples">Examples</a></li>
+      </ul>
+    </li>
+    <li><a href="#complex-queries">Complex Queries</a>
+      <ul>
+        <li><a href="#and-operation">AND Operation</a></li>
+        <li><a href="#or-operation">OR Operation</a></li>
+        <li><a href="#not-operation">NOT Operation</a></li>
+        <li><a href="#parentheses-grouping">Parentheses Grouping</a></li>
+      </ul>
+    </li>
+    <li><a href="#range-search">Range Search</a>
+      <ul>
+        <li><a href="#token-count">Token Count</a></li>
+      </ul>
+    </li>
+    <li><a href="#full-text-search-fts">Full-text Search (FTS)</a>
+      <ul>
+        <li><a href="#content-search">Content Search</a></li>
+      </ul>
+    </li>
+    <li><a href="#json-output">JSON Output</a></li>
+    <li><a href="#next-steps">Next Steps</a></li>
+  </ul>
+</nav>
+
+
+
+    </div>
+  </aside>
+  
+ 
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

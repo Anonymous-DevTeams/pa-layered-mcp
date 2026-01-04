@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Advanced Features# Advanced features of PA-Retriever.
+Bundle Management# Create Bundle (Export)# Package documents into shareable .pab files.
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 # Bundle by domain pa export --domain=auth --name=&#34;auth-module&#34; # Bundle by type pa export --type=l2 --name=&#34;l2-ports&#34; # Select specific documents pa export --ids=&#34;auth.L2-LoginPort,auth.L2-SignupPort&#34; --name=&#34;auth-login&#34; # Include dependencies pa export --domain=auth --include-deps --name=&#34;auth-full&#34; # With signature pa export --domain=auth --sign --name=&#34;auth-signed&#34; Import Bundle# 1 2 3 4 5 6 7 8 9 10 11 # Basic import pa import auth-module.pab # Skip on conflict pa import auth-module.pab --strategy=skip # Overwrite on conflict pa import auth-module.pab --strategy=overwrite # Verify signature pa import auth-module.pab --verify Bundle Info# 1 pa info auth-module.pab LAN Sharing# Start Share Server# 1 2 3 4 5 6 7 8 # Basic start pa share start # With name and port pa share start --name=&#34;My-Mac&#34; --port=9000 # With token auth pa share start --token=&#34;my-secret-token&#34; Discover Peers# 1 2 3 4 5 # Search network for PA-Retriever pa discover # With timeout pa discover --timeout=10s Download Bundle# 1 2 3 4 5 6 7 8 # Download specific bundle pa fetch Alice-Mac/auth-module # Browse peer&#39;s bundles pa lan browse Alice-Mac # Search across peers pa lan search &#34;auth&#34; Registry (Local/Git)# Create Local Registry# 1 2 3 4 5 # Initialize registry pa registry init # With name pa registry init --name=&#34;my-registry&#34; --path=~/my-registry Publish Bundle# 1 2 # Publish to local registry pa publish auth-module.pab --version=1.0.0 Search Registry# 1 2 3 4 5 # Search in registry pa registry search &#34;auth&#34; # List bundles pa registry list Download from Registry# 1 2 3 4 5 # Download from registry pa registry fetch auth-module # Specific version pa registry fetch auth-module@1.0.0 Signing (Identity)# Generate Keys# 1 2 3 4 5 # Generate signing key pair pa identity generate # With name pa identity generate --name=work List Keys# 1 pa identity list Sign Bundle# 1 2 3 4 5 # Sign with default key pa export --domain=auth --sign --name=&#34;auth-signed&#34; # Sign with specific key pa export --domain=auth --sign --key=work --name=&#34;auth-signed&#34; Verify Signature# 1 2 # Verify on import pa import auth-signed.pab --verify Profile Management# Create Profile# 1 2 3 4 5 # Work profile pa profile add work --db=~/.pa/work.db --docs=~/work/docs --desc=&#34;Work projects&#34; # Team profile pa profile add team --db=~/.pa/team.db --docs=~/shared/team/docs Switch Profile# 1 2 3 4 5 # Switch pa use work # Check current pa status --compact Temporary Switch with Env# 1 PA_PROFILE=work pa search &#34;type:l2&#34; HTTP API Server# Access via HTTP API in addition to MCP.
+">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://pa-layer.github.io/en/docs/pa-retriever/advanced/">
+  <meta property="og:site_name" content="PA-Layer">
+  <meta property="og:title" content="Advanced Features">
+  <meta property="og:description" content="Advanced Features# Advanced features of PA-Retriever.
+Bundle Management# Create Bundle (Export)# Package documents into shareable .pab files.
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 # Bundle by domain pa export --domain=auth --name=&#34;auth-module&#34; # Bundle by type pa export --type=l2 --name=&#34;l2-ports&#34; # Select specific documents pa export --ids=&#34;auth.L2-LoginPort,auth.L2-SignupPort&#34; --name=&#34;auth-login&#34; # Include dependencies pa export --domain=auth --include-deps --name=&#34;auth-full&#34; # With signature pa export --domain=auth --sign --name=&#34;auth-signed&#34; Import Bundle# 1 2 3 4 5 6 7 8 9 10 11 # Basic import pa import auth-module.pab # Skip on conflict pa import auth-module.pab --strategy=skip # Overwrite on conflict pa import auth-module.pab --strategy=overwrite # Verify signature pa import auth-module.pab --verify Bundle Info# 1 pa info auth-module.pab LAN Sharing# Start Share Server# 1 2 3 4 5 6 7 8 # Basic start pa share start # With name and port pa share start --name=&#34;My-Mac&#34; --port=9000 # With token auth pa share start --token=&#34;my-secret-token&#34; Discover Peers# 1 2 3 4 5 # Search network for PA-Retriever pa discover # With timeout pa discover --timeout=10s Download Bundle# 1 2 3 4 5 6 7 8 # Download specific bundle pa fetch Alice-Mac/auth-module # Browse peer&#39;s bundles pa lan browse Alice-Mac # Search across peers pa lan search &#34;auth&#34; Registry (Local/Git)# Create Local Registry# 1 2 3 4 5 # Initialize registry pa registry init # With name pa registry init --name=&#34;my-registry&#34; --path=~/my-registry Publish Bundle# 1 2 # Publish to local registry pa publish auth-module.pab --version=1.0.0 Search Registry# 1 2 3 4 5 # Search in registry pa registry search &#34;auth&#34; # List bundles pa registry list Download from Registry# 1 2 3 4 5 # Download from registry pa registry fetch auth-module # Specific version pa registry fetch auth-module@1.0.0 Signing (Identity)# Generate Keys# 1 2 3 4 5 # Generate signing key pair pa identity generate # With name pa identity generate --name=work List Keys# 1 pa identity list Sign Bundle# 1 2 3 4 5 # Sign with default key pa export --domain=auth --sign --name=&#34;auth-signed&#34; # Sign with specific key pa export --domain=auth --sign --key=work --name=&#34;auth-signed&#34; Verify Signature# 1 2 # Verify on import pa import auth-signed.pab --verify Profile Management# Create Profile# 1 2 3 4 5 # Work profile pa profile add work --db=~/.pa/work.db --docs=~/work/docs --desc=&#34;Work projects&#34; # Team profile pa profile add team --db=~/.pa/team.db --docs=~/shared/team/docs Switch Profile# 1 2 3 4 5 # Switch pa use work # Check current pa status --compact Temporary Switch with Env# 1 PA_PROFILE=work pa search &#34;type:l2&#34; HTTP API Server# Access via HTTP API in addition to MCP.">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+
+
+  <meta itemprop="name" content="Advanced Features">
+  <meta itemprop="description" content="Advanced Features# Advanced features of PA-Retriever.
+Bundle Management# Create Bundle (Export)# Package documents into shareable .pab files.
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 # Bundle by domain pa export --domain=auth --name=&#34;auth-module&#34; # Bundle by type pa export --type=l2 --name=&#34;l2-ports&#34; # Select specific documents pa export --ids=&#34;auth.L2-LoginPort,auth.L2-SignupPort&#34; --name=&#34;auth-login&#34; # Include dependencies pa export --domain=auth --include-deps --name=&#34;auth-full&#34; # With signature pa export --domain=auth --sign --name=&#34;auth-signed&#34; Import Bundle# 1 2 3 4 5 6 7 8 9 10 11 # Basic import pa import auth-module.pab # Skip on conflict pa import auth-module.pab --strategy=skip # Overwrite on conflict pa import auth-module.pab --strategy=overwrite # Verify signature pa import auth-module.pab --verify Bundle Info# 1 pa info auth-module.pab LAN Sharing# Start Share Server# 1 2 3 4 5 6 7 8 # Basic start pa share start # With name and port pa share start --name=&#34;My-Mac&#34; --port=9000 # With token auth pa share start --token=&#34;my-secret-token&#34; Discover Peers# 1 2 3 4 5 # Search network for PA-Retriever pa discover # With timeout pa discover --timeout=10s Download Bundle# 1 2 3 4 5 6 7 8 # Download specific bundle pa fetch Alice-Mac/auth-module # Browse peer&#39;s bundles pa lan browse Alice-Mac # Search across peers pa lan search &#34;auth&#34; Registry (Local/Git)# Create Local Registry# 1 2 3 4 5 # Initialize registry pa registry init # With name pa registry init --name=&#34;my-registry&#34; --path=~/my-registry Publish Bundle# 1 2 # Publish to local registry pa publish auth-module.pab --version=1.0.0 Search Registry# 1 2 3 4 5 # Search in registry pa registry search &#34;auth&#34; # List bundles pa registry list Download from Registry# 1 2 3 4 5 # Download from registry pa registry fetch auth-module # Specific version pa registry fetch auth-module@1.0.0 Signing (Identity)# Generate Keys# 1 2 3 4 5 # Generate signing key pair pa identity generate # With name pa identity generate --name=work List Keys# 1 pa identity list Sign Bundle# 1 2 3 4 5 # Sign with default key pa export --domain=auth --sign --name=&#34;auth-signed&#34; # Sign with specific key pa export --domain=auth --sign --key=work --name=&#34;auth-signed&#34; Verify Signature# 1 2 # Verify on import pa import auth-signed.pab --verify Profile Management# Create Profile# 1 2 3 4 5 # Work profile pa profile add work --db=~/.pa/work.db --docs=~/work/docs --desc=&#34;Work projects&#34; # Team profile pa profile add team --db=~/.pa/team.db --docs=~/shared/team/docs Switch Profile# 1 2 3 4 5 # Switch pa use work # Check current pa status --compact Temporary Switch with Env# 1 PA_PROFILE=work pa search &#34;type:l2&#34; HTTP API Server# Access via HTTP API in addition to MCP.">
+  <meta itemprop="wordCount" content="570">
+
+<title>Advanced Features | PA-Layer</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="https://pa-layer.github.io/en/docs/pa-retriever/advanced/">
+  <link rel="alternate" hreflang="ko" href="https://pa-layer.github.io/ko/docs/pa-retriever/advanced/" title="고급 기능">
+<link rel="stylesheet" href="/book.min.6970156cec683193d93c9c4edaf0d56574e4361df2e0c1be4f697ae81c3ba55f.css" integrity="sha256-aXAVbOxoMZPZPJxO2vDVZXTkNh3y4MG&#43;T2l66Bw7pV8=" crossorigin="anonymous">
+
+
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.b5456745024e721c0ed5066be46dd05983568404556d91df1ba7a31dc5a41591.js" integrity="sha256-tUVnRQJOchwO1QZr5G3QWYNWhARVbZHfG6ejHcWkFZE=" crossorigin="anonymous"></script>
+
+
+
+  
+</head>
+<body dir="ltr" class="book-kind-page book-type-docs">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    
+<aside class="book-menu">
+  <div class="book-menu-content">
+    
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/en/"><img src="/images/pa-layer-logo.svg" alt="Logo" /><span>PA-Layer</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input id="book-search-input" type="text" 
+    placeholder="Search"
+    aria-label="Search"
+    maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+  
+
+
+  
+    
+  
+
+
+  
+
+
+<ul class="book-languages">
+  <li>
+    <input type="checkbox" id="languages" class="toggle" />
+    <label for="languages" class="flex">
+      <a role="button">
+        <img src="/icons/translate.svg" class="book-icon" alt="Languages" />
+        English
+      </a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+
+    <ul>
+      
+      <li>
+        <a href="/ko/docs/pa-retriever/advanced/" class="flex flex-auto">
+          한국어
+        </a>
+      </li>
+      
+    </ul>
+  </li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-6236be1b89680b92e3aefa016e21a142" class="toggle"  />
+    <label for="section-6236be1b89680b92e3aefa016e21a142" class="flex">
+      <a href="/en/docs/installation/" class="">
+        Installation</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/macos/" class="">
+      macOS Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/windows/" class="">
+      Windows Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/linux/" class="">
+      Linux Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/workspace/" class="">
+      Workspace Setup</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c57e8d2542437d90ac12ebccc18f7bd6" class="toggle"  />
+    <label for="section-c57e8d2542437d90ac12ebccc18f7bd6" class="flex">
+      <a href="/en/docs/configuration/" class="">
+        Configuration</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/claude/" class="">
+      Claude Integration</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/obsidian/" class="">
+      Obsidian Settings</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/pa-config/" class="">
+      PA-Retriever Config</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e28c43a16f6ea811813d9b83e9c091a1" class="toggle"  />
+    <label for="section-e28c43a16f6ea811813d9b83e9c091a1" class="flex">
+      <a href="/en/docs/pa-layer/" class="">
+        PA-Layer</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/overview/" class="">
+      Architecture Overview</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/backend/" class="">
+      Backend Conventions</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/frontend/" class="">
+      Frontend Conventions</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-2e7de72bf7fb1d60035ad67e5a7421f2" class="toggle" checked />
+    <label for="section-2e7de72bf7fb1d60035ad67e5a7421f2" class="flex">
+      <a href="/en/docs/pa-retriever/" class="">
+        PA-Retriever</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/basic/" class="">
+      Basic Usage</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/search/" class="">
+      Search Guide</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/code/" class="">
+      Code Indexing</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/with-claude/" class="">
+      Using with Claude</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/advanced/" class="active">
+      Advanced Features</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+<ul><li><a href="https://github.com/pa-layer/pa-retriever" target="_blank" rel="noopener">GitHub</a></li></ul>
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+
+  </div>
+</aside>
+ 
+
+    <div class="book-page">
+      <header class="book-header hidden">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/icons/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>Advanced Features</h3>
+
+  <label for="toc-control">
+    
+    <img src="/icons/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#bundle-management">Bundle Management</a>
+      <ul>
+        <li><a href="#create-bundle-export">Create Bundle (Export)</a></li>
+        <li><a href="#import-bundle">Import Bundle</a></li>
+        <li><a href="#bundle-info">Bundle Info</a></li>
+      </ul>
+    </li>
+    <li><a href="#lan-sharing">LAN Sharing</a>
+      <ul>
+        <li><a href="#start-share-server">Start Share Server</a></li>
+        <li><a href="#discover-peers">Discover Peers</a></li>
+        <li><a href="#download-bundle">Download Bundle</a></li>
+      </ul>
+    </li>
+    <li><a href="#registry-localgit">Registry (Local/Git)</a>
+      <ul>
+        <li><a href="#create-local-registry">Create Local Registry</a></li>
+        <li><a href="#publish-bundle">Publish Bundle</a></li>
+        <li><a href="#search-registry">Search Registry</a></li>
+        <li><a href="#download-from-registry">Download from Registry</a></li>
+      </ul>
+    </li>
+    <li><a href="#signing-identity">Signing (Identity)</a>
+      <ul>
+        <li><a href="#generate-keys">Generate Keys</a></li>
+        <li><a href="#list-keys">List Keys</a></li>
+        <li><a href="#sign-bundle">Sign Bundle</a></li>
+        <li><a href="#verify-signature">Verify Signature</a></li>
+      </ul>
+    </li>
+    <li><a href="#profile-management">Profile Management</a>
+      <ul>
+        <li><a href="#create-profile">Create Profile</a></li>
+        <li><a href="#switch-profile">Switch Profile</a></li>
+        <li><a href="#temporary-switch-with-env">Temporary Switch with Env</a></li>
+      </ul>
+    </li>
+    <li><a href="#http-api-server">HTTP API Server</a>
+      <ul>
+        <li><a href="#api-endpoints">API Endpoints</a></li>
+        <li><a href="#examples">Examples</a></li>
+      </ul>
+    </li>
+    <li><a href="#automation">Automation</a>
+      <ul>
+        <li><a href="#cron-indexing">Cron Indexing</a></li>
+        <li><a href="#git-hook">Git Hook</a></li>
+      </ul>
+    </li>
+    <li><a href="#troubleshooting">Troubleshooting</a>
+      <ul>
+        <li><a href="#index-corruption">Index Corruption</a></li>
+        <li><a href="#mcp-connection-issues">MCP Connection Issues</a></li>
+        <li><a href="#search-result-issues">Search Result Issues</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="advanced-features">Advanced Features<a class="anchor" href="#advanced-features">#</a></h1>
+<p>Advanced features of PA-Retriever.</p>
+<h2 id="bundle-management">Bundle Management<a class="anchor" href="#bundle-management">#</a></h2>
+<h3 id="create-bundle-export">Create Bundle (Export)<a class="anchor" href="#create-bundle-export">#</a></h3>
+<p>Package documents into shareable <code>.pab</code> files.</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Bundle by domain</span>
+</span></span><span style="display:flex;"><span>pa export --domain<span style="color:#f92672">=</span>auth --name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;auth-module&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Bundle by type</span>
+</span></span><span style="display:flex;"><span>pa export --type<span style="color:#f92672">=</span>l2 --name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;l2-ports&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Select specific documents</span>
+</span></span><span style="display:flex;"><span>pa export --ids<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;auth.L2-LoginPort,auth.L2-SignupPort&#34;</span> --name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;auth-login&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Include dependencies</span>
+</span></span><span style="display:flex;"><span>pa export --domain<span style="color:#f92672">=</span>auth --include-deps --name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;auth-full&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># With signature</span>
+</span></span><span style="display:flex;"><span>pa export --domain<span style="color:#f92672">=</span>auth --sign --name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;auth-signed&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="import-bundle">Import Bundle<a class="anchor" href="#import-bundle">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Basic import</span>
+</span></span><span style="display:flex;"><span>pa import auth-module.pab
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Skip on conflict</span>
+</span></span><span style="display:flex;"><span>pa import auth-module.pab --strategy<span style="color:#f92672">=</span>skip
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Overwrite on conflict</span>
+</span></span><span style="display:flex;"><span>pa import auth-module.pab --strategy<span style="color:#f92672">=</span>overwrite
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Verify signature</span>
+</span></span><span style="display:flex;"><span>pa import auth-module.pab --verify</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="bundle-info">Bundle Info<a class="anchor" href="#bundle-info">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>pa info auth-module.pab</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="lan-sharing">LAN Sharing<a class="anchor" href="#lan-sharing">#</a></h2>
+<h3 id="start-share-server">Start Share Server<a class="anchor" href="#start-share-server">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Basic start</span>
+</span></span><span style="display:flex;"><span>pa share start
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># With name and port</span>
+</span></span><span style="display:flex;"><span>pa share start --name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;My-Mac&#34;</span> --port<span style="color:#f92672">=</span><span style="color:#ae81ff">9000</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># With token auth</span>
+</span></span><span style="display:flex;"><span>pa share start --token<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;my-secret-token&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="discover-peers">Discover Peers<a class="anchor" href="#discover-peers">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Search network for PA-Retriever</span>
+</span></span><span style="display:flex;"><span>pa discover
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># With timeout</span>
+</span></span><span style="display:flex;"><span>pa discover --timeout<span style="color:#f92672">=</span>10s</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="download-bundle">Download Bundle<a class="anchor" href="#download-bundle">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Download specific bundle</span>
+</span></span><span style="display:flex;"><span>pa fetch Alice-Mac/auth-module
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Browse peer&#39;s bundles</span>
+</span></span><span style="display:flex;"><span>pa lan browse Alice-Mac
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Search across peers</span>
+</span></span><span style="display:flex;"><span>pa lan search <span style="color:#e6db74">&#34;auth&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="registry-localgit">Registry (Local/Git)<a class="anchor" href="#registry-localgit">#</a></h2>
+<h3 id="create-local-registry">Create Local Registry<a class="anchor" href="#create-local-registry">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Initialize registry</span>
+</span></span><span style="display:flex;"><span>pa registry init
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># With name</span>
+</span></span><span style="display:flex;"><span>pa registry init --name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;my-registry&#34;</span> --path<span style="color:#f92672">=</span>~/my-registry</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="publish-bundle">Publish Bundle<a class="anchor" href="#publish-bundle">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Publish to local registry</span>
+</span></span><span style="display:flex;"><span>pa publish auth-module.pab --version<span style="color:#f92672">=</span>1.0.0</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="search-registry">Search Registry<a class="anchor" href="#search-registry">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Search in registry</span>
+</span></span><span style="display:flex;"><span>pa registry search <span style="color:#e6db74">&#34;auth&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># List bundles</span>
+</span></span><span style="display:flex;"><span>pa registry list</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="download-from-registry">Download from Registry<a class="anchor" href="#download-from-registry">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Download from registry</span>
+</span></span><span style="display:flex;"><span>pa registry fetch auth-module
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Specific version</span>
+</span></span><span style="display:flex;"><span>pa registry fetch auth-module@1.0.0</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="signing-identity">Signing (Identity)<a class="anchor" href="#signing-identity">#</a></h2>
+<h3 id="generate-keys">Generate Keys<a class="anchor" href="#generate-keys">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Generate signing key pair</span>
+</span></span><span style="display:flex;"><span>pa identity generate
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># With name</span>
+</span></span><span style="display:flex;"><span>pa identity generate --name<span style="color:#f92672">=</span>work</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="list-keys">List Keys<a class="anchor" href="#list-keys">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>pa identity list</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="sign-bundle">Sign Bundle<a class="anchor" href="#sign-bundle">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Sign with default key</span>
+</span></span><span style="display:flex;"><span>pa export --domain<span style="color:#f92672">=</span>auth --sign --name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;auth-signed&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Sign with specific key</span>
+</span></span><span style="display:flex;"><span>pa export --domain<span style="color:#f92672">=</span>auth --sign --key<span style="color:#f92672">=</span>work --name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;auth-signed&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="verify-signature">Verify Signature<a class="anchor" href="#verify-signature">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Verify on import</span>
+</span></span><span style="display:flex;"><span>pa import auth-signed.pab --verify</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="profile-management">Profile Management<a class="anchor" href="#profile-management">#</a></h2>
+<h3 id="create-profile">Create Profile<a class="anchor" href="#create-profile">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Work profile</span>
+</span></span><span style="display:flex;"><span>pa profile add work --db<span style="color:#f92672">=</span>~/.pa/work.db --docs<span style="color:#f92672">=</span>~/work/docs --desc<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Work projects&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Team profile</span>
+</span></span><span style="display:flex;"><span>pa profile add team --db<span style="color:#f92672">=</span>~/.pa/team.db --docs<span style="color:#f92672">=</span>~/shared/team/docs</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="switch-profile">Switch Profile<a class="anchor" href="#switch-profile">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Switch</span>
+</span></span><span style="display:flex;"><span>pa use work
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Check current</span>
+</span></span><span style="display:flex;"><span>pa status --compact</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="temporary-switch-with-env">Temporary Switch with Env<a class="anchor" href="#temporary-switch-with-env">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>PA_PROFILE<span style="color:#f92672">=</span>work pa search <span style="color:#e6db74">&#34;type:l2&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="http-api-server">HTTP API Server<a class="anchor" href="#http-api-server">#</a></h2>
+<p>Access via HTTP API in addition to MCP.</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Start HTTP server</span>
+</span></span><span style="display:flex;"><span>pa serve --http --port<span style="color:#f92672">=</span><span style="color:#ae81ff">8080</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="api-endpoints">API Endpoints<a class="anchor" href="#api-endpoints">#</a></h3>
+<table>
+  <thead>
+      <tr>
+          <th>Endpoint</th>
+          <th>Method</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>/api/search</code></td>
+          <td>GET</td>
+          <td>Search documents</td>
+      </tr>
+      <tr>
+          <td><code>/api/docs/{id}</code></td>
+          <td>GET</td>
+          <td>Get document</td>
+      </tr>
+      <tr>
+          <td><code>/api/stats</code></td>
+          <td>GET</td>
+          <td>Statistics</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="examples">Examples<a class="anchor" href="#examples">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Search</span>
+</span></span><span style="display:flex;"><span>curl <span style="color:#e6db74">&#34;http://localhost:8080/api/search?q=type:l2&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Get document</span>
+</span></span><span style="display:flex;"><span>curl <span style="color:#e6db74">&#34;http://localhost:8080/api/docs/auth.L2-LoginPort&#34;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="automation">Automation<a class="anchor" href="#automation">#</a></h2>
+<h3 id="cron-indexing">Cron Indexing<a class="anchor" href="#cron-indexing">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Edit crontab</span>
+</span></span><span style="display:flex;"><span>crontab -e
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Hourly indexing</span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">0</span> * * * * /usr/local/bin/pa index &gt;&gt; ~/.pa/index.log 2&gt;&amp;<span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Daily full re-index</span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">0</span> <span style="color:#ae81ff">3</span> * * * /usr/local/bin/pa index --force &gt;&gt; ~/.pa/index.log 2&gt;&amp;<span style="color:#ae81ff">1</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="git-hook">Git Hook<a class="anchor" href="#git-hook">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># .git/hooks/post-commit</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#!/bin/bash</span>
+</span></span><span style="display:flex;"><span>pa index</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="troubleshooting">Troubleshooting<a class="anchor" href="#troubleshooting">#</a></h2>
+<h3 id="index-corruption">Index Corruption<a class="anchor" href="#index-corruption">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Recreate index</span>
+</span></span><span style="display:flex;"><span>rm ~/.pa/default.db*
+</span></span><span style="display:flex;"><span>pa index --force</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="mcp-connection-issues">MCP Connection Issues<a class="anchor" href="#mcp-connection-issues">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Check logs</span>
+</span></span><span style="display:flex;"><span>pa serve --mcp --verbose
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Regenerate config</span>
+</span></span><span style="display:flex;"><span>pa mcp install --force</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="search-result-issues">Search Result Issues<a class="anchor" href="#search-result-issues">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Rebuild FTS index</span>
+</span></span><span style="display:flex;"><span>pa index --rebuild-fts</span></span></code></pre></td></tr></table>
+</div>
+</div></article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+<div>
+
+</div>
+
+<div>
+
+</div>
+
+</div>
+
+
+
+
+
+  
+  
+  
+  <div class="flex flex-wrap justify-between">
+    <span>
+    
+      <a href="/en/docs/pa-retriever/with-claude/" class="flex align-center">
+        <img src="/icons/backward.svg" class="book-icon" alt="Backward" />
+        <span>Using with Claude</span>
+      </a>
+    
+    </span>
+    <span>
+    
+    </span>
+  </div>
+  
+
+
+ 
+        
+  
+ 
+        
+        
+  
+ 
+        
+  
+  
+    <script>(function(){document.querySelectorAll("pre:has(code)").forEach(e=>{e.addEventListener("click",e.focus),e.addEventListener("copy",function(t){if(t.preventDefault(),navigator.clipboard){const t=window.getSelection().toString()||e.textContent;navigator.clipboard.writeText(t)}})})})()</script>
+  
+
+      </footer>
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+  
+  <aside class="book-toc">
+    <div class="book-toc-content">
+      
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#bundle-management">Bundle Management</a>
+      <ul>
+        <li><a href="#create-bundle-export">Create Bundle (Export)</a></li>
+        <li><a href="#import-bundle">Import Bundle</a></li>
+        <li><a href="#bundle-info">Bundle Info</a></li>
+      </ul>
+    </li>
+    <li><a href="#lan-sharing">LAN Sharing</a>
+      <ul>
+        <li><a href="#start-share-server">Start Share Server</a></li>
+        <li><a href="#discover-peers">Discover Peers</a></li>
+        <li><a href="#download-bundle">Download Bundle</a></li>
+      </ul>
+    </li>
+    <li><a href="#registry-localgit">Registry (Local/Git)</a>
+      <ul>
+        <li><a href="#create-local-registry">Create Local Registry</a></li>
+        <li><a href="#publish-bundle">Publish Bundle</a></li>
+        <li><a href="#search-registry">Search Registry</a></li>
+        <li><a href="#download-from-registry">Download from Registry</a></li>
+      </ul>
+    </li>
+    <li><a href="#signing-identity">Signing (Identity)</a>
+      <ul>
+        <li><a href="#generate-keys">Generate Keys</a></li>
+        <li><a href="#list-keys">List Keys</a></li>
+        <li><a href="#sign-bundle">Sign Bundle</a></li>
+        <li><a href="#verify-signature">Verify Signature</a></li>
+      </ul>
+    </li>
+    <li><a href="#profile-management">Profile Management</a>
+      <ul>
+        <li><a href="#create-profile">Create Profile</a></li>
+        <li><a href="#switch-profile">Switch Profile</a></li>
+        <li><a href="#temporary-switch-with-env">Temporary Switch with Env</a></li>
+      </ul>
+    </li>
+    <li><a href="#http-api-server">HTTP API Server</a>
+      <ul>
+        <li><a href="#api-endpoints">API Endpoints</a></li>
+        <li><a href="#examples">Examples</a></li>
+      </ul>
+    </li>
+    <li><a href="#automation">Automation</a>
+      <ul>
+        <li><a href="#cron-indexing">Cron Indexing</a></li>
+        <li><a href="#git-hook">Git Hook</a></li>
+      </ul>
+    </li>
+    <li><a href="#troubleshooting">Troubleshooting</a>
+      <ul>
+        <li><a href="#index-corruption">Index Corruption</a></li>
+        <li><a href="#mcp-connection-issues">MCP Connection Issues</a></li>
+        <li><a href="#search-result-issues">Search Result Issues</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+    </div>
+  </aside>
+  
+ 
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

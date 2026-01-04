@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="ko" dir="ltr">
+<head>
+  <!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="아키텍처 개요# PA-Layer의 핵심 아키텍처 원칙과 규칙을 설명합니다.
+Hexagonal Architecture (Port/Adapter)# 핵심 아이디어# 비즈니스 로직을 기술적 세부사항으로부터 분리합니다.
+┌─────────────────────────────┐ │ │ REST ────►│ Port │ │ ↓ │ gRPC ────►│ Domain Logic (비즈니스 핵심) │◄──── DB │ ↓ │ GraphQL ────►│ Port │◄──── Cache │ │ └─────────────────────────────┘ 좌측: Driving Adapters (입력) 우측: Driven Adapters (출력)PA-Layer에서의 적용# 우리는 Hexagonal의 완전한 구현이 아닌, 핵심 개념만 취합니다:
+원본 Hexagonal PA-Layer 적용 Port (Interface) Port 문서 - 인터페이스 명세 Adapter (Implementation) 코드 구현체 - Kotlin/TS/Go Driving/Driven 구분 입력/출력 방향 으로 단순화 1 2 3 4 5 6 7 8 9 10 11 12 13 14 // Port: 비즈니스 규칙 정의 interface LoginPort { suspend fun login(request: LoginRequest): LoginResult } // Adapter: 실제 구현 class LoginAdapter( private val userRepository: UserRepository, private val tokenService: TokenService ) : LoginPort { override suspend fun login(request: LoginRequest): LoginResult { // 구현 } } CQS (Command-Query Separation)# 원칙# Command Query 상태를 변경한다 상태를 읽는다 부수 효과가 있다 부수 효과가 없다 보통 반환값이 없거나 Result 데이터를 반환한다 PA-Layer 적용# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 // ❌ 안티 패턴: Command와 Query 혼합 interface UserPort { fun createUser(request: CreateUserRequest): User // 생성하면서 반환 } // ✅ 권장 패턴: 분리 interface UserCommandPort { suspend fun createUser(command: CreateUserCommand): CreateUserResult } interface UserQueryPort { suspend fun findUser(query: FindUserQuery): User? suspend fun listUsers(query: ListUsersQuery): List&lt;User&gt; } 문서에서의 구분# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 # L1-UserPort.md (Command 중심) --- type: l1 domain: users operations: - createUser (command) - updateUser (command) - deleteUser (command) --- # Q-UserQuery.md (Query 전용) --- type: query domain: users operations: - findById - findByEmail - searchUsers --- 레이어 규칙# 의존성 방향# 상위 레이어 → 하위 레이어 (단방향) API ↓ L2 ↓ LM (선택) ↓ L1규칙:
+">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://pa-layer.github.io/ko/docs/pa-layer/overview/">
+  <meta property="og:site_name" content="PA-Layer">
+  <meta property="og:title" content="아키텍처 개요">
+  <meta property="og:description" content="아키텍처 개요# PA-Layer의 핵심 아키텍처 원칙과 규칙을 설명합니다.
+Hexagonal Architecture (Port/Adapter)# 핵심 아이디어# 비즈니스 로직을 기술적 세부사항으로부터 분리합니다.
+┌─────────────────────────────┐ │ │ REST ────►│ Port │ │ ↓ │ gRPC ────►│ Domain Logic (비즈니스 핵심) │◄──── DB │ ↓ │ GraphQL ────►│ Port │◄──── Cache │ │ └─────────────────────────────┘ 좌측: Driving Adapters (입력) 우측: Driven Adapters (출력)PA-Layer에서의 적용# 우리는 Hexagonal의 완전한 구현이 아닌, 핵심 개념만 취합니다:
+원본 Hexagonal PA-Layer 적용 Port (Interface) Port 문서 - 인터페이스 명세 Adapter (Implementation) 코드 구현체 - Kotlin/TS/Go Driving/Driven 구분 입력/출력 방향 으로 단순화 1 2 3 4 5 6 7 8 9 10 11 12 13 14 // Port: 비즈니스 규칙 정의 interface LoginPort { suspend fun login(request: LoginRequest): LoginResult } // Adapter: 실제 구현 class LoginAdapter( private val userRepository: UserRepository, private val tokenService: TokenService ) : LoginPort { override suspend fun login(request: LoginRequest): LoginResult { // 구현 } } CQS (Command-Query Separation)# 원칙# Command Query 상태를 변경한다 상태를 읽는다 부수 효과가 있다 부수 효과가 없다 보통 반환값이 없거나 Result 데이터를 반환한다 PA-Layer 적용# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 // ❌ 안티 패턴: Command와 Query 혼합 interface UserPort { fun createUser(request: CreateUserRequest): User // 생성하면서 반환 } // ✅ 권장 패턴: 분리 interface UserCommandPort { suspend fun createUser(command: CreateUserCommand): CreateUserResult } interface UserQueryPort { suspend fun findUser(query: FindUserQuery): User? suspend fun listUsers(query: ListUsersQuery): List&lt;User&gt; } 문서에서의 구분# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 # L1-UserPort.md (Command 중심) --- type: l1 domain: users operations: - createUser (command) - updateUser (command) - deleteUser (command) --- # Q-UserQuery.md (Query 전용) --- type: query domain: users operations: - findById - findByEmail - searchUsers --- 레이어 규칙# 의존성 방향# 상위 레이어 → 하위 레이어 (단방향) API ↓ L2 ↓ LM (선택) ↓ L1규칙:">
+  <meta property="og:locale" content="ko">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+
+
+  <meta itemprop="name" content="아키텍처 개요">
+  <meta itemprop="description" content="아키텍처 개요# PA-Layer의 핵심 아키텍처 원칙과 규칙을 설명합니다.
+Hexagonal Architecture (Port/Adapter)# 핵심 아이디어# 비즈니스 로직을 기술적 세부사항으로부터 분리합니다.
+┌─────────────────────────────┐ │ │ REST ────►│ Port │ │ ↓ │ gRPC ────►│ Domain Logic (비즈니스 핵심) │◄──── DB │ ↓ │ GraphQL ────►│ Port │◄──── Cache │ │ └─────────────────────────────┘ 좌측: Driving Adapters (입력) 우측: Driven Adapters (출력)PA-Layer에서의 적용# 우리는 Hexagonal의 완전한 구현이 아닌, 핵심 개념만 취합니다:
+원본 Hexagonal PA-Layer 적용 Port (Interface) Port 문서 - 인터페이스 명세 Adapter (Implementation) 코드 구현체 - Kotlin/TS/Go Driving/Driven 구분 입력/출력 방향 으로 단순화 1 2 3 4 5 6 7 8 9 10 11 12 13 14 // Port: 비즈니스 규칙 정의 interface LoginPort { suspend fun login(request: LoginRequest): LoginResult } // Adapter: 실제 구현 class LoginAdapter( private val userRepository: UserRepository, private val tokenService: TokenService ) : LoginPort { override suspend fun login(request: LoginRequest): LoginResult { // 구현 } } CQS (Command-Query Separation)# 원칙# Command Query 상태를 변경한다 상태를 읽는다 부수 효과가 있다 부수 효과가 없다 보통 반환값이 없거나 Result 데이터를 반환한다 PA-Layer 적용# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 // ❌ 안티 패턴: Command와 Query 혼합 interface UserPort { fun createUser(request: CreateUserRequest): User // 생성하면서 반환 } // ✅ 권장 패턴: 분리 interface UserCommandPort { suspend fun createUser(command: CreateUserCommand): CreateUserResult } interface UserQueryPort { suspend fun findUser(query: FindUserQuery): User? suspend fun listUsers(query: ListUsersQuery): List&lt;User&gt; } 문서에서의 구분# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 # L1-UserPort.md (Command 중심) --- type: l1 domain: users operations: - createUser (command) - updateUser (command) - deleteUser (command) --- # Q-UserQuery.md (Query 전용) --- type: query domain: users operations: - findById - findByEmail - searchUsers --- 레이어 규칙# 의존성 방향# 상위 레이어 → 하위 레이어 (단방향) API ↓ L2 ↓ LM (선택) ↓ L1규칙:">
+  <meta itemprop="wordCount" content="716">
+
+<title>아키텍처 개요 | PA-Layer</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="https://pa-layer.github.io/ko/docs/pa-layer/overview/">
+  <link rel="alternate" hreflang="en" href="https://pa-layer.github.io/en/docs/pa-layer/overview/" title="Architecture Overview">
+<link rel="stylesheet" href="/book.min.6970156cec683193d93c9c4edaf0d56574e4361df2e0c1be4f697ae81c3ba55f.css" integrity="sha256-aXAVbOxoMZPZPJxO2vDVZXTkNh3y4MG&#43;T2l66Bw7pV8=" crossorigin="anonymous">
+
+
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/ko.search.min.e9756793949413dae8c85e803ce1e02b13ffa1c302aec58e19bfbadb693819d3.js" integrity="sha256-6XVnk5SUE9royF6APOHgKxP/ocMCrsWOGb&#43;622k4GdM=" crossorigin="anonymous"></script>
+
+
+
+  
+</head>
+<body dir="ltr" class="book-kind-page book-type-docs">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    
+<aside class="book-menu">
+  <div class="book-menu-content">
+    
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/ko/"><img src="/images/pa-layer-logo.svg" alt="Logo" /><span>PA-Layer</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input id="book-search-input" type="text" 
+    placeholder="Search"
+    aria-label="Search"
+    maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+  
+
+
+  
+    
+  
+
+
+  
+
+
+<ul class="book-languages">
+  <li>
+    <input type="checkbox" id="languages" class="toggle" />
+    <label for="languages" class="flex">
+      <a role="button">
+        <img src="/icons/translate.svg" class="book-icon" alt="Languages" />
+        한국어
+      </a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+
+    <ul>
+      
+      <li>
+        <a href="/en/docs/pa-layer/overview/" class="flex flex-auto">
+          English
+        </a>
+      </li>
+      
+    </ul>
+  </li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-b056803e087b3464503e98766cccad1a" class="toggle"  />
+    <label for="section-b056803e087b3464503e98766cccad1a" class="flex">
+      <a href="/ko/docs/installation/" class="">
+        설치하기</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/macos/" class="">
+      macOS 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/windows/" class="">
+      Windows 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/linux/" class="">
+      Linux 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/workspace/" class="">
+      워크스페이스 구성</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-187b3aa4e29a5d5ef2738d28ac16df69" class="toggle"  />
+    <label for="section-187b3aa4e29a5d5ef2738d28ac16df69" class="flex">
+      <a href="/ko/docs/configuration/" class="">
+        설정하기</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/claude/" class="">
+      Claude 연동</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/obsidian/" class="">
+      Obsidian 설정</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/pa-config/" class="">
+      PA-Retriever 설정</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99ad2865f9541edb014cad9a350d886e" class="toggle" checked />
+    <label for="section-99ad2865f9541edb014cad9a350d886e" class="flex">
+      <a href="/ko/docs/pa-layer/" class="">
+        PA-Layer</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/overview/" class="active">
+      아키텍처 개요</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/backend/" class="">
+      Backend 컨벤션</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/frontend/" class="">
+      Frontend 컨벤션</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99cc806f10f29d7b76e63ff1539abbc7" class="toggle"  />
+    <label for="section-99cc806f10f29d7b76e63ff1539abbc7" class="flex">
+      <a href="/ko/docs/pa-retriever/" class="">
+        PA-Retriever</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/basic/" class="">
+      기본 사용법</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/search/" class="">
+      검색 가이드</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/code/" class="">
+      코드 인덱싱</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/with-claude/" class="">
+      Claude와 함께 사용</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/advanced/" class="">
+      고급 기능</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+<ul><li><a href="https://github.com/pa-layer/pa-retriever" target="_blank" rel="noopener">GitHub</a></li></ul>
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+
+  </div>
+</aside>
+ 
+
+    <div class="book-page">
+      <header class="book-header hidden">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/icons/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>아키텍처 개요</h3>
+
+  <label for="toc-control">
+    
+    <img src="/icons/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#hexagonal-architecture-portadapter">Hexagonal Architecture (Port/Adapter)</a>
+      <ul>
+        <li><a href="#핵심-아이디어">핵심 아이디어</a></li>
+        <li><a href="#pa-layer에서의-적용">PA-Layer에서의 적용</a></li>
+      </ul>
+    </li>
+    <li><a href="#cqs-command-query-separation">CQS (Command-Query Separation)</a>
+      <ul>
+        <li><a href="#원칙">원칙</a></li>
+        <li><a href="#pa-layer-적용">PA-Layer 적용</a></li>
+        <li><a href="#문서에서의-구분">문서에서의 구분</a></li>
+      </ul>
+    </li>
+    <li><a href="#레이어-규칙">레이어 규칙</a>
+      <ul>
+        <li><a href="#의존성-방향">의존성 방향</a></li>
+        <li><a href="#l1-domain-layer">L1 (Domain Layer)</a></li>
+        <li><a href="#l2-feature-layer">L2 (Feature Layer)</a></li>
+        <li><a href="#lm-mediator-layer---선택적">LM (Mediator Layer) - 선택적</a></li>
+      </ul>
+    </li>
+    <li><a href="#문서-컨벤션">문서 컨벤션</a>
+      <ul>
+        <li><a href="#frontmatter-필수-필드">Frontmatter 필수 필드</a></li>
+        <li><a href="#문서-구조-권장">문서 구조 권장</a></li>
+      </ul>
+    </li>
+    <li><a href="#흐름">흐름</a></li>
+    <li><a href="#의존성">의존성</a></li>
+    <li><a href="#구현-노트">구현 노트</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="아키텍처-개요">아키텍처 개요<a class="anchor" href="#%ec%95%84%ed%82%a4%ed%85%8d%ec%b2%98-%ea%b0%9c%ec%9a%94">#</a></h1>
+<p>PA-Layer의 핵심 아키텍처 원칙과 규칙을 설명합니다.</p>
+<h2 id="hexagonal-architecture-portadapter">Hexagonal Architecture (Port/Adapter)<a class="anchor" href="#hexagonal-architecture-portadapter">#</a></h2>
+<h3 id="핵심-아이디어">핵심 아이디어<a class="anchor" href="#%ed%95%b5%ec%8b%ac-%ec%95%84%ec%9d%b4%eb%94%94%ec%96%b4">#</a></h3>
+<p><strong>비즈니스 로직을 기술적 세부사항으로부터 분리</strong>합니다.</p>
+<pre tabindex="0"><code>             ┌─────────────────────────────┐
+             │                             │
+   REST ────►│ Port                        │
+             │  ↓                          │
+   gRPC ────►│ Domain Logic (비즈니스 핵심) │◄──── DB
+             │  ↓                          │
+GraphQL ────►│ Port                        │◄──── Cache
+             │                             │
+             └─────────────────────────────┘
+             
+              좌측: Driving Adapters (입력)
+              우측: Driven Adapters (출력)</code></pre><h3 id="pa-layer에서의-적용">PA-Layer에서의 적용<a class="anchor" href="#pa-layer%ec%97%90%ec%84%9c%ec%9d%98-%ec%a0%81%ec%9a%a9">#</a></h3>
+<p>우리는 Hexagonal의 <strong>완전한 구현이 아닌</strong>, 핵심 개념만 취합니다:</p>
+<table>
+  <thead>
+      <tr>
+          <th>원본 Hexagonal</th>
+          <th>PA-Layer 적용</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Port (Interface)</td>
+          <td><strong>Port 문서</strong> - 인터페이스 명세</td>
+      </tr>
+      <tr>
+          <td>Adapter (Implementation)</td>
+          <td><strong>코드 구현체</strong> - Kotlin/TS/Go</td>
+      </tr>
+      <tr>
+          <td>Driving/Driven 구분</td>
+          <td><strong>입력/출력 방향</strong> 으로 단순화</td>
+      </tr>
+  </tbody>
+</table>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// Port: 비즈니스 규칙 정의
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">LoginPort</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">login</span>(request: LoginRequest): LoginResult
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Adapter: 실제 구현
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">LoginAdapter</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> userRepository: UserRepository,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> tokenService: TokenService
+</span></span><span style="display:flex;"><span>) : LoginPort {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">login</span>(request: LoginRequest): LoginResult {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 구현
+</span></span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="cqs-command-query-separation">CQS (Command-Query Separation)<a class="anchor" href="#cqs-command-query-separation">#</a></h2>
+<h3 id="원칙">원칙<a class="anchor" href="#%ec%9b%90%ec%b9%99">#</a></h3>
+<table>
+  <thead>
+      <tr>
+          <th>Command</th>
+          <th>Query</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>상태를 변경한다</td>
+          <td>상태를 읽는다</td>
+      </tr>
+      <tr>
+          <td>부수 효과가 있다</td>
+          <td>부수 효과가 없다</td>
+      </tr>
+      <tr>
+          <td>보통 반환값이 없거나 Result</td>
+          <td>데이터를 반환한다</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="pa-layer-적용">PA-Layer 적용<a class="anchor" href="#pa-layer-%ec%a0%81%ec%9a%a9">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// ❌ 안티 패턴: Command와 Query 혼합
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">UserPort</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">createUser</span>(request: CreateUserRequest): User  <span style="color:#75715e">// 생성하면서 반환
+</span></span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// ✅ 권장 패턴: 분리
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">UserCommandPort</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">createUser</span>(command: CreateUserCommand): CreateUserResult
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">UserQueryPort</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">findUser</span>(query: FindUserQuery): User?
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">listUsers</span>(query: ListUsersQuery): List&lt;User&gt;
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="문서에서의-구분">문서에서의 구분<a class="anchor" href="#%eb%ac%b8%ec%84%9c%ec%97%90%ec%84%9c%ec%9d%98-%ea%b5%ac%eb%b6%84">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#75715e"># L1-UserPort.md (Command 중심)</span>
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">type</span>: <span style="color:#ae81ff">l1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">domain</span>: <span style="color:#ae81ff">users</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">operations</span>:
+</span></span><span style="display:flex;"><span>  - <span style="color:#ae81ff">createUser (command)</span>
+</span></span><span style="display:flex;"><span>  - <span style="color:#ae81ff">updateUser (command)</span>
+</span></span><span style="display:flex;"><span>  - <span style="color:#ae81ff">deleteUser (command)</span>
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Q-UserQuery.md (Query 전용)</span>
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">type</span>: <span style="color:#ae81ff">query</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">domain</span>: <span style="color:#ae81ff">users</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">operations</span>:
+</span></span><span style="display:flex;"><span>  - <span style="color:#ae81ff">findById</span>
+</span></span><span style="display:flex;"><span>  - <span style="color:#ae81ff">findByEmail</span>
+</span></span><span style="display:flex;"><span>  - <span style="color:#ae81ff">searchUsers</span>
+</span></span><span style="display:flex;"><span>---</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="레이어-규칙">레이어 규칙<a class="anchor" href="#%eb%a0%88%ec%9d%b4%ec%96%b4-%ea%b7%9c%ec%b9%99">#</a></h2>
+<h3 id="의존성-방향">의존성 방향<a class="anchor" href="#%ec%9d%98%ec%a1%b4%ec%84%b1-%eb%b0%a9%ed%96%a5">#</a></h3>
+<pre tabindex="0"><code>상위 레이어 → 하위 레이어 (단방향)
+
+  API
+   ↓
+  L2
+   ↓
+  LM (선택)
+   ↓
+  L1</code></pre><p><strong>규칙</strong>:</p>
+<ul>
+<li>L1은 다른 L1에 의존할 수 없음</li>
+<li>L2는 L1 또는 LM에 의존</li>
+<li>LM은 L1에만 의존</li>
+<li>API는 L2에 의존</li>
+</ul>
+<h3 id="l1-domain-layer">L1 (Domain Layer)<a class="anchor" href="#l1-domain-layer">#</a></h3>
+<p><strong>특징</strong>:</p>
+<ul>
+<li>단일 도메인 책임</li>
+<li>순수 비즈니스 로직</li>
+<li>외부 의존성 최소화</li>
+</ul>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-markdown" data-lang="markdown"><span style="display:flex;"><span>&lt;!-- L1-UserPort.md --&gt;
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span>type: l1
+</span></span><span style="display:flex;"><span>domain: users
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span># L1-UserPort
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">## 책임
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">-</span> 사용자 생성/수정/삭제
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">-</span> 사용자 검증 로직
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">## 제약
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">-</span> 다른 도메인 Port에 직접 의존 금지
+</span></span><span style="display:flex;"><span>- DB/캐시 구현체 직접 참조 금지</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="l2-feature-layer">L2 (Feature Layer)<a class="anchor" href="#l2-feature-layer">#</a></h3>
+<p><strong>특징</strong>:</p>
+<ul>
+<li>여러 L1 Port 조합</li>
+<li>사용자 기능 단위</li>
+<li>트랜잭션 경계 관리</li>
+</ul>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-markdown" data-lang="markdown"><span style="display:flex;"><span>&lt;!-- L2-LoginPort.md --&gt;
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span>type: l2
+</span></span><span style="display:flex;"><span>domain: auth
+</span></span><span style="display:flex;"><span>depends_on: [L1-UserPort, L1-TokenPort, L1-SessionPort]
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span># L2-LoginPort
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">## 책임
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">-</span> 로그인 프로세스 전체 조율
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">-</span> 인증 → 토큰 발급 → 세션 생성
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">## 의존성
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">-</span> [[L1-UserPort]]: 사용자 조회/검증
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">-</span> [[L1-TokenPort]]: 토큰 생성
+</span></span><span style="display:flex;"><span>- [[L1-SessionPort]]: 세션 관리</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="lm-mediator-layer---선택적">LM (Mediator Layer) - 선택적<a class="anchor" href="#lm-mediator-layer---%ec%84%a0%ed%83%9d%ec%a0%81">#</a></h3>
+<p><strong>특징</strong>:</p>
+<ul>
+<li>L1 Port 간 조율</li>
+<li>복잡한 도메인 간 상호작용</li>
+<li>필요할 때만 사용</li>
+</ul>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-markdown" data-lang="markdown"><span style="display:flex;"><span>&lt;!-- LM-AuthCoordinator.md --&gt;
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span>type: lm
+</span></span><span style="display:flex;"><span>domain: auth
+</span></span><span style="display:flex;"><span>coordinates: [L1-UserPort, L1-TokenPort]
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span># LM-AuthCoordinator
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">## 역할
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">-</span> 사용자/토큰 도메인 간 조율
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">-</span> 인증 흐름 중앙 관리
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">## 사용 시점
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">-</span> 여러 L1이 복잡하게 상호작용할 때
+</span></span><span style="display:flex;"><span>- 도메인 경계가 모호해질 때</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="문서-컨벤션">문서 컨벤션<a class="anchor" href="#%eb%ac%b8%ec%84%9c-%ec%bb%a8%eb%b2%a4%ec%85%98">#</a></h2>
+<h3 id="frontmatter-필수-필드">Frontmatter 필수 필드<a class="anchor" href="#frontmatter-%ed%95%84%ec%88%98-%ed%95%84%eb%93%9c">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">type: l2           # 필수</span>: <span style="color:#ae81ff">문서 타입</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">domain: auth       # 권장</span>: <span style="color:#ae81ff">도메인</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">status: active     # 선택</span>: <span style="color:#ae81ff">draft, active, deprecated</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">depends_on: []     # 선택</span>: <span style="color:#ae81ff">의존 문서</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">aliases: []        # 선택</span>: <span style="color:#ae81ff">검색용 별칭</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">tags: []           # 선택</span>: <span style="color:#ae81ff">분류 태그</span>
+</span></span><span style="display:flex;"><span>---</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="문서-구조-권장">문서 구조 권장<a class="anchor" href="#%eb%ac%b8%ec%84%9c-%ea%b5%ac%ec%a1%b0-%ea%b6%8c%ec%9e%a5">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-markdown" data-lang="markdown"><span style="display:flex;"><span># Port 이름
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">## 개요
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">&gt; </span><span style="font-style:italic">한 줄 요약
+</span></span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">## 책임
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">-</span> 이 Port가 하는 일
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">## 인터페이스
+</span></span></span><span style="display:flex;"><span>```kotlin
+</span></span><span style="display:flex;"><span>interface XxxPort {
+</span></span><span style="display:flex;"><span>    // 메서드 정의
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="흐름">흐름<a class="anchor" href="#%ed%9d%90%eb%a6%84">#</a></h2>
+<pre class="mermaid">sequenceDiagram
+    // 시퀀스 다이어그램</pre><script src="/mermaid.min.js"></script><script>mermaid.initialize({"flowchart":{"useMaxWidth":true},"theme":"default"})</script><h2 id="의존성">의존성<a class="anchor" href="#%ec%9d%98%ec%a1%b4%ec%84%b1">#</a></h2>
+<ul>
+<li>[[다른Port]]: 의존 이유</li>
+</ul>
+<h2 id="구현-노트">구현 노트<a class="anchor" href="#%ea%b5%ac%ed%98%84-%eb%85%b8%ed%8a%b8">#</a></h2>
+<!-- @pa-port: XxxPort -->
+<pre tabindex="0"><code>
+---
+
+## AI 에이전트 활용
+
+### 문서 검색</code></pre><p>&ldquo;auth 도메인의 L2 Port를 모두 찾아줘&rdquo;
+→ pa search &ldquo;type:l2 AND domain:auth&rdquo;</p>
+<p>&ldquo;로그인과 관련된 모든 문서를 보여줘&rdquo;
+→ pa search &ldquo;login&rdquo;</p>
+<pre tabindex="0"><code>
+### 코드 생성</code></pre><p>&ldquo;L2-LoginPort 명세를 보고 Kotlin 구현체를 만들어줘&rdquo;</p>
+<p>AI는:</p>
+<ol>
+<li>문서 조회</li>
+<li>의존성 확인 ([[L1-UserPort]] 등)</li>
+<li>의존 문서도 로드</li>
+<li>전체 컨텍스트로 코드 생성</li>
+</ol>
+<pre tabindex="0"><code>
+### 문서 작성</code></pre><p>&ldquo;새로운 L2-PaymentPort 문서를 기존 L2 형식으로 작성해줘&rdquo;</p>
+<p>AI는:</p>
+<ol>
+<li>기존 L2 문서 검색</li>
+<li>패턴 학습</li>
+<li>일관된 형식으로 새 문서 생성</li>
+</ol>
+<pre tabindex="0"><code>
+---
+
+## 다음 단계
+
+- [Backend 컨벤션](/ko/docs/pa-layer/backend/)
+- [Frontend 컨벤션](/ko/docs/pa-layer/frontend/)</code></pre></article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+<div>
+
+</div>
+
+<div>
+
+</div>
+
+</div>
+
+
+
+
+
+  
+  
+  
+  <div class="flex flex-wrap justify-between">
+    <span>
+    
+      <a href="/ko/docs/pa-layer/" class="flex align-center">
+        <img src="/icons/backward.svg" class="book-icon" alt="Backward" />
+        <span>PA-Layer</span>
+      </a>
+    
+    </span>
+    <span>
+    
+      <a href="/ko/docs/pa-layer/backend/" class="flex align-center">
+        <span>Backend 컨벤션</span>
+        <img src="/icons/forward.svg" class="book-icon" alt="Forward" />
+      </a>
+    
+    </span>
+  </div>
+  
+
+
+ 
+        
+  
+ 
+        
+        
+  
+ 
+        
+  
+  
+    <script>(function(){document.querySelectorAll("pre:has(code)").forEach(e=>{e.addEventListener("click",e.focus),e.addEventListener("copy",function(t){if(t.preventDefault(),navigator.clipboard){const t=window.getSelection().toString()||e.textContent;navigator.clipboard.writeText(t)}})})})()</script>
+  
+
+      </footer>
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+  
+  <aside class="book-toc">
+    <div class="book-toc-content">
+      
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#hexagonal-architecture-portadapter">Hexagonal Architecture (Port/Adapter)</a>
+      <ul>
+        <li><a href="#핵심-아이디어">핵심 아이디어</a></li>
+        <li><a href="#pa-layer에서의-적용">PA-Layer에서의 적용</a></li>
+      </ul>
+    </li>
+    <li><a href="#cqs-command-query-separation">CQS (Command-Query Separation)</a>
+      <ul>
+        <li><a href="#원칙">원칙</a></li>
+        <li><a href="#pa-layer-적용">PA-Layer 적용</a></li>
+        <li><a href="#문서에서의-구분">문서에서의 구분</a></li>
+      </ul>
+    </li>
+    <li><a href="#레이어-규칙">레이어 규칙</a>
+      <ul>
+        <li><a href="#의존성-방향">의존성 방향</a></li>
+        <li><a href="#l1-domain-layer">L1 (Domain Layer)</a></li>
+        <li><a href="#l2-feature-layer">L2 (Feature Layer)</a></li>
+        <li><a href="#lm-mediator-layer---선택적">LM (Mediator Layer) - 선택적</a></li>
+      </ul>
+    </li>
+    <li><a href="#문서-컨벤션">문서 컨벤션</a>
+      <ul>
+        <li><a href="#frontmatter-필수-필드">Frontmatter 필수 필드</a></li>
+        <li><a href="#문서-구조-권장">문서 구조 권장</a></li>
+      </ul>
+    </li>
+    <li><a href="#흐름">흐름</a></li>
+    <li><a href="#의존성">의존성</a></li>
+    <li><a href="#구현-노트">구현 노트</a></li>
+  </ul>
+</nav>
+
+
+
+    </div>
+  </aside>
+  
+ 
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

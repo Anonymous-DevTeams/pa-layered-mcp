@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="ko" dir="ltr">
+<head>
+  <!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="워크스페이스 구성# PA-Layer 시스템의 효율적인 작업을 위한 디렉토리 구조를 설명합니다.
+권장 디렉토리 구조# ~/playground/ # 워크스페이스 루트 ├── mcp-docs/ # ObsidianVault (문서) │ ├── .obsidian/ # Obsidian 설정 │ ├── ports/ # Port 문서들 │ │ ├── auth/ │ │ │ ├── L1-AuthPort.md │ │ │ ├── L2-LoginPort.md │ │ │ └── L2-SignupPort.md │ │ └── users/ │ │ └── L2-ProfilePort.md │ ├── templates/ # 템플릿 │ ├── guides/ # 가이드 │ └── .pa-index.yaml # 인덱스 설정 │ ├── CodeSpace/ # 코드 프로젝트들 │ ├── my-backend/ # Kotlin/Spring 프로젝트 │ ├── my-frontend/ # React 프로젝트 │ └── my-api/ # Go API 프로젝트 │ └── bundles/ # 공유 Bundle 저장소 ~/.pa/ # PA-Retriever 설정 ├── config.yaml # 메인 설정 ├── default.db # 인덱스 데이터베이스 ├── keys/ # 서명 키 └── peers.json # LAN 피어 캐시각 디렉토리의 역할# 1. WorkDirectory (~/playground/)# 목적: 모든 PA-Layer 관련 작업의 루트 디렉토리
+">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://pa-layer.github.io/ko/docs/installation/workspace/">
+  <meta property="og:site_name" content="PA-Layer">
+  <meta property="og:title" content="워크스페이스 구성">
+  <meta property="og:description" content="워크스페이스 구성# PA-Layer 시스템의 효율적인 작업을 위한 디렉토리 구조를 설명합니다.
+권장 디렉토리 구조# ~/playground/ # 워크스페이스 루트 ├── mcp-docs/ # ObsidianVault (문서) │ ├── .obsidian/ # Obsidian 설정 │ ├── ports/ # Port 문서들 │ │ ├── auth/ │ │ │ ├── L1-AuthPort.md │ │ │ ├── L2-LoginPort.md │ │ │ └── L2-SignupPort.md │ │ └── users/ │ │ └── L2-ProfilePort.md │ ├── templates/ # 템플릿 │ ├── guides/ # 가이드 │ └── .pa-index.yaml # 인덱스 설정 │ ├── CodeSpace/ # 코드 프로젝트들 │ ├── my-backend/ # Kotlin/Spring 프로젝트 │ ├── my-frontend/ # React 프로젝트 │ └── my-api/ # Go API 프로젝트 │ └── bundles/ # 공유 Bundle 저장소 ~/.pa/ # PA-Retriever 설정 ├── config.yaml # 메인 설정 ├── default.db # 인덱스 데이터베이스 ├── keys/ # 서명 키 └── peers.json # LAN 피어 캐시각 디렉토리의 역할# 1. WorkDirectory (~/playground/)# 목적: 모든 PA-Layer 관련 작업의 루트 디렉토리">
+  <meta property="og:locale" content="ko">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+
+
+  <meta itemprop="name" content="워크스페이스 구성">
+  <meta itemprop="description" content="워크스페이스 구성# PA-Layer 시스템의 효율적인 작업을 위한 디렉토리 구조를 설명합니다.
+권장 디렉토리 구조# ~/playground/ # 워크스페이스 루트 ├── mcp-docs/ # ObsidianVault (문서) │ ├── .obsidian/ # Obsidian 설정 │ ├── ports/ # Port 문서들 │ │ ├── auth/ │ │ │ ├── L1-AuthPort.md │ │ │ ├── L2-LoginPort.md │ │ │ └── L2-SignupPort.md │ │ └── users/ │ │ └── L2-ProfilePort.md │ ├── templates/ # 템플릿 │ ├── guides/ # 가이드 │ └── .pa-index.yaml # 인덱스 설정 │ ├── CodeSpace/ # 코드 프로젝트들 │ ├── my-backend/ # Kotlin/Spring 프로젝트 │ ├── my-frontend/ # React 프로젝트 │ └── my-api/ # Go API 프로젝트 │ └── bundles/ # 공유 Bundle 저장소 ~/.pa/ # PA-Retriever 설정 ├── config.yaml # 메인 설정 ├── default.db # 인덱스 데이터베이스 ├── keys/ # 서명 키 └── peers.json # LAN 피어 캐시각 디렉토리의 역할# 1. WorkDirectory (~/playground/)# 목적: 모든 PA-Layer 관련 작업의 루트 디렉토리">
+  <meta itemprop="wordCount" content="794">
+
+<title>워크스페이스 구성 | PA-Layer</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="https://pa-layer.github.io/ko/docs/installation/workspace/">
+  <link rel="alternate" hreflang="en" href="https://pa-layer.github.io/en/docs/installation/workspace/" title="Workspace Setup">
+<link rel="stylesheet" href="/book.min.6970156cec683193d93c9c4edaf0d56574e4361df2e0c1be4f697ae81c3ba55f.css" integrity="sha256-aXAVbOxoMZPZPJxO2vDVZXTkNh3y4MG&#43;T2l66Bw7pV8=" crossorigin="anonymous">
+
+
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/ko.search.min.e9756793949413dae8c85e803ce1e02b13ffa1c302aec58e19bfbadb693819d3.js" integrity="sha256-6XVnk5SUE9royF6APOHgKxP/ocMCrsWOGb&#43;622k4GdM=" crossorigin="anonymous"></script>
+
+
+
+  
+</head>
+<body dir="ltr" class="book-kind-page book-type-docs">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    
+<aside class="book-menu">
+  <div class="book-menu-content">
+    
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/ko/"><img src="/images/pa-layer-logo.svg" alt="Logo" /><span>PA-Layer</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input id="book-search-input" type="text" 
+    placeholder="Search"
+    aria-label="Search"
+    maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+  
+
+
+  
+    
+  
+
+
+  
+
+
+<ul class="book-languages">
+  <li>
+    <input type="checkbox" id="languages" class="toggle" />
+    <label for="languages" class="flex">
+      <a role="button">
+        <img src="/icons/translate.svg" class="book-icon" alt="Languages" />
+        한국어
+      </a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+
+    <ul>
+      
+      <li>
+        <a href="/en/docs/installation/workspace/" class="flex flex-auto">
+          English
+        </a>
+      </li>
+      
+    </ul>
+  </li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-b056803e087b3464503e98766cccad1a" class="toggle" checked />
+    <label for="section-b056803e087b3464503e98766cccad1a" class="flex">
+      <a href="/ko/docs/installation/" class="">
+        설치하기</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/macos/" class="">
+      macOS 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/windows/" class="">
+      Windows 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/linux/" class="">
+      Linux 설치</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/installation/workspace/" class="active">
+      워크스페이스 구성</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-187b3aa4e29a5d5ef2738d28ac16df69" class="toggle"  />
+    <label for="section-187b3aa4e29a5d5ef2738d28ac16df69" class="flex">
+      <a href="/ko/docs/configuration/" class="">
+        설정하기</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/claude/" class="">
+      Claude 연동</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/obsidian/" class="">
+      Obsidian 설정</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/configuration/pa-config/" class="">
+      PA-Retriever 설정</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99ad2865f9541edb014cad9a350d886e" class="toggle"  />
+    <label for="section-99ad2865f9541edb014cad9a350d886e" class="flex">
+      <a href="/ko/docs/pa-layer/" class="">
+        PA-Layer</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/overview/" class="">
+      아키텍처 개요</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/backend/" class="">
+      Backend 컨벤션</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-layer/frontend/" class="">
+      Frontend 컨벤션</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99cc806f10f29d7b76e63ff1539abbc7" class="toggle"  />
+    <label for="section-99cc806f10f29d7b76e63ff1539abbc7" class="flex">
+      <a href="/ko/docs/pa-retriever/" class="">
+        PA-Retriever</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/basic/" class="">
+      기본 사용법</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/search/" class="">
+      검색 가이드</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/code/" class="">
+      코드 인덱싱</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/with-claude/" class="">
+      Claude와 함께 사용</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/ko/docs/pa-retriever/advanced/" class="">
+      고급 기능</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+<ul><li><a href="https://github.com/pa-layer/pa-retriever" target="_blank" rel="noopener">GitHub</a></li></ul>
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+
+  </div>
+</aside>
+ 
+
+    <div class="book-page">
+      <header class="book-header hidden">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/icons/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>워크스페이스 구성</h3>
+
+  <label for="toc-control">
+    
+    <img src="/icons/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#권장-디렉토리-구조">권장 디렉토리 구조</a></li>
+    <li><a href="#각-디렉토리의-역할">각 디렉토리의 역할</a>
+      <ul>
+        <li><a href="#1-workdirectory-playground">1. WorkDirectory (<code>~/playground/</code>)</a></li>
+        <li><a href="#2-obsidianvault-playgroundmcp-docs">2. ObsidianVault (<code>~/playground/mcp-docs/</code>)</a></li>
+        <li><a href="#3-codespace-playgroundcodespace">3. CodeSpace (<code>~/playground/CodeSpace/</code>)</a></li>
+        <li><a href="#4-pa-설정-디렉토리-pa">4. PA 설정 디렉토리 (<code>~/.pa/</code>)</a></li>
+      </ul>
+    </li>
+    <li><a href="#설정-예시">설정 예시</a>
+      <ul>
+        <li><a href="#configyaml">config.yaml</a></li>
+      </ul>
+    </li>
+    <li><a href="#워크스페이스-장점">워크스페이스 장점</a>
+      <ul>
+        <li><a href="#1-ai-에이전트와의-협업">1. AI 에이전트와의 협업</a></li>
+        <li><a href="#2-문서-코드-연결">2. 문서-코드 연결</a></li>
+        <li><a href="#3-멀티-프로젝트-지원">3. 멀티 프로젝트 지원</a></li>
+        <li><a href="#4-협업-및-공유">4. 협업 및 공유</a></li>
+      </ul>
+    </li>
+    <li><a href="#초기-설정-체크리스트">초기 설정 체크리스트</a></li>
+    <li><a href="#다음-단계">다음 단계</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="워크스페이스-구성">워크스페이스 구성<a class="anchor" href="#%ec%9b%8c%ed%81%ac%ec%8a%a4%ed%8e%98%ec%9d%b4%ec%8a%a4-%ea%b5%ac%ec%84%b1">#</a></h1>
+<p>PA-Layer 시스템의 효율적인 작업을 위한 디렉토리 구조를 설명합니다.</p>
+<h2 id="권장-디렉토리-구조">권장 디렉토리 구조<a class="anchor" href="#%ea%b6%8c%ec%9e%a5-%eb%94%94%eb%a0%89%ed%86%a0%eb%a6%ac-%ea%b5%ac%ec%a1%b0">#</a></h2>
+<pre tabindex="0"><code>~/playground/                    # 워크스페이스 루트
+├── mcp-docs/                    # ObsidianVault (문서)
+│   ├── .obsidian/               # Obsidian 설정
+│   ├── ports/                   # Port 문서들
+│   │   ├── auth/
+│   │   │   ├── L1-AuthPort.md
+│   │   │   ├── L2-LoginPort.md
+│   │   │   └── L2-SignupPort.md
+│   │   └── users/
+│   │       └── L2-ProfilePort.md
+│   ├── templates/               # 템플릿
+│   ├── guides/                  # 가이드
+│   └── .pa-index.yaml           # 인덱스 설정
+│
+├── CodeSpace/                   # 코드 프로젝트들
+│   ├── my-backend/              # Kotlin/Spring 프로젝트
+│   ├── my-frontend/             # React 프로젝트
+│   └── my-api/                  # Go API 프로젝트
+│
+└── bundles/                     # 공유 Bundle 저장소
+
+~/.pa/                           # PA-Retriever 설정
+├── config.yaml                  # 메인 설정
+├── default.db                   # 인덱스 데이터베이스
+├── keys/                        # 서명 키
+└── peers.json                   # LAN 피어 캐시</code></pre><h2 id="각-디렉토리의-역할">각 디렉토리의 역할<a class="anchor" href="#%ea%b0%81-%eb%94%94%eb%a0%89%ed%86%a0%eb%a6%ac%ec%9d%98-%ec%97%ad%ed%95%a0">#</a></h2>
+<h3 id="1-workdirectory-playground">1. WorkDirectory (<code>~/playground/</code>)<a class="anchor" href="#1-workdirectory-playground">#</a></h3>
+<p><strong>목적</strong>: 모든 PA-Layer 관련 작업의 루트 디렉토리</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 생성</span>
+</span></span><span style="display:flex;"><span>mkdir -p ~/playground
+</span></span><span style="display:flex;"><span>cd ~/playground</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>장점</strong>:</p>
+<ul>
+<li>모든 프로젝트를 한 곳에서 관리</li>
+<li>Git 레포지토리별로 분리 가능</li>
+<li>Claude/AI 에이전트에게 명확한 작업 범위 제공</li>
+</ul>
+<h3 id="2-obsidianvault-playgroundmcp-docs">2. ObsidianVault (<code>~/playground/mcp-docs/</code>)<a class="anchor" href="#2-obsidianvault-playgroundmcp-docs">#</a></h3>
+<p><strong>목적</strong>: PA-Layer 문서 저장소 (Port, Template, Guide 등)</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 생성</span>
+</span></span><span style="display:flex;"><span>mkdir -p ~/playground/mcp-docs
+</span></span><span style="display:flex;"><span>cd ~/playground/mcp-docs
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Git 초기화 (권장)</span>
+</span></span><span style="display:flex;"><span>git init
+</span></span><span style="display:flex;"><span>echo <span style="color:#e6db74">&#34;.obsidian/workspace.json&#34;</span> &gt;&gt; .gitignore</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>구조 예시</strong>:</p>
+<pre tabindex="0"><code>mcp-docs/
+├── ports/                  # Port 문서
+│   ├── auth/               # 도메인별 분류
+│   │   ├── L1-AuthPort.md
+│   │   ├── L2-LoginPort.md
+│   │   └── Q-AuthQuery.md
+│   └── orders/
+│       ├── L1-OrderPort.md
+│       └── L2-CheckoutPort.md
+├── templates/              # 재사용 템플릿
+│   ├── tpl-port.md
+│   └── tpl-api.md
+├── guides/                 # 개발 가이드
+│   ├── coding-style.md
+│   └── review-checklist.md
+└── skills/                 # AI 스킬
+    └── SKILL.md</code></pre><p><strong>장점</strong>:</p>
+<ul>
+<li>Obsidian의 강력한 마크다운 편집 기능</li>
+<li>Wiki 링크로 문서 간 연결 (<code>[[L2-LoginPort]]</code>)</li>
+<li>Git으로 버전 관리 및 협업</li>
+<li>실시간 미리보기 및 그래프 뷰</li>
+</ul>
+<h3 id="3-codespace-playgroundcodespace">3. CodeSpace (<code>~/playground/CodeSpace/</code>)<a class="anchor" href="#3-codespace-playgroundcodespace">#</a></h3>
+<p><strong>목적</strong>: 실제 코드 프로젝트 저장소</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 생성</span>
+</span></span><span style="display:flex;"><span>mkdir -p ~/playground/CodeSpace
+</span></span><span style="display:flex;"><span>cd ~/playground/CodeSpace
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 프로젝트 클론 예시</span>
+</span></span><span style="display:flex;"><span>git clone https://github.com/myorg/my-backend.git
+</span></span><span style="display:flex;"><span>git clone https://github.com/myorg/my-frontend.git</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>구조 예시</strong>:</p>
+<pre tabindex="0"><code>CodeSpace/
+├── my-backend/             # Kotlin/Spring
+│   ├── build.gradle.kts
+│   └── src/
+│       └── main/kotlin/
+│           └── com/example/
+│               ├── auth/
+│               │   ├── port/
+│               │   │   └── AuthPort.kt
+│               │   └── adapter/
+│               │       └── AuthAdapter.kt
+│               └── ...
+├── my-frontend/            # React/TypeScript
+│   ├── package.json
+│   └── src/
+│       ├── ports/
+│       │   └── auth/
+│       │       └── AuthPort.ts
+│       └── ...
+└── my-api/                 # Go
+    ├── go.mod
+    └── internal/
+        └── auth/
+            └── port.go</code></pre><p><strong>장점</strong>:</p>
+<ul>
+<li>PA-Retriever가 코드 시그니처 자동 인덱싱</li>
+<li>Port 문서와 코드 구현체 자동 연결</li>
+<li>여러 언어/프레임워크 프로젝트 통합 관리</li>
+</ul>
+<h3 id="4-pa-설정-디렉토리-pa">4. PA 설정 디렉토리 (<code>~/.pa/</code>)<a class="anchor" href="#4-pa-%ec%84%a4%ec%a0%95-%eb%94%94%eb%a0%89%ed%86%a0%eb%a6%ac-pa">#</a></h3>
+<p><strong>목적</strong>: PA-Retriever 설정 및 데이터 저장</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 자동 생성됨 (pa init 실행 시)</span>
+</span></span><span style="display:flex;"><span>ls -la ~/.pa/
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 수동 생성 (필요시)</span>
+</span></span><span style="display:flex;"><span>mkdir -p ~/.pa/keys</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>파일 설명</strong>:</p>
+<pre tabindex="0"><code>~/.pa/
+├── config.yaml      # 메인 설정 파일
+├── default.db       # SQLite 인덱스 데이터베이스
+├── default.db-wal   # WAL 모드 파일
+├── keys/            # Ed25519 서명 키 쌍
+│   ├── default.pub
+│   └── default.key
+└── peers.json       # LAN 피어 캐시</code></pre><hr>
+<h2 id="설정-예시">설정 예시<a class="anchor" href="#%ec%84%a4%ec%a0%95-%ec%98%88%ec%8b%9c">#</a></h2>
+<h3 id="configyaml">config.yaml<a class="anchor" href="#configyaml">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#75715e"># ~/.pa/config.yaml</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">active</span>: <span style="color:#ae81ff">default</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">workspace</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">root</span>: <span style="color:#ae81ff">~/playground</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">obsidian_vault</span>: <span style="color:#ae81ff">~/playground/mcp-docs</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">code_space</span>: <span style="color:#ae81ff">~/playground/CodeSpace</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">index</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">db_path</span>: <span style="color:#ae81ff">~/.pa/default.db</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">wal_mode</span>: <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">exclude</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#e6db74">&#34;*.tmp&#34;</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#e6db74">&#34;.git&#34;</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#e6db74">&#34;node_modules&#34;</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#e6db74">&#34;.obsidian/workspace*.json&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">types</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">preset</span>: <span style="color:#ae81ff">agile </span> <span style="color:#75715e"># basic, agile, design, full</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">profiles</span>:
+</span></span><span style="display:flex;"><span>  - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">default</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">db_path</span>: <span style="color:#ae81ff">~/.pa/default.db</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">docs_path</span>: <span style="color:#ae81ff">~/playground/mcp-docs</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">mcp</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">servers</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">claude-desktop</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">enabled</span>: <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">claude-code</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">enabled</span>: <span style="color:#66d9ef">true</span></span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="워크스페이스-장점">워크스페이스 장점<a class="anchor" href="#%ec%9b%8c%ed%81%ac%ec%8a%a4%ed%8e%98%ec%9d%b4%ec%8a%a4-%ec%9e%a5%ec%a0%90">#</a></h2>
+<h3 id="1-ai-에이전트와의-협업">1. AI 에이전트와의 협업<a class="anchor" href="#1-ai-%ec%97%90%ec%9d%b4%ec%a0%84%ed%8a%b8%ec%99%80%ec%9d%98-%ed%98%91%ec%97%85">#</a></h3>
+<pre tabindex="0"><code>사용자: &#34;Auth 관련 Port를 모두 검색해줘&#34;
+Claude: [pa search &#34;domain:auth type:l2&#34;]
+
+사용자: &#34;LoginPort 구현체 코드를 찾아줘&#34;
+Claude: [pa code search &#34;LoginPort&#34;]</code></pre><ul>
+<li><strong>명확한 컨텍스트</strong>: AI가 어떤 문서/코드를 참조해야 하는지 알 수 있음</li>
+<li><strong>토큰 효율</strong>: 필요한 문서만 선택적으로 로드</li>
+<li><strong>일관된 구조</strong>: AI가 예측 가능한 위치에서 파일 탐색</li>
+</ul>
+<h3 id="2-문서-코드-연결">2. 문서-코드 연결<a class="anchor" href="#2-%eb%ac%b8%ec%84%9c-%ec%bd%94%eb%93%9c-%ec%97%b0%ea%b2%b0">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-markdown" data-lang="markdown"><span style="display:flex;"><span>&lt;!-- mcp-docs/ports/auth/L2-LoginPort.md --&gt;
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span>type: l2
+</span></span><span style="display:flex;"><span>domain: auth
+</span></span><span style="display:flex;"><span>port_id: LoginPort  # 코드 연결용
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span># L2-LoginPort
+</span></span><span style="display:flex;"><span>@pa-port: LoginPort  # 자동 연결 마커</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// CodeSpace/my-backend/src/.../port/LoginPort.kt
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">LoginPort</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">login</span>(request: LoginRequest): LoginResult
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></td></tr></table>
+</div>
+</div><p>PA-Retriever가 자동으로 문서와 코드를 연결합니다.</p>
+<h3 id="3-멀티-프로젝트-지원">3. 멀티 프로젝트 지원<a class="anchor" href="#3-%eb%a9%80%ed%8b%b0-%ed%94%84%eb%a1%9c%ec%a0%9d%ed%8a%b8-%ec%a7%80%ec%9b%90">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 프로필로 여러 워크스페이스 관리</span>
+</span></span><span style="display:flex;"><span>pa profile add work --docs<span style="color:#f92672">=</span>~/work/docs --db<span style="color:#f92672">=</span>~/.pa/work.db
+</span></span><span style="display:flex;"><span>pa profile add personal --docs<span style="color:#f92672">=</span>~/personal/notes --db<span style="color:#f92672">=</span>~/.pa/personal.db
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 프로필 전환</span>
+</span></span><span style="display:flex;"><span>pa use work
+</span></span><span style="display:flex;"><span>pa use personal</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="4-협업-및-공유">4. 협업 및 공유<a class="anchor" href="#4-%ed%98%91%ec%97%85-%eb%b0%8f-%ea%b3%b5%ec%9c%a0">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Bundle로 문서 공유</span>
+</span></span><span style="display:flex;"><span>pa export --domain<span style="color:#f92672">=</span>auth --name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;auth-module&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># LAN 공유</span>
+</span></span><span style="display:flex;"><span>pa share start --name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;My-Mac&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 다른 컴퓨터에서</span>
+</span></span><span style="display:flex;"><span>pa discover
+</span></span><span style="display:flex;"><span>pa fetch My-Mac/auth-module</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="초기-설정-체크리스트">초기 설정 체크리스트<a class="anchor" href="#%ec%b4%88%ea%b8%b0-%ec%84%a4%ec%a0%95-%ec%b2%b4%ed%81%ac%eb%a6%ac%ec%8a%a4%ed%8a%b8">#</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"> <code>~/playground</code> 디렉토리 생성</li>
+<li><input disabled="" type="checkbox"> <code>~/playground/mcp-docs</code> 생성 및 Git 초기화</li>
+<li><input disabled="" type="checkbox"> <code>~/playground/CodeSpace</code> 생성</li>
+<li><input disabled="" type="checkbox"> Obsidian에서 <code>mcp-docs</code> Vault 열기</li>
+<li><input disabled="" type="checkbox"> <code>pa init</code> 실행</li>
+<li><input disabled="" type="checkbox"> <code>pa index</code> 실행</li>
+<li><input disabled="" type="checkbox"> <code>pa mcp install</code> 실행</li>
+<li><input disabled="" type="checkbox"> Claude Desktop 재시작</li>
+</ul>
+<hr>
+<h2 id="다음-단계">다음 단계<a class="anchor" href="#%eb%8b%a4%ec%9d%8c-%eb%8b%a8%ea%b3%84">#</a></h2>
+<ul>
+<li><a href="/ko/docs/configuration/">설정하기</a> - Claude, Obsidian 연동 상세 설정</li>
+</ul>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+<div>
+
+</div>
+
+<div>
+
+</div>
+
+</div>
+
+
+
+
+
+  
+  
+  
+  <div class="flex flex-wrap justify-between">
+    <span>
+    
+      <a href="/ko/docs/installation/linux/" class="flex align-center">
+        <img src="/icons/backward.svg" class="book-icon" alt="Backward" />
+        <span>Linux 설치</span>
+      </a>
+    
+    </span>
+    <span>
+    
+      <a href="/ko/docs/configuration/" class="flex align-center">
+        <span>설정하기</span>
+        <img src="/icons/forward.svg" class="book-icon" alt="Forward" />
+      </a>
+    
+    </span>
+  </div>
+  
+
+
+ 
+        
+  
+ 
+        
+        
+  
+ 
+        
+  
+  
+    <script>(function(){document.querySelectorAll("pre:has(code)").forEach(e=>{e.addEventListener("click",e.focus),e.addEventListener("copy",function(t){if(t.preventDefault(),navigator.clipboard){const t=window.getSelection().toString()||e.textContent;navigator.clipboard.writeText(t)}})})})()</script>
+  
+
+      </footer>
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+  
+  <aside class="book-toc">
+    <div class="book-toc-content">
+      
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#권장-디렉토리-구조">권장 디렉토리 구조</a></li>
+    <li><a href="#각-디렉토리의-역할">각 디렉토리의 역할</a>
+      <ul>
+        <li><a href="#1-workdirectory-playground">1. WorkDirectory (<code>~/playground/</code>)</a></li>
+        <li><a href="#2-obsidianvault-playgroundmcp-docs">2. ObsidianVault (<code>~/playground/mcp-docs/</code>)</a></li>
+        <li><a href="#3-codespace-playgroundcodespace">3. CodeSpace (<code>~/playground/CodeSpace/</code>)</a></li>
+        <li><a href="#4-pa-설정-디렉토리-pa">4. PA 설정 디렉토리 (<code>~/.pa/</code>)</a></li>
+      </ul>
+    </li>
+    <li><a href="#설정-예시">설정 예시</a>
+      <ul>
+        <li><a href="#configyaml">config.yaml</a></li>
+      </ul>
+    </li>
+    <li><a href="#워크스페이스-장점">워크스페이스 장점</a>
+      <ul>
+        <li><a href="#1-ai-에이전트와의-협업">1. AI 에이전트와의 협업</a></li>
+        <li><a href="#2-문서-코드-연결">2. 문서-코드 연결</a></li>
+        <li><a href="#3-멀티-프로젝트-지원">3. 멀티 프로젝트 지원</a></li>
+        <li><a href="#4-협업-및-공유">4. 협업 및 공유</a></li>
+      </ul>
+    </li>
+    <li><a href="#초기-설정-체크리스트">초기 설정 체크리스트</a></li>
+    <li><a href="#다음-단계">다음 단계</a></li>
+  </ul>
+</nav>
+
+
+
+    </div>
+  </aside>
+  
+ 
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

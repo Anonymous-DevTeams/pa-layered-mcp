@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Backend Conventions# PA-Layer Backend implementation guide.
+Common Principles# Directory Structure# src/ ├── domain/ # By domain │ ├── auth/ │ │ ├── port/ # Port interfaces │ │ ├── adapter/ # Adapter implementations │ │ └── model/ # Domain models │ └── orders/ ├── api/ # API layer └── infrastructure/ # InfrastructureNaming Rules# Type Rule Example L1 Port {Domain}Port UserPort, TokenPort L2 Port {Feature}Port LoginPort, CheckoutPort Adapter {Port}Adapter LoginAdapter Query {Domain}Query UserQuery Kotlin / Spring Framework# L1 Port Example# 1 2 3 4 5 6 7 8 9 interface UserPort { suspend fun create(command: CreateUserCommand): CreateUserResult suspend fun update(command: UpdateUserCommand): UpdateUserResult } sealed class CreateUserResult { data class Success(val userId: UserId) : CreateUserResult() data class EmailAlreadyExists(val email: String) : CreateUserResult() } L2 Port Example# 1 2 3 4 5 6 7 8 9 10 interface LoginPort { suspend fun login(request: LoginRequest): LoginResult suspend fun logout(request: LogoutRequest): LogoutResult } sealed class LoginResult { data class Success(val accessToken: String, val refreshToken: String) object InvalidCredentials object AccountLocked } Adapter Example# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 @Component class LoginAdapter( private val userPort: UserPort, private val tokenPort: TokenPort ) : LoginPort { @Transactional override suspend fun login(request: LoginRequest): LoginResult { val user = userPort.findByEmail(request.email) ?: return LoginResult.InvalidCredentials if (!user.verifyPassword(request.password)) { return LoginResult.InvalidCredentials } val tokens = tokenPort.generate(user.id) return LoginResult.Success(tokens.accessToken, tokens.refreshToken) } } TypeScript / NestJS# Port Example# 1 2 3 4 5 6 7 8 9 10 11 export const LOGIN_PORT = Symbol(&#39;LOGIN_PORT&#39;); export interface LoginPort { login(request: LoginRequest): Promise&lt;LoginResult&gt;; logout(): Promise&lt;void&gt;; } export type LoginResult = | { type: &#39;success&#39;; accessToken: string; refreshToken: string } | { type: &#39;invalidCredentials&#39; } | { type: &#39;accountLocked&#39; }; Go# Port Example# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 type LoginPort interface { Login(ctx context.Context, req LoginRequest) (LoginResult, error) Logout(ctx context.Context, req LogoutRequest) error } type LoginResult struct { Type string AccessToken string RefreshToken string } const ( LoginSuccess = &#34;success&#34; LoginInvalidCredentials = &#34;invalid_credentials&#34; ) Next Steps# Frontend Conventions ">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://pa-layer.github.io/en/docs/pa-layer/backend/">
+  <meta property="og:site_name" content="PA-Layer">
+  <meta property="og:title" content="Backend Conventions">
+  <meta property="og:description" content="Backend Conventions# PA-Layer Backend implementation guide.
+Common Principles# Directory Structure# src/ ├── domain/ # By domain │ ├── auth/ │ │ ├── port/ # Port interfaces │ │ ├── adapter/ # Adapter implementations │ │ └── model/ # Domain models │ └── orders/ ├── api/ # API layer └── infrastructure/ # InfrastructureNaming Rules# Type Rule Example L1 Port {Domain}Port UserPort, TokenPort L2 Port {Feature}Port LoginPort, CheckoutPort Adapter {Port}Adapter LoginAdapter Query {Domain}Query UserQuery Kotlin / Spring Framework# L1 Port Example# 1 2 3 4 5 6 7 8 9 interface UserPort { suspend fun create(command: CreateUserCommand): CreateUserResult suspend fun update(command: UpdateUserCommand): UpdateUserResult } sealed class CreateUserResult { data class Success(val userId: UserId) : CreateUserResult() data class EmailAlreadyExists(val email: String) : CreateUserResult() } L2 Port Example# 1 2 3 4 5 6 7 8 9 10 interface LoginPort { suspend fun login(request: LoginRequest): LoginResult suspend fun logout(request: LogoutRequest): LogoutResult } sealed class LoginResult { data class Success(val accessToken: String, val refreshToken: String) object InvalidCredentials object AccountLocked } Adapter Example# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 @Component class LoginAdapter( private val userPort: UserPort, private val tokenPort: TokenPort ) : LoginPort { @Transactional override suspend fun login(request: LoginRequest): LoginResult { val user = userPort.findByEmail(request.email) ?: return LoginResult.InvalidCredentials if (!user.verifyPassword(request.password)) { return LoginResult.InvalidCredentials } val tokens = tokenPort.generate(user.id) return LoginResult.Success(tokens.accessToken, tokens.refreshToken) } } TypeScript / NestJS# Port Example# 1 2 3 4 5 6 7 8 9 10 11 export const LOGIN_PORT = Symbol(&#39;LOGIN_PORT&#39;); export interface LoginPort { login(request: LoginRequest): Promise&lt;LoginResult&gt;; logout(): Promise&lt;void&gt;; } export type LoginResult = | { type: &#39;success&#39;; accessToken: string; refreshToken: string } | { type: &#39;invalidCredentials&#39; } | { type: &#39;accountLocked&#39; }; Go# Port Example# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 type LoginPort interface { Login(ctx context.Context, req LoginRequest) (LoginResult, error) Logout(ctx context.Context, req LogoutRequest) error } type LoginResult struct { Type string AccessToken string RefreshToken string } const ( LoginSuccess = &#34;success&#34; LoginInvalidCredentials = &#34;invalid_credentials&#34; ) Next Steps# Frontend Conventions">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+
+
+  <meta itemprop="name" content="Backend Conventions">
+  <meta itemprop="description" content="Backend Conventions# PA-Layer Backend implementation guide.
+Common Principles# Directory Structure# src/ ├── domain/ # By domain │ ├── auth/ │ │ ├── port/ # Port interfaces │ │ ├── adapter/ # Adapter implementations │ │ └── model/ # Domain models │ └── orders/ ├── api/ # API layer └── infrastructure/ # InfrastructureNaming Rules# Type Rule Example L1 Port {Domain}Port UserPort, TokenPort L2 Port {Feature}Port LoginPort, CheckoutPort Adapter {Port}Adapter LoginAdapter Query {Domain}Query UserQuery Kotlin / Spring Framework# L1 Port Example# 1 2 3 4 5 6 7 8 9 interface UserPort { suspend fun create(command: CreateUserCommand): CreateUserResult suspend fun update(command: UpdateUserCommand): UpdateUserResult } sealed class CreateUserResult { data class Success(val userId: UserId) : CreateUserResult() data class EmailAlreadyExists(val email: String) : CreateUserResult() } L2 Port Example# 1 2 3 4 5 6 7 8 9 10 interface LoginPort { suspend fun login(request: LoginRequest): LoginResult suspend fun logout(request: LogoutRequest): LogoutResult } sealed class LoginResult { data class Success(val accessToken: String, val refreshToken: String) object InvalidCredentials object AccountLocked } Adapter Example# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 @Component class LoginAdapter( private val userPort: UserPort, private val tokenPort: TokenPort ) : LoginPort { @Transactional override suspend fun login(request: LoginRequest): LoginResult { val user = userPort.findByEmail(request.email) ?: return LoginResult.InvalidCredentials if (!user.verifyPassword(request.password)) { return LoginResult.InvalidCredentials } val tokens = tokenPort.generate(user.id) return LoginResult.Success(tokens.accessToken, tokens.refreshToken) } } TypeScript / NestJS# Port Example# 1 2 3 4 5 6 7 8 9 10 11 export const LOGIN_PORT = Symbol(&#39;LOGIN_PORT&#39;); export interface LoginPort { login(request: LoginRequest): Promise&lt;LoginResult&gt;; logout(): Promise&lt;void&gt;; } export type LoginResult = | { type: &#39;success&#39;; accessToken: string; refreshToken: string } | { type: &#39;invalidCredentials&#39; } | { type: &#39;accountLocked&#39; }; Go# Port Example# 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 type LoginPort interface { Login(ctx context.Context, req LoginRequest) (LoginResult, error) Logout(ctx context.Context, req LogoutRequest) error } type LoginResult struct { Type string AccessToken string RefreshToken string } const ( LoginSuccess = &#34;success&#34; LoginInvalidCredentials = &#34;invalid_credentials&#34; ) Next Steps# Frontend Conventions">
+  <meta itemprop="wordCount" content="343">
+
+<title>Backend Conventions | PA-Layer</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="https://pa-layer.github.io/en/docs/pa-layer/backend/">
+  <link rel="alternate" hreflang="ko" href="https://pa-layer.github.io/ko/docs/pa-layer/backend/" title="Backend 컨벤션">
+<link rel="stylesheet" href="/book.min.6970156cec683193d93c9c4edaf0d56574e4361df2e0c1be4f697ae81c3ba55f.css" integrity="sha256-aXAVbOxoMZPZPJxO2vDVZXTkNh3y4MG&#43;T2l66Bw7pV8=" crossorigin="anonymous">
+
+
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.b5456745024e721c0ed5066be46dd05983568404556d91df1ba7a31dc5a41591.js" integrity="sha256-tUVnRQJOchwO1QZr5G3QWYNWhARVbZHfG6ejHcWkFZE=" crossorigin="anonymous"></script>
+
+
+
+  
+</head>
+<body dir="ltr" class="book-kind-page book-type-docs">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    
+<aside class="book-menu">
+  <div class="book-menu-content">
+    
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/en/"><img src="/images/pa-layer-logo.svg" alt="Logo" /><span>PA-Layer</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input id="book-search-input" type="text" 
+    placeholder="Search"
+    aria-label="Search"
+    maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+  
+
+
+  
+    
+  
+
+
+  
+
+
+<ul class="book-languages">
+  <li>
+    <input type="checkbox" id="languages" class="toggle" />
+    <label for="languages" class="flex">
+      <a role="button">
+        <img src="/icons/translate.svg" class="book-icon" alt="Languages" />
+        English
+      </a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+
+    <ul>
+      
+      <li>
+        <a href="/ko/docs/pa-layer/backend/" class="flex flex-auto">
+          한국어
+        </a>
+      </li>
+      
+    </ul>
+  </li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-6236be1b89680b92e3aefa016e21a142" class="toggle"  />
+    <label for="section-6236be1b89680b92e3aefa016e21a142" class="flex">
+      <a href="/en/docs/installation/" class="">
+        Installation</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/macos/" class="">
+      macOS Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/windows/" class="">
+      Windows Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/linux/" class="">
+      Linux Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/workspace/" class="">
+      Workspace Setup</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c57e8d2542437d90ac12ebccc18f7bd6" class="toggle"  />
+    <label for="section-c57e8d2542437d90ac12ebccc18f7bd6" class="flex">
+      <a href="/en/docs/configuration/" class="">
+        Configuration</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/claude/" class="">
+      Claude Integration</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/obsidian/" class="">
+      Obsidian Settings</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/pa-config/" class="">
+      PA-Retriever Config</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e28c43a16f6ea811813d9b83e9c091a1" class="toggle" checked />
+    <label for="section-e28c43a16f6ea811813d9b83e9c091a1" class="flex">
+      <a href="/en/docs/pa-layer/" class="">
+        PA-Layer</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/overview/" class="">
+      Architecture Overview</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/backend/" class="active">
+      Backend Conventions</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/frontend/" class="">
+      Frontend Conventions</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-2e7de72bf7fb1d60035ad67e5a7421f2" class="toggle"  />
+    <label for="section-2e7de72bf7fb1d60035ad67e5a7421f2" class="flex">
+      <a href="/en/docs/pa-retriever/" class="">
+        PA-Retriever</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/basic/" class="">
+      Basic Usage</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/search/" class="">
+      Search Guide</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/code/" class="">
+      Code Indexing</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/with-claude/" class="">
+      Using with Claude</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/advanced/" class="">
+      Advanced Features</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+<ul><li><a href="https://github.com/pa-layer/pa-retriever" target="_blank" rel="noopener">GitHub</a></li></ul>
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+
+  </div>
+</aside>
+ 
+
+    <div class="book-page">
+      <header class="book-header hidden">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/icons/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>Backend Conventions</h3>
+
+  <label for="toc-control">
+    
+    <img src="/icons/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#common-principles">Common Principles</a>
+      <ul>
+        <li><a href="#directory-structure">Directory Structure</a></li>
+        <li><a href="#naming-rules">Naming Rules</a></li>
+      </ul>
+    </li>
+    <li><a href="#kotlin--spring-framework">Kotlin / Spring Framework</a>
+      <ul>
+        <li><a href="#l1-port-example">L1 Port Example</a></li>
+        <li><a href="#l2-port-example">L2 Port Example</a></li>
+        <li><a href="#adapter-example">Adapter Example</a></li>
+      </ul>
+    </li>
+    <li><a href="#typescript--nestjs">TypeScript / NestJS</a>
+      <ul>
+        <li><a href="#port-example">Port Example</a></li>
+      </ul>
+    </li>
+    <li><a href="#go">Go</a>
+      <ul>
+        <li><a href="#port-example-1">Port Example</a></li>
+      </ul>
+    </li>
+    <li><a href="#next-steps">Next Steps</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="backend-conventions">Backend Conventions<a class="anchor" href="#backend-conventions">#</a></h1>
+<p>PA-Layer Backend implementation guide.</p>
+<h2 id="common-principles">Common Principles<a class="anchor" href="#common-principles">#</a></h2>
+<h3 id="directory-structure">Directory Structure<a class="anchor" href="#directory-structure">#</a></h3>
+<pre tabindex="0"><code>src/
+├── domain/                    # By domain
+│   ├── auth/
+│   │   ├── port/              # Port interfaces
+│   │   ├── adapter/           # Adapter implementations
+│   │   └── model/             # Domain models
+│   └── orders/
+├── api/                       # API layer
+└── infrastructure/            # Infrastructure</code></pre><h3 id="naming-rules">Naming Rules<a class="anchor" href="#naming-rules">#</a></h3>
+<table>
+  <thead>
+      <tr>
+          <th>Type</th>
+          <th>Rule</th>
+          <th>Example</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>L1 Port</td>
+          <td><code>{Domain}Port</code></td>
+          <td><code>UserPort</code>, <code>TokenPort</code></td>
+      </tr>
+      <tr>
+          <td>L2 Port</td>
+          <td><code>{Feature}Port</code></td>
+          <td><code>LoginPort</code>, <code>CheckoutPort</code></td>
+      </tr>
+      <tr>
+          <td>Adapter</td>
+          <td><code>{Port}Adapter</code></td>
+          <td><code>LoginAdapter</code></td>
+      </tr>
+      <tr>
+          <td>Query</td>
+          <td><code>{Domain}Query</code></td>
+          <td><code>UserQuery</code></td>
+      </tr>
+  </tbody>
+</table>
+<hr>
+<h2 id="kotlin--spring-framework">Kotlin / Spring Framework<a class="anchor" href="#kotlin--spring-framework">#</a></h2>
+<h3 id="l1-port-example">L1 Port Example<a class="anchor" href="#l1-port-example">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">UserPort</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">create</span>(command: CreateUserCommand): CreateUserResult
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">update</span>(command: UpdateUserCommand): UpdateUserResult
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">sealed</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">CreateUserResult</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">data</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Success</span>(<span style="color:#66d9ef">val</span> userId: UserId) : CreateUserResult()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">data</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">EmailAlreadyExists</span>(<span style="color:#66d9ef">val</span> email: String) : CreateUserResult()
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="l2-port-example">L2 Port Example<a class="anchor" href="#l2-port-example">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">LoginPort</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">login</span>(request: LoginRequest): LoginResult
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">logout</span>(request: LogoutRequest): LogoutResult
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">sealed</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">LoginResult</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">data</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Success</span>(<span style="color:#66d9ef">val</span> accessToken: String, <span style="color:#66d9ef">val</span> refreshToken: String)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">object</span> <span style="color:#a6e22e">InvalidCredentials</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">object</span> <span style="color:#a6e22e">AccountLocked</span>
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="adapter-example">Adapter Example<a class="anchor" href="#adapter-example">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#a6e22e">@Component</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">LoginAdapter</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> userPort: UserPort,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> tokenPort: TokenPort
+</span></span><span style="display:flex;"><span>) : LoginPort {
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Transactional</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">login</span>(request: LoginRequest): LoginResult {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> user = userPort.findByEmail(request.email)
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">?:</span> <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">LoginResult</span>.InvalidCredentials
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (!user.verifyPassword(request.password)) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">LoginResult</span>.InvalidCredentials
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> tokens = tokenPort.generate(user.id)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">LoginResult</span>.Success(tokens.accessToken, tokens.refreshToken)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="typescript--nestjs">TypeScript / NestJS<a class="anchor" href="#typescript--nestjs">#</a></h2>
+<h3 id="port-example">Port Example<a class="anchor" href="#port-example">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">export</span> <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">LOGIN_PORT</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">Symbol</span>(<span style="color:#e6db74">&#39;LOGIN_PORT&#39;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">export</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">LoginPort</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">login</span>(<span style="color:#a6e22e">request</span>: <span style="color:#66d9ef">LoginRequest</span>)<span style="color:#f92672">:</span> <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">LoginResult</span>&gt;;
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">logout</span>()<span style="color:#f92672">:</span> <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">void</span>&gt;;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">export</span> <span style="color:#66d9ef">type</span> <span style="color:#a6e22e">LoginResult</span> <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">|</span> { <span style="color:#66d9ef">type</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;success&#39;</span>; <span style="color:#a6e22e">accessToken</span>: <span style="color:#66d9ef">string</span>; <span style="color:#a6e22e">refreshToken</span>: <span style="color:#66d9ef">string</span> }
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">|</span> { <span style="color:#66d9ef">type</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;invalidCredentials&#39;</span> }
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">|</span> { <span style="color:#66d9ef">type</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;accountLocked&#39;</span> };</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="go">Go<a class="anchor" href="#go">#</a></h2>
+<h3 id="port-example-1">Port Example<a class="anchor" href="#port-example-1">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">LoginPort</span> <span style="color:#66d9ef">interface</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Login</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">req</span> <span style="color:#a6e22e">LoginRequest</span>) (<span style="color:#a6e22e">LoginResult</span>, <span style="color:#66d9ef">error</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Logout</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">req</span> <span style="color:#a6e22e">LogoutRequest</span>) <span style="color:#66d9ef">error</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">LoginResult</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Type</span>         <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">AccessToken</span>  <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">RefreshToken</span> <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> (
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">LoginSuccess</span>           = <span style="color:#e6db74">&#34;success&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">LoginInvalidCredentials</span> = <span style="color:#e6db74">&#34;invalid_credentials&#34;</span>
+</span></span><span style="display:flex;"><span>)</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="next-steps">Next Steps<a class="anchor" href="#next-steps">#</a></h2>
+<ul>
+<li><a href="/en/docs/pa-layer/frontend/">Frontend Conventions</a></li>
+</ul>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+<div>
+
+</div>
+
+<div>
+
+</div>
+
+</div>
+
+
+
+
+
+  
+  
+  
+  <div class="flex flex-wrap justify-between">
+    <span>
+    
+      <a href="/en/docs/pa-layer/overview/" class="flex align-center">
+        <img src="/icons/backward.svg" class="book-icon" alt="Backward" />
+        <span>Architecture Overview</span>
+      </a>
+    
+    </span>
+    <span>
+    
+      <a href="/en/docs/pa-layer/frontend/" class="flex align-center">
+        <span>Frontend Conventions</span>
+        <img src="/icons/forward.svg" class="book-icon" alt="Forward" />
+      </a>
+    
+    </span>
+  </div>
+  
+
+
+ 
+        
+  
+ 
+        
+        
+  
+ 
+        
+  
+  
+    <script>(function(){document.querySelectorAll("pre:has(code)").forEach(e=>{e.addEventListener("click",e.focus),e.addEventListener("copy",function(t){if(t.preventDefault(),navigator.clipboard){const t=window.getSelection().toString()||e.textContent;navigator.clipboard.writeText(t)}})})})()</script>
+  
+
+      </footer>
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+  
+  <aside class="book-toc">
+    <div class="book-toc-content">
+      
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#common-principles">Common Principles</a>
+      <ul>
+        <li><a href="#directory-structure">Directory Structure</a></li>
+        <li><a href="#naming-rules">Naming Rules</a></li>
+      </ul>
+    </li>
+    <li><a href="#kotlin--spring-framework">Kotlin / Spring Framework</a>
+      <ul>
+        <li><a href="#l1-port-example">L1 Port Example</a></li>
+        <li><a href="#l2-port-example">L2 Port Example</a></li>
+        <li><a href="#adapter-example">Adapter Example</a></li>
+      </ul>
+    </li>
+    <li><a href="#typescript--nestjs">TypeScript / NestJS</a>
+      <ul>
+        <li><a href="#port-example">Port Example</a></li>
+      </ul>
+    </li>
+    <li><a href="#go">Go</a>
+      <ul>
+        <li><a href="#port-example-1">Port Example</a></li>
+      </ul>
+    </li>
+    <li><a href="#next-steps">Next Steps</a></li>
+  </ul>
+</nav>
+
+
+
+    </div>
+  </aside>
+  
+ 
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

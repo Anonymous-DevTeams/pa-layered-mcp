@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Workspace Setup# Directory structure for efficient work with PA-Layer system.
+Recommended Structure# ~/playground/ # Workspace root ├── mcp-docs/ # ObsidianVault (documents) │ ├── .obsidian/ # Obsidian settings │ ├── ports/ # Port documents │ │ ├── auth/ │ │ │ ├── L1-AuthPort.md │ │ │ ├── L2-LoginPort.md │ │ │ └── L2-SignupPort.md │ │ └── users/ │ │ └── L2-ProfilePort.md │ ├── templates/ # Templates │ ├── guides/ # Guides │ └── .pa-index.yaml # Index settings │ ├── CodeSpace/ # Code projects │ ├── my-backend/ # Kotlin/Spring project │ ├── my-frontend/ # React project │ └── my-api/ # Go API project │ └── bundles/ # Shared Bundle storage ~/.pa/ # PA-Retriever settings ├── config.yaml # Main config ├── default.db # Index database ├── keys/ # Signing keys └── peers.json # LAN peer cacheBenefits# 1. AI Agent Collaboration# Clear context: AI knows which documents/code to reference Token efficiency: Load only needed documents Consistent structure: AI can navigate predictable locations 2. Document-Code Connection# 1 2 3 4 5 6 7 8 9 &lt;!-- mcp-docs/ports/auth/L2-LoginPort.md --&gt; --- type: l2 domain: auth port_id: LoginPort --- # L2-LoginPort @pa-port: LoginPort 1 2 3 4 // CodeSpace/my-backend/src/.../port/LoginPort.kt interface LoginPort { fun login(request: LoginRequest): LoginResult } PA-Retriever automatically connects documents and code.
+">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://pa-layer.github.io/en/docs/installation/workspace/">
+  <meta property="og:site_name" content="PA-Layer">
+  <meta property="og:title" content="Workspace Setup">
+  <meta property="og:description" content="Workspace Setup# Directory structure for efficient work with PA-Layer system.
+Recommended Structure# ~/playground/ # Workspace root ├── mcp-docs/ # ObsidianVault (documents) │ ├── .obsidian/ # Obsidian settings │ ├── ports/ # Port documents │ │ ├── auth/ │ │ │ ├── L1-AuthPort.md │ │ │ ├── L2-LoginPort.md │ │ │ └── L2-SignupPort.md │ │ └── users/ │ │ └── L2-ProfilePort.md │ ├── templates/ # Templates │ ├── guides/ # Guides │ └── .pa-index.yaml # Index settings │ ├── CodeSpace/ # Code projects │ ├── my-backend/ # Kotlin/Spring project │ ├── my-frontend/ # React project │ └── my-api/ # Go API project │ └── bundles/ # Shared Bundle storage ~/.pa/ # PA-Retriever settings ├── config.yaml # Main config ├── default.db # Index database ├── keys/ # Signing keys └── peers.json # LAN peer cacheBenefits# 1. AI Agent Collaboration# Clear context: AI knows which documents/code to reference Token efficiency: Load only needed documents Consistent structure: AI can navigate predictable locations 2. Document-Code Connection# 1 2 3 4 5 6 7 8 9 &lt;!-- mcp-docs/ports/auth/L2-LoginPort.md --&gt; --- type: l2 domain: auth port_id: LoginPort --- # L2-LoginPort @pa-port: LoginPort 1 2 3 4 // CodeSpace/my-backend/src/.../port/LoginPort.kt interface LoginPort { fun login(request: LoginRequest): LoginResult } PA-Retriever automatically connects documents and code.">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+
+
+  <meta itemprop="name" content="Workspace Setup">
+  <meta itemprop="description" content="Workspace Setup# Directory structure for efficient work with PA-Layer system.
+Recommended Structure# ~/playground/ # Workspace root ├── mcp-docs/ # ObsidianVault (documents) │ ├── .obsidian/ # Obsidian settings │ ├── ports/ # Port documents │ │ ├── auth/ │ │ │ ├── L1-AuthPort.md │ │ │ ├── L2-LoginPort.md │ │ │ └── L2-SignupPort.md │ │ └── users/ │ │ └── L2-ProfilePort.md │ ├── templates/ # Templates │ ├── guides/ # Guides │ └── .pa-index.yaml # Index settings │ ├── CodeSpace/ # Code projects │ ├── my-backend/ # Kotlin/Spring project │ ├── my-frontend/ # React project │ └── my-api/ # Go API project │ └── bundles/ # Shared Bundle storage ~/.pa/ # PA-Retriever settings ├── config.yaml # Main config ├── default.db # Index database ├── keys/ # Signing keys └── peers.json # LAN peer cacheBenefits# 1. AI Agent Collaboration# Clear context: AI knows which documents/code to reference Token efficiency: Load only needed documents Consistent structure: AI can navigate predictable locations 2. Document-Code Connection# 1 2 3 4 5 6 7 8 9 &lt;!-- mcp-docs/ports/auth/L2-LoginPort.md --&gt; --- type: l2 domain: auth port_id: LoginPort --- # L2-LoginPort @pa-port: LoginPort 1 2 3 4 // CodeSpace/my-backend/src/.../port/LoginPort.kt interface LoginPort { fun login(request: LoginRequest): LoginResult } PA-Retriever automatically connects documents and code.">
+  <meta itemprop="wordCount" content="280">
+
+<title>Workspace Setup | PA-Layer</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="https://pa-layer.github.io/en/docs/installation/workspace/">
+  <link rel="alternate" hreflang="ko" href="https://pa-layer.github.io/ko/docs/installation/workspace/" title="워크스페이스 구성">
+<link rel="stylesheet" href="/book.min.6970156cec683193d93c9c4edaf0d56574e4361df2e0c1be4f697ae81c3ba55f.css" integrity="sha256-aXAVbOxoMZPZPJxO2vDVZXTkNh3y4MG&#43;T2l66Bw7pV8=" crossorigin="anonymous">
+
+
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.b5456745024e721c0ed5066be46dd05983568404556d91df1ba7a31dc5a41591.js" integrity="sha256-tUVnRQJOchwO1QZr5G3QWYNWhARVbZHfG6ejHcWkFZE=" crossorigin="anonymous"></script>
+
+
+
+  
+</head>
+<body dir="ltr" class="book-kind-page book-type-docs">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    
+<aside class="book-menu">
+  <div class="book-menu-content">
+    
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/en/"><img src="/images/pa-layer-logo.svg" alt="Logo" /><span>PA-Layer</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input id="book-search-input" type="text" 
+    placeholder="Search"
+    aria-label="Search"
+    maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+  
+
+
+  
+    
+  
+
+
+  
+
+
+<ul class="book-languages">
+  <li>
+    <input type="checkbox" id="languages" class="toggle" />
+    <label for="languages" class="flex">
+      <a role="button">
+        <img src="/icons/translate.svg" class="book-icon" alt="Languages" />
+        English
+      </a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+
+    <ul>
+      
+      <li>
+        <a href="/ko/docs/installation/workspace/" class="flex flex-auto">
+          한국어
+        </a>
+      </li>
+      
+    </ul>
+  </li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-6236be1b89680b92e3aefa016e21a142" class="toggle" checked />
+    <label for="section-6236be1b89680b92e3aefa016e21a142" class="flex">
+      <a href="/en/docs/installation/" class="">
+        Installation</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/macos/" class="">
+      macOS Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/windows/" class="">
+      Windows Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/linux/" class="">
+      Linux Installation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/installation/workspace/" class="active">
+      Workspace Setup</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c57e8d2542437d90ac12ebccc18f7bd6" class="toggle"  />
+    <label for="section-c57e8d2542437d90ac12ebccc18f7bd6" class="flex">
+      <a href="/en/docs/configuration/" class="">
+        Configuration</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/claude/" class="">
+      Claude Integration</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/obsidian/" class="">
+      Obsidian Settings</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/configuration/pa-config/" class="">
+      PA-Retriever Config</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e28c43a16f6ea811813d9b83e9c091a1" class="toggle"  />
+    <label for="section-e28c43a16f6ea811813d9b83e9c091a1" class="flex">
+      <a href="/en/docs/pa-layer/" class="">
+        PA-Layer</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/overview/" class="">
+      Architecture Overview</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/backend/" class="">
+      Backend Conventions</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-layer/frontend/" class="">
+      Frontend Conventions</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-2e7de72bf7fb1d60035ad67e5a7421f2" class="toggle"  />
+    <label for="section-2e7de72bf7fb1d60035ad67e5a7421f2" class="flex">
+      <a href="/en/docs/pa-retriever/" class="">
+        PA-Retriever</a>
+      <img src="/icons/chevron-right.svg" class="book-icon" alt="Expand" />
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/basic/" class="">
+      Basic Usage</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/search/" class="">
+      Search Guide</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/code/" class="">
+      Code Indexing</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/with-claude/" class="">
+      Using with Claude</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/en/docs/pa-retriever/advanced/" class="">
+      Advanced Features</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+<ul><li><a href="https://github.com/pa-layer/pa-retriever" target="_blank" rel="noopener">GitHub</a></li></ul>
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+
+  </div>
+</aside>
+ 
+
+    <div class="book-page">
+      <header class="book-header hidden">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/icons/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>Workspace Setup</h3>
+
+  <label for="toc-control">
+    
+    <img src="/icons/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#recommended-structure">Recommended Structure</a></li>
+    <li><a href="#benefits">Benefits</a>
+      <ul>
+        <li><a href="#1-ai-agent-collaboration">1. AI Agent Collaboration</a></li>
+        <li><a href="#2-document-code-connection">2. Document-Code Connection</a></li>
+        <li><a href="#3-multi-project-support">3. Multi-project Support</a></li>
+      </ul>
+    </li>
+    <li><a href="#setup-checklist">Setup Checklist</a></li>
+    <li><a href="#next-steps">Next Steps</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="workspace-setup">Workspace Setup<a class="anchor" href="#workspace-setup">#</a></h1>
+<p>Directory structure for efficient work with PA-Layer system.</p>
+<h2 id="recommended-structure">Recommended Structure<a class="anchor" href="#recommended-structure">#</a></h2>
+<pre tabindex="0"><code>~/playground/                    # Workspace root
+├── mcp-docs/                    # ObsidianVault (documents)
+│   ├── .obsidian/               # Obsidian settings
+│   ├── ports/                   # Port documents
+│   │   ├── auth/
+│   │   │   ├── L1-AuthPort.md
+│   │   │   ├── L2-LoginPort.md
+│   │   │   └── L2-SignupPort.md
+│   │   └── users/
+│   │       └── L2-ProfilePort.md
+│   ├── templates/               # Templates
+│   ├── guides/                  # Guides
+│   └── .pa-index.yaml           # Index settings
+│
+├── CodeSpace/                   # Code projects
+│   ├── my-backend/              # Kotlin/Spring project
+│   ├── my-frontend/             # React project
+│   └── my-api/                  # Go API project
+│
+└── bundles/                     # Shared Bundle storage
+
+~/.pa/                           # PA-Retriever settings
+├── config.yaml                  # Main config
+├── default.db                   # Index database
+├── keys/                        # Signing keys
+└── peers.json                   # LAN peer cache</code></pre><h2 id="benefits">Benefits<a class="anchor" href="#benefits">#</a></h2>
+<h3 id="1-ai-agent-collaboration">1. AI Agent Collaboration<a class="anchor" href="#1-ai-agent-collaboration">#</a></h3>
+<ul>
+<li><strong>Clear context</strong>: AI knows which documents/code to reference</li>
+<li><strong>Token efficiency</strong>: Load only needed documents</li>
+<li><strong>Consistent structure</strong>: AI can navigate predictable locations</li>
+</ul>
+<h3 id="2-document-code-connection">2. Document-Code Connection<a class="anchor" href="#2-document-code-connection">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-markdown" data-lang="markdown"><span style="display:flex;"><span>&lt;!-- mcp-docs/ports/auth/L2-LoginPort.md --&gt;
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span>type: l2
+</span></span><span style="display:flex;"><span>domain: auth
+</span></span><span style="display:flex;"><span>port_id: LoginPort
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span># L2-LoginPort
+</span></span><span style="display:flex;"><span>@pa-port: LoginPort</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// CodeSpace/my-backend/src/.../port/LoginPort.kt
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">LoginPort</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">login</span>(request: LoginRequest): LoginResult
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></td></tr></table>
+</div>
+</div><p>PA-Retriever automatically connects documents and code.</p>
+<h3 id="3-multi-project-support">3. Multi-project Support<a class="anchor" href="#3-multi-project-support">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:2;-o-tab-size:2;tab-size:2;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Manage multiple workspaces with profiles</span>
+</span></span><span style="display:flex;"><span>pa profile add work --docs<span style="color:#f92672">=</span>~/work/docs --db<span style="color:#f92672">=</span>~/.pa/work.db
+</span></span><span style="display:flex;"><span>pa profile add personal --docs<span style="color:#f92672">=</span>~/personal/notes --db<span style="color:#f92672">=</span>~/.pa/personal.db
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Switch profiles</span>
+</span></span><span style="display:flex;"><span>pa use work
+</span></span><span style="display:flex;"><span>pa use personal</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="setup-checklist">Setup Checklist<a class="anchor" href="#setup-checklist">#</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"> Create <code>~/playground</code> directory</li>
+<li><input disabled="" type="checkbox"> Create <code>~/playground/mcp-docs</code> and initialize Git</li>
+<li><input disabled="" type="checkbox"> Create <code>~/playground/CodeSpace</code></li>
+<li><input disabled="" type="checkbox"> Open <code>mcp-docs</code> Vault in Obsidian</li>
+<li><input disabled="" type="checkbox"> Run <code>pa init</code></li>
+<li><input disabled="" type="checkbox"> Run <code>pa index</code></li>
+<li><input disabled="" type="checkbox"> Run <code>pa mcp install</code></li>
+<li><input disabled="" type="checkbox"> Restart Claude Desktop</li>
+</ul>
+<hr>
+<h2 id="next-steps">Next Steps<a class="anchor" href="#next-steps">#</a></h2>
+<ul>
+<li><a href="/en/docs/configuration/">Configuration</a> - Detailed Claude, Obsidian setup</li>
+</ul>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+<div>
+
+</div>
+
+<div>
+
+</div>
+
+</div>
+
+
+
+
+
+  
+  
+  
+  <div class="flex flex-wrap justify-between">
+    <span>
+    
+      <a href="/en/docs/installation/linux/" class="flex align-center">
+        <img src="/icons/backward.svg" class="book-icon" alt="Backward" />
+        <span>Linux Installation</span>
+      </a>
+    
+    </span>
+    <span>
+    
+      <a href="/en/docs/configuration/" class="flex align-center">
+        <span>Configuration</span>
+        <img src="/icons/forward.svg" class="book-icon" alt="Forward" />
+      </a>
+    
+    </span>
+  </div>
+  
+
+
+ 
+        
+  
+ 
+        
+        
+  
+ 
+        
+  
+  
+    <script>(function(){document.querySelectorAll("pre:has(code)").forEach(e=>{e.addEventListener("click",e.focus),e.addEventListener("copy",function(t){if(t.preventDefault(),navigator.clipboard){const t=window.getSelection().toString()||e.textContent;navigator.clipboard.writeText(t)}})})})()</script>
+  
+
+      </footer>
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+  
+  <aside class="book-toc">
+    <div class="book-toc-content">
+      
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#recommended-structure">Recommended Structure</a></li>
+    <li><a href="#benefits">Benefits</a>
+      <ul>
+        <li><a href="#1-ai-agent-collaboration">1. AI Agent Collaboration</a></li>
+        <li><a href="#2-document-code-connection">2. Document-Code Connection</a></li>
+        <li><a href="#3-multi-project-support">3. Multi-project Support</a></li>
+      </ul>
+    </li>
+    <li><a href="#setup-checklist">Setup Checklist</a></li>
+    <li><a href="#next-steps">Next Steps</a></li>
+  </ul>
+</nav>
+
+
+
+    </div>
+  </aside>
+  
+ 
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
